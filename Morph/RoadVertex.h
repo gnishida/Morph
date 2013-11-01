@@ -6,6 +6,8 @@ class RoadVertex {
 public:
 	QVector2D pt;
 	int ref;
+	bool orig;
+	bool virt;
 
 public:
 	RoadVertex();

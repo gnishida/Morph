@@ -44,12 +44,18 @@ private slots:
 	void tick();
 
 public:
-	void drawGraph(QPainter *painter, RoadGraph *roads);
+	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col);
+	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2);
 	RoadGraph* interpolate(RoadGraph* roads1, RoadGraph* roads2, float t);
 	RoadGraph* buildGraph1();
 	RoadGraph* buildGraph2();
 	void buildCorrespondence(RoadGraph* roads1, RoadGraph* roads2);
-	void findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2);
+
+	void addNodesOnEdges(RoadGraph* roads, int numNodes);
+
+	void findNearestNeighbors(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
+	void removeVirtVertices(RoadGraph* roads);
+	void checkEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
 	void augmentGraph();
 	void findExclusiveNearestNeighbor(RoadGraph* roads1, RoadGraph* roads2);
 	RoadVertexDesc findNearestNeighbor(RoadGraph* roads, QVector2D pt, RoadVertexDesc ignore);

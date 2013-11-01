@@ -1,6 +1,7 @@
 ﻿#include "Morph.h"
 #include <qset.h>
 #include <qpainter.h>
+#include <qcolor.h>
 
 Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	ui.setupUi(this);
@@ -23,14 +24,16 @@ Morph::~Morph() {
 void Morph::paintEvent(QPaintEvent *) {
     QPainter painter(this);
 
-	drawGraph(&painter, new_roads1);
+	drawGraph(&painter, roads1, QColor(0, 0, 255));
+	drawGraph(&painter, roads2, QColor(255, 0, 0));
+	drawRelation(&painter, roads1, neighbor1, roads2, neighbor2);
 }
 
-void Morph::drawGraph(QPainter *painter, RoadGraph *roads) {
+void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col) {
 	if (roads == NULL) return;
 
 	painter->setRenderHint(QPainter::Antialiasing, true);
-	painter->setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::RoundCap));
+	painter->setPen(QPen(col, 2, Qt::SolidLine, Qt::RoundCap));
 	painter->setBrush(QBrush(Qt::green, Qt::SolidPattern));
 
 	RoadEdgeIter ei, eend;
@@ -40,6 +43,30 @@ void Morph::drawGraph(QPainter *painter, RoadGraph *roads) {
 		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {
 			painter->drawLine(edge->getPolyLine()[i].x(), edge->getPolyLine()[i].y(), edge->getPolyLine()[i+1].x(), edge->getPolyLine()[i+1].y());
 		}
+	}
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		RoadVertex* v = roads->graph[*vi];
+		if (v->virt) continue;
+
+		painter->fillRect((int)v->getPt().x() - 3, (int)v->getPt().y() - 3, 6, 6, col);
+	}
+}
+
+void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2) {
+	if (roads1 == NULL || roads2 == NULL) return;
+
+	painter->setPen(QPen(Qt::black, 2, Qt::DotLine, Qt::RoundCap));
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		RoadVertex* v1 = roads1->graph[*vi];
+		RoadVertex* v2 = roads2->graph[neighbor1[*vi]];
+
+		if (v1->virt || v2->virt) continue;
+
+		painter->drawLine(v1->getPt().x(), v1->getPt().y(), v2->getPt().x(), v2->getPt().y());
 	}
 }
 
@@ -66,10 +93,54 @@ void Morph::start() {
 	}
 	*/
 
-	findNearestNeighbors(roads1, roads2);
+	addNodesOnEdges(roads1, 10);
+	addNodesOnEdges(roads2, 10);
+	findNearestNeighbors(roads1, &neighbor1, roads2, &neighbor2);
+	findNearestNeighbors(roads2, &neighbor2, roads1, &neighbor1);
+
+	QMap<RoadVertexDesc, QVector2D> n1;
+	QMap<RoadVertexDesc, QVector2D> n2;
+
+	// 対応関係を、一旦座標データに変換する
+	for (QMap<RoadVertexDesc, RoadVertexDesc>::iterator it = neighbor1.begin(); it != neighbor1.end(); ++it) {
+		RoadVertexDesc v1 = it.key();
+		RoadVertexDesc v2 = neighbor1[v1];
+		n1[v1] = roads2->graph[v2]->getPt();
+	}
+	for (QMap<RoadVertexDesc, RoadVertexDesc>::iterator it = neighbor2.begin(); it != neighbor2.end(); ++it) {
+		RoadVertexDesc v1 = it.key();
+		RoadVertexDesc v2 = neighbor2[v1];
+		n2[v1] = roads1->graph[v2]->getPt();
+	}
+
+	// 対応関係を構築したので、完全仮想頂点を全て削除する
+	removeVirtVertices(roads1);
+	removeVirtVertices(roads2);
+
+	// 座標データに基づいて、対応関係を復旧する。
+	neighbor1.clear();
+	for (QMap<RoadVertexDesc, QVector2D>::iterator it = n1.begin(); it != n1.end(); ++it) {
+		RoadVertexDesc v1 = it.key();
+		RoadVertexDesc v2 = findNearestNeighbor(roads2, n1[v1], -1);
+		neighbor1[v1] = v2;
+	}
+	neighbor2.clear();
+	for (QMap<RoadVertexDesc, QVector2D>::iterator it = n2.begin(); it != n2.end(); ++it) {
+		RoadVertexDesc v1 = it.key();
+		RoadVertexDesc v2 = findNearestNeighbor(roads1, n2[v1], -1);
+		neighbor2[v1] = v2;
+	}
+
+
+
+	checkEdges(roads1, &neighbor1, roads2, &neighbor2);
+	checkEdges(roads2, &neighbor2, roads1, &neighbor1);
+
+	/*
 	augmentGraph();
 	findExclusiveNearestNeighbor(roads1, roads2);
 	buildEdges(roads1, roads2);
+	*/
 
 	t = 0.0f;
 
@@ -77,10 +148,12 @@ void Morph::start() {
 }
 
 void Morph::tick() {
+	/*
 	if (roads != NULL) {
 		delete roads;
 	}
 	roads = interpolate(roads1, roads2, t);
+	*/
 
 	update();
 
@@ -269,21 +342,203 @@ void Morph::buildCorrespondence(RoadGraph* roads1, RoadGraph* roads2) {
 	*/
 }
 
-void Morph::findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2) {
-	neighbor1.clear();
-	neighbor2.clear();
+/**
+ * 各エッジに、指定した数のノードを追加する。
+ */
+void Morph::addNodesOnEdges(RoadGraph* roads, int numNodes) {
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		RoadEdge* e = roads->graph[*ei];
 
-	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
-		int aaa = *vi;
-		int bbb = findNearestNeighbor(roads2, roads1->graph[*vi]->getPt(), -1);
-		neighbor1[*vi] = bbb;
+		// もともとのエッジに、すべて「無効」のしるしをつける
+		e->valid = false;
 	}
 
-	for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
-		int aaa = *vi;
-		int bbb = findNearestNeighbor(roads1, roads2->graph[*vi]->getPt(), -1);
-		neighbor2[*vi] = bbb;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		RoadEdge* e = roads->graph[*ei];
+
+		// 「無効」のしるしのついたエッジ（つまり、もともとのエッジ）に対してのみ、ノードを追加する。
+		if (e->valid) continue;
+
+		RoadVertexDesc src_desc = boost::source(*ei, roads->graph);
+		RoadVertexDesc tgt_desc = boost::target(*ei, roads->graph);
+
+		RoadVertex* src = roads->graph[src_desc];
+		RoadVertex* tgt = roads->graph[tgt_desc];
+		
+		RoadVertexDesc prev_v_desc = src_desc;
+		for (int i = 0; i < numNodes; i++) {
+			// ノードを追加
+			RoadVertex* v = new RoadVertex(src->getPt() + (tgt->getPt() - src->getPt()) / (float)(numNodes + 1) * (float)(i + 1));
+			v->orig = false;
+			v->virt = true;		// 追加したノードは、暫定的に、完全仮想ノードとする。
+			RoadVertexDesc v_desc = boost::add_vertex(roads->graph);
+			roads->graph[v_desc] = v;
+
+			// エッジを追加
+			RoadEdge* new_e = new RoadEdge(1, 1);
+			new_e->addPoint(roads->graph[prev_v_desc]->getPt());
+			new_e->addPoint(roads->graph[v_desc]->getPt());
+			std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(prev_v_desc, v_desc, roads->graph);
+			roads1->graph[new_e_pair.first] = new_e;
+			
+			prev_v_desc = v_desc;
+		}
+
+		// 最後のノードと、tgtの間にもエッジを追加
+		RoadEdge* new_e = new RoadEdge(1, 1);
+		new_e->addPoint(roads->graph[prev_v_desc]->getPt());
+		new_e->addPoint(roads->graph[tgt_desc]->getPt());
+		std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(prev_v_desc, tgt_desc, roads->graph);
+		roads1->graph[new_e_pair.first] = new_e;			
+	}
+
+	// 「無効」のしるしのついたエッジ（つまり、もともとのエッジ）を全て削除する
+	bool deleted = true;
+	while (deleted) {
+		deleted = false;
+		for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+			RoadEdge* e = roads->graph[*ei];
+			if (e->valid) continue;
+
+			boost::remove_edge(*ei, roads->graph);
+			deleted = true;
+			break;
+		}
+	}
+}
+
+/**
+ * Roads1の各頂点について、roads2の中から最も近い頂点を探し、対応関係をマップに入れて返却する。
+ */
+void Morph::findNearestNeighbors(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor2) {
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		// 完全仮想頂点は、対応関係を作成しない。
+		if (roads1->graph[*vi]->virt) continue;
+
+		// 対応関係がすでに作成済みの場合は、スキップ
+		if (neighbor1->contains(*vi)) continue;
+
+		RoadVertexDesc v2_desc = findNearestNeighbor(roads2, roads1->graph[*vi]->getPt(), -1);
+		neighbor1->insert(*vi, v2_desc);
+		neighbor2->insert(v2_desc, *vi);
+
+		roads2->graph[v2_desc]->virt = false;	// 対応関係が発生したので、本当の頂点として扱う
+	}
+}
+
+/**
+ * roads1の完全仮想頂点を全て削除する。
+ */
+void Morph::removeVirtVertices(RoadGraph* roads) {
+	bool deleted = true;
+	while (deleted) {
+		deleted = false;
+
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+			if (roads->graph[*vi]->virt == false) continue;
+
+			// 完全仮想頂点なので、削除する
+
+			// まず、隣接２頂点を取得する。
+			RoadVertexDesc desc[2];
+			RoadEdge* e[2];
+			int count = 0;
+			RoadOutEdgeIter oei, oeend;
+			for (boost::tie(oei, oeend) = boost::out_edges(*vi, roads->graph); oei != oeend; ++oei, ++count) {
+				e[count] = roads->graph[*oei];
+				desc[count] = boost::target(*oei, roads->graph);
+			}
+
+			// 隣接２頂点間にエッジを作成
+			RoadEdge* new_e = new RoadEdge(1, 1);
+			new_e->addPoint(roads->graph[desc[0]]->getPt());
+			new_e->addPoint(roads->graph[desc[1]]->getPt());
+			std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(desc[0], desc[1], roads->graph);
+			roads->graph[new_e_pair.first] = new_e;
+
+			// エッジを削除
+			boost::remove_edge(desc[0], *vi, roads->graph);
+			boost::remove_edge(desc[1], *vi, roads->graph);
+			delete e[0];
+			if (e[1] != e[0]) delete e[1];
+
+			// ノードを削除
+			boost::remove_vertex(*vi, roads->graph);
+
+			deleted = true;
+			break;
+		}
+	}
+}
+
+/**
+ * Roads1の各エッジについて、両端２頂点ABに対応する２頂点CD間にエッジがあることを確認する。
+ * ない場合は、対応する２頂点CDのうち、１つの頂点Cを２つに分割し、A-C、B-C'を対応関係とする。
+ */
+void Morph::checkEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2) {
+	bool updated = true;
+
+	while (updated) {
+		updated = false;
+
+		RoadEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
+			// 両端２頂点AB
+			RoadVertexDesc src_desc = boost::source(*ei, roads1->graph);
+			RoadVertexDesc tgt_desc = boost::target(*ei, roads1->graph);
+
+			// 頂点が完全仮想頂点の場合は、スキップ
+			if (roads1->graph[src_desc]->virt || roads1->graph[tgt_desc]->virt) continue;
+
+			// 対応する２頂点CD
+			RoadVertexDesc src_desc2 = neighbor1->value(src_desc);
+			RoadVertexDesc tgt_desc2 = neighbor1->value(tgt_desc);
+
+			// CD間にエッジがあれば、めでたし、めでたし
+			if (hasExclusiveEdge(roads2, src_desc2, tgt_desc2)) continue;
+
+			if (roads2->graph[src_desc2]->orig) {
+				// Cを２つに分割し、A-C、B-C'の対応関係にする。
+				RoadVertex* new_v = new RoadVertex(roads2->graph[src_desc2]->getPt());
+				new_v->orig = roads2->graph[src_desc2]->orig;
+				new_v->virt = roads2->graph[src_desc2]->virt;
+				RoadVertexDesc new_v_desc = boost::add_vertex(roads2->graph);
+				roads2->graph[new_v_desc] = new_v;
+
+				// B-C'の対応関係を作成
+				neighbor1->insert(tgt_desc, new_v_desc);
+				neighbor2->insert(new_v_desc, tgt_desc);
+
+				// Dの対応関係は不要になったので、削除する
+				neighbor2->remove(tgt_desc2);
+
+				// Dは、完全仮想頂点となる。
+				roads2->graph[tgt_desc2]->virt = true;
+			} else {
+				// Dを２つに分割し、B-D, A-D'の関係とする。
+				RoadVertex* new_v = new RoadVertex(roads2->graph[tgt_desc2]->getPt());
+				new_v->orig = roads2->graph[tgt_desc2]->orig;
+				new_v->virt = roads2->graph[tgt_desc2]->virt;
+				RoadVertexDesc new_v_desc = boost::add_vertex(roads2->graph);
+				roads2->graph[new_v_desc] = new_v;
+
+				// A-D'の対応関係を作成
+				neighbor1->insert(src_desc, new_v_desc);
+				neighbor2->insert(new_v_desc, src_desc);
+
+				// Cの対応関係は不要になったので、削除する
+				neighbor2->remove(src_desc2);
+
+				// Cは、完全仮想頂点となる。
+				roads2->graph[src_desc2]->virt = true;
+			}
+
+			updated = true;
+			break;
+		}
 	}
 }
 

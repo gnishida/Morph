@@ -11,7 +11,7 @@ public:
 	float length;
 	unsigned int type;
 	std::vector<QVector2D> polyLine;
-
+	bool valid;
 
 
 public:
