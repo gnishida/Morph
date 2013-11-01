@@ -11,7 +11,6 @@ public:
 	bool virt;
 	bool pair;
 	bool finalized;
-	//std::vector<unsigned int> sibling;
 
 public:
 	RoadVertex();

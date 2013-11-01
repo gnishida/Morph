@@ -5,6 +5,7 @@ RoadEdge::RoadEdge(int lanes, int type) {
 	this->type = type;
 	this->length = 0.0f;
 	this->valid = true;
+	this->orig = false;
 }
 
 RoadEdge::~RoadEdge() {

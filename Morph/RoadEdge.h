@@ -12,7 +12,7 @@ public:
 	unsigned int type;
 	std::vector<QVector2D> polyLine;
 	bool valid;
-
+	bool orig;
 
 public:
 	RoadEdge(int numLanes, int typeRoad);

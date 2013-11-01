@@ -79,6 +79,12 @@ void Morph::start() {
 	}
 	roadsA = buildGraph1();
 	roadsB = buildGraph2();
+	/*
+	roadsA = new RoadGraph();
+	roadsA->load("roads1.gsm");
+	roadsB = new RoadGraph();
+	roadsB->load("roads2.gsm");
+	*/
 
 	// 第１ステップ：各頂点について、直近の対応を探す
 	neighbor1 = findNearestNeighbors(roadsA, roadsB);
@@ -107,9 +113,17 @@ void Morph::start() {
 	augmentGraph(roadsA, &neighbor1, roadsB, &neighbor2);
 	augmentGraph(roadsB, &neighbor2, roadsA, &neighbor1);
 
+	// 兄弟がない頂点についても、擬似的に、自分自身１人を兄弟として登録する
+	setupSiblings(roadsA);
+	setupSiblings(roadsB);
+
 	// 第５ステップ：エッジの対応チェック
-	checkEdges(roadsA, &neighbor1, roadsB, &neighbor2);
-	checkEdges(roadsB, &neighbor2, roadsA, &neighbor1);
+	updateEdges(roadsA, &neighbor1, roadsB, &neighbor2);
+	updateEdges(roadsB, &neighbor2, roadsA, &neighbor1);
+
+	// 第６ステップ：エッジの対応チェック２
+	updateEdges2(roadsA, &neighbor1, roadsB, &neighbor2);
+	updateEdges2(roadsB, &neighbor2, roadsA, &neighbor1);
 
 	t = 1.0f;
 
@@ -225,13 +239,137 @@ RoadGraph* Morph::buildGraph2() {
 	RoadEdge* e1 = new RoadEdge(1, 1);
 	e1->addPoint(v1->getPt());
 	e1->addPoint(v2->getPt());
+	e1->orig = true;
 	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
 	roads->graph[edge_pair1.first] = e1;
 	
 	RoadEdge* e2 = new RoadEdge(1, 1);
 	e2->addPoint(v2->getPt());
 	e2->addPoint(v3->getPt());
+	e2->orig = true;
 	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v2_desc, v3_desc, roads->graph);
+	roads->graph[edge_pair2.first] = e2;
+
+	return roads;
+}
+
+RoadGraph* Morph::buildGraph3() {
+	RoadGraph* roads = new RoadGraph();
+
+	RoadVertex* v1 = new RoadVertex(QVector2D(200, 200));
+	RoadVertexDesc v1_desc = boost::add_vertex(roads->graph);
+	roads->graph[v1_desc] = v1;
+
+	RoadVertex* v2 = new RoadVertex(QVector2D(100, 200));
+	RoadVertexDesc v2_desc = boost::add_vertex(roads->graph);
+	roads->graph[v2_desc] = v2;
+
+	RoadVertex* v3 = new RoadVertex(QVector2D(200, 100));
+	RoadVertexDesc v3_desc = boost::add_vertex(roads->graph);
+	roads->graph[v3_desc] = v3;
+
+	RoadVertex* v4 = new RoadVertex(QVector2D(300, 200));
+	RoadVertexDesc v4_desc = boost::add_vertex(roads->graph);
+	roads->graph[v4_desc] = v4;
+
+	RoadVertex* v5 = new RoadVertex(QVector2D(200, 300));
+	RoadVertexDesc v5_desc = boost::add_vertex(roads->graph);
+	roads->graph[v5_desc] = v5;
+
+	RoadEdge* e1 = new RoadEdge(1, 1);
+	e1->addPoint(v1->getPt());
+	e1->addPoint(v2->getPt());
+	e1->orig = true;
+	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
+	roads->graph[edge_pair1.first] = e1;
+
+	RoadEdge* e2 = new RoadEdge(1, 1);
+	e2->addPoint(v1->getPt());
+	e2->addPoint(v3->getPt());
+	e2->orig = true;
+	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v1_desc, v3_desc, roads->graph);
+	roads->graph[edge_pair2.first] = e2;
+
+	RoadEdge* e3 = new RoadEdge(1, 1);
+	e3->addPoint(v1->getPt());
+	e3->addPoint(v4->getPt());
+	e3->orig = true;
+	std::pair<RoadEdgeDesc, bool> edge_pair3 = boost::add_edge(v1_desc, v4_desc, roads->graph);
+	roads->graph[edge_pair3.first] = e3;
+
+	RoadEdge* e4 = new RoadEdge(1, 1);
+	e4->addPoint(v1->getPt());
+	e4->addPoint(v5->getPt());
+	e4->orig = true;
+	std::pair<RoadEdgeDesc, bool> edge_pair4 = boost::add_edge(v1_desc, v5_desc, roads->graph);
+	roads->graph[edge_pair4.first] = e4;
+
+	return roads;
+}
+
+RoadGraph* Morph::buildGraph4() {
+	RoadGraph* roads = new RoadGraph();
+
+	RoadVertex* v1 = new RoadVertex(QVector2D(200, 180));
+	RoadVertexDesc v1_desc = boost::add_vertex(roads->graph);
+	roads->graph[v1_desc] = v1;
+
+	RoadVertex* v2 = new RoadVertex(QVector2D(100, 180));
+	RoadVertexDesc v2_desc = boost::add_vertex(roads->graph);
+	roads->graph[v2_desc] = v2;
+
+	RoadVertex* v3 = new RoadVertex(QVector2D(300, 180));
+	RoadVertexDesc v3_desc = boost::add_vertex(roads->graph);
+	roads->graph[v3_desc] = v3;
+
+	RoadEdge* e1 = new RoadEdge(1, 1);
+	e1->addPoint(v1->getPt());
+	e1->addPoint(v2->getPt());
+	e1->orig = true;
+	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
+	roads->graph[edge_pair1.first] = e1;
+
+	RoadEdge* e2 = new RoadEdge(1, 1);
+	e2->addPoint(v1->getPt());
+	e2->addPoint(v3->getPt());
+	e2->orig = true;
+	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v1_desc, v3_desc, roads->graph);
+	roads->graph[edge_pair2.first] = e2;
+
+	return roads;
+}
+
+RoadGraph* Morph::buildGraph5() {
+	RoadGraph* roads = new RoadGraph();
+
+	RoadVertex* v1 = new RoadVertex(QVector2D(20, 120));
+	RoadVertexDesc v1_desc = boost::add_vertex(roads->graph);
+	roads->graph[v1_desc] = v1;
+
+	RoadVertex* v2 = new RoadVertex(QVector2D(100, 200));
+	RoadVertexDesc v2_desc = boost::add_vertex(roads->graph);
+	roads->graph[v2_desc] = v2;
+
+	RoadVertex* v3 = new RoadVertex(QVector2D(200, 200));
+	RoadVertexDesc v3_desc = boost::add_vertex(roads->graph);
+	roads->graph[v3_desc] = v3;
+
+	RoadVertex* v4 = new RoadVertex(QVector2D(280, 120));
+	RoadVertexDesc v4_desc = boost::add_vertex(roads->graph);
+	roads->graph[v4_desc] = v4;
+
+	RoadEdge* e1 = new RoadEdge(1, 1);
+	e1->addPoint(v1->getPt());
+	e1->addPoint(v2->getPt());
+	e1->orig = true;
+	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
+	roads->graph[edge_pair1.first] = e1;
+
+	RoadEdge* e2 = new RoadEdge(1, 1);
+	e2->addPoint(v3->getPt());
+	e2->addPoint(v4->getPt());
+	e2->orig = true;
+	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v3_desc, v4_desc, roads->graph);
 	roads->graph[edge_pair2.first] = e2;
 
 	return roads;
@@ -428,7 +566,7 @@ void Morph::augmentGraph(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>
  *        当該エッジの中間点に２つの頂点を追加し、相方グラフについては、
  *     　 対応するその両端頂点に２つの頂点を追加し、それらを対応させる。
  */
-void Morph::checkEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2) {
+void Morph::updateEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2) {
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
 		if (!roads1->graph[*ei]->valid) continue;
@@ -455,7 +593,45 @@ void Morph::checkEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *
 		}
 
 		// 対策(a)に成功したら、対策(b)は不要。
-		if (updateEdgeWithSibling(roads1, neighbor1, roads2, neighbor2, src_desc, tgt_desc)) continue;
+		if (updateEdgeWithSibling1(roads1, neighbor1, roads2, neighbor2, src_desc, tgt_desc)) continue;
+		if (updateEdgeWithSibling2(roads1, neighbor1, roads2, neighbor2, src_desc, tgt_desc)) continue;
+		if (updateEdgeWithSibling4(roads1, neighbor1, roads2, neighbor2, src_desc, tgt_desc)) continue;
+	}
+}
+
+/**
+ * 第６ステップ：エッジの対応関係をチェックする。
+ * １）両方のグラフでエッジがある場合は、そのエッジの両端頂点をfinalizeする。
+ * ２）相方のグラフにエッジがない場合、
+ *     b) まったく代替エッジがない場合、
+ *        当該エッジの中間点に２つの頂点を追加し、相方グラフについては、
+ *     　 対応するその両端頂点に２つの頂点を追加し、それらを対応させる。
+ */
+void Morph::updateEdges2(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2) {
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
+		if (!roads1->graph[*ei]->valid) continue;
+
+		// 当該エッジの両端頂点を取得
+		RoadVertexDesc src_desc = boost::source(*ei, roads1->graph);
+		RoadVertexDesc tgt_desc = boost::target(*ei, roads1->graph);
+		RoadVertex* src = roads1->graph[src_desc];
+		RoadVertex* tgt = roads1->graph[tgt_desc];
+
+		// 対応頂点を取得
+		RoadVertexDesc src2_desc = neighbor1->value(src_desc);
+		RoadVertexDesc tgt2_desc = neighbor1->value(tgt_desc);
+		RoadVertex* src2 = roads2->graph[src2_desc];
+		RoadVertex* tgt2 = roads2->graph[tgt2_desc];
+		
+		// 対応グラフにもエッジがあれば、頂点をfinalizeする
+		if (hasEdge(roads2, src2_desc, tgt2_desc)) {
+			roads1->graph[src_desc]->finalized = true;
+			roads1->graph[tgt_desc]->finalized = true;
+			roads2->graph[src2_desc]->finalized = true;
+			roads2->graph[tgt2_desc]->finalized = true;
+			continue;
+		}
 
 		// 対策(b)
 		updateEdgeWithSplit(roads1, neighbor1, roads2, neighbor2, src_desc, tgt_desc);
@@ -463,12 +639,13 @@ void Morph::checkEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *
 }
 
 /**
+ * 第５ステップの対策(a) - 1
  * roads1の頂点ABについて、兄弟を使って対応するエッジを見つけ、それに基づいてエッジを更新する。
- * Aの兄弟の対応点A'と、Bの対応点B'の兄弟との間にエッジがないか、全ての兄弟について調べる。
- * もしあれば、エッジABを無効にし、代わりに、Aの兄弟とBの間にエッジを作成する。
- * また、A'とB'の兄弟との間のエッジも無効にし、代わりに、A'とB'の間にエッジを作成する。
+ * 1) Aの兄弟の対応点A'と、Bの対応点B'の兄弟との間にエッジがないか、調べる。
+ *    もしあれば、エッジABを無効にし、代わりに、Aの兄弟とBの間にエッジを作成する。
+ *    また、A'とB'の兄弟との間のエッジも無効にし、代わりに、A'とB'の間にエッジを作成する。
  */
-bool Morph::updateEdgeWithSibling(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt) {
+bool Morph::updateEdgeWithSibling1(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt) {
 	bool matched = false;
 
 	if (roads1->siblings.contains(src)) {
@@ -489,7 +666,7 @@ bool Morph::updateEdgeWithSibling(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVe
 					// B'の兄弟を取得
 					RoadVertexDesc t2 = roads2->siblings[t][j];
 
-					if (hasEdge(roads2, s2, t2)) {
+					if (hasOriginalEdge(roads2, s2, t2)) {
 						// エッジABを無効にする
 						RoadEdgeDesc e1 = getEdge(roads1, src, tgt);
 						roads1->graph[e1]->valid = false;
@@ -501,16 +678,18 @@ bool Morph::updateEdgeWithSibling(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVe
 						std::pair<RoadEdgeDesc, bool> new_e1_pair = boost::add_edge(s, tgt, roads1->graph);
 						roads1->graph[new_e1_pair.first] = new_e1;
 
-						// A'とB'の兄弟との間のエッジを無効にする
-						RoadEdgeDesc e2 = getEdge(roads2, s2, t2);
-						roads2->graph[e2]->valid = false;
+						if (t != t2) {
+							// A'とB'の兄弟との間のエッジを無効にする
+							RoadEdgeDesc e2 = getEdge(roads2, s2, t2);
+							roads2->graph[e2]->valid = false;
 
-						// A'とB'の間にエッジを作成する
-						RoadEdge* new_e2 = new RoadEdge(1, 1);
-						new_e2->addPoint(roads2->graph[s2]->getPt());
-						new_e2->addPoint(roads2->graph[t]->getPt());
-						std::pair<RoadEdgeDesc, bool> new_e2_pair = boost::add_edge(s2, t, roads2->graph);
-						roads2->graph[new_e2_pair.first] = new_e2;
+							// A'とB'の間にエッジを作成する
+							RoadEdge* new_e2 = new RoadEdge(1, 1);
+							new_e2->addPoint(roads2->graph[s2]->getPt());
+							new_e2->addPoint(roads2->graph[t]->getPt());
+							std::pair<RoadEdgeDesc, bool> new_e2_pair = boost::add_edge(s2, t, roads2->graph);
+							roads2->graph[new_e2_pair.first] = new_e2;
+						}
 
 						matched = true;
 						break;
@@ -539,9 +718,9 @@ bool Morph::updateEdgeWithSibling(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVe
 				for (int j = 0; j < roads2->siblings[s].size(); j++) {
 					// A'の兄弟を取得
 					RoadVertexDesc s2 = roads2->siblings[s][j];
-					if (s2 == s) continue;
+					//if (s2 == s) continue;
 
-					if (hasEdge(roads2, s2, t2)) {
+					if (hasOriginalEdge(roads2, s2, t2)) {
 						// エッジABを無効にする
 						RoadEdgeDesc e1 = getEdge(roads1, src, tgt);
 						roads1->graph[e1]->valid = false;
@@ -553,16 +732,18 @@ bool Morph::updateEdgeWithSibling(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVe
 						std::pair<RoadEdgeDesc, bool> new_e1_pair = boost::add_edge(src, t, roads1->graph);
 						roads1->graph[new_e1_pair.first] = new_e1;
 
-						// A'の兄弟とB'との間のエッジを無効にする
-						RoadEdgeDesc e2 = getEdge(roads2, s2, t2);
-						roads2->graph[e2]->valid = false;
+						if (s != s2) {
+							// A'の兄弟とB'との間のエッジを無効にする
+							RoadEdgeDesc e2 = getEdge(roads2, s2, t2);
+							roads2->graph[e2]->valid = false;
 
-						// A'とB'の間にエッジを作成する
-						RoadEdge* new_e2 = new RoadEdge(1, 1);
-						new_e2->addPoint(roads2->graph[s]->getPt());
-						new_e2->addPoint(roads2->graph[t2]->getPt());
-						std::pair<RoadEdgeDesc, bool> new_e2_pair = boost::add_edge(s, t2, roads2->graph);
-						roads2->graph[new_e2_pair.first] = new_e2;
+							// A'とB'の間にエッジを作成する
+							RoadEdge* new_e2 = new RoadEdge(1, 1);
+							new_e2->addPoint(roads2->graph[s]->getPt());
+							new_e2->addPoint(roads2->graph[t2]->getPt());
+							std::pair<RoadEdgeDesc, bool> new_e2_pair = boost::add_edge(s, t2, roads2->graph);
+							roads2->graph[new_e2_pair.first] = new_e2;
+						}
 
 						matched = true;
 						break;
@@ -572,6 +753,168 @@ bool Morph::updateEdgeWithSibling(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVe
 				if (matched) break;
 			}
 		}
+	}
+
+	return matched;
+}
+
+/**
+ * 第５ステップの対策(a) - 2
+ * roads1の頂点ABについて、兄弟を使って対応するエッジを見つけ、それに基づいてエッジを更新する。
+ * 2) Aの兄弟の対応点A'と、Bの兄弟の対応点B'との間にエッジがないか、調べる。
+ *    もしあれば、エッジABを無効にし、代わりに、Aの兄弟とBの兄弟の間にエッジを作成する。
+ */
+bool Morph::updateEdgeWithSibling2(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt) {
+	bool matched = false;
+
+	// AまたはBに兄弟がいない場合は、失敗
+	if (!roads1->siblings.contains(src) || !roads1->siblings.contains(tgt)) return false;
+
+	for (int i = 0; i < roads1->siblings[src].size(); i++) {
+		// Aの兄弟を取得
+		RoadVertexDesc s = roads1->siblings[src][i];
+		//if (s == src) continue;
+
+		// Aの兄弟の対応点A'を取得
+		RoadVertexDesc s2 = neighbor1->value(s);
+
+		for (int j = 0; j < roads1->siblings[tgt].size(); j++) {
+			// Bの兄弟を取得
+			RoadVertexDesc t = roads1->siblings[tgt][j];
+			//if (t == tgt) continue;
+
+			// Aの兄弟がAで、Bの兄弟がBなら、意味が無いのでスキップ。
+			if (s == src && t == tgt) continue;
+
+			// Bの兄弟の対応点B'を取得
+			RoadVertexDesc t2 = neighbor1->value(t);
+
+			if (hasOriginalEdge(roads2, s2, t2)) {
+				// エッジABを無効にする
+				RoadEdgeDesc e1 = getEdge(roads1, src, tgt);
+				roads1->graph[e1]->valid = false;
+
+				// Aの兄弟とBの兄弟の間にエッジを作成
+				RoadEdge* new_e1 = new RoadEdge(1, 1);
+				new_e1->addPoint(roads1->graph[s]->getPt());
+				new_e1->addPoint(roads1->graph[t]->getPt());
+				std::pair<RoadEdgeDesc, bool> new_e1_pair = boost::add_edge(s, t, roads1->graph);
+				roads1->graph[new_e1_pair.first] = new_e1;
+
+				matched = true;
+				break;
+			}
+		}
+
+		if (matched) break;
+	}
+
+	return matched;
+}
+
+/**
+ * 第５ステップの対策(a) - 3
+ * roads1の頂点ABについて、兄弟を使って対応するエッジを見つけ、それに基づいてエッジを更新する。
+ * 3) Aの対応点A'の兄弟と、Bの兄弟の対応点B'との間にエッジがないか、調べる。
+ *    もしあれば、エッジABを無効にし、代わりに、AとBの兄弟の間にエッジを作成する。
+ *    また、A'の兄弟と、B'との間のエッジを無効にし、代わりに、A'とB'の間にエッジを作成する。
+ */
+bool Morph::updateEdgeWithSibling3(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt) {
+	bool matched = false;
+
+	// 対応点A'を取得
+	RoadVertexDesc s = neighbor1->value(src);
+
+	// 対応点A'の兄弟について
+	for (int i = 0; i < roads2->siblings[s].size(); i++) {
+		// A'の兄弟を取得
+		RoadVertexDesc s2 = roads2->siblings[s][i];
+		if (s2 == s) continue;
+
+		for (int j = 0; j < roads1->siblings[tgt].size(); j++) {
+			// Bの兄弟を取得
+			RoadVertexDesc t = roads1->siblings[tgt][j];
+
+			// Bの兄弟の対応点B'を取得
+			RoadVertexDesc t2 = neighbor1->value(t);
+
+			if (hasOriginalEdge(roads2, s2, t2)) {
+				// A'の兄弟とB'の間のエッジを無効にする
+				RoadEdgeDesc e2 = getEdge(roads2, s2, t2);
+				roads2->graph[e2]->valid = false;
+
+				// A'とB'の間にエッジを作成
+				RoadEdge* new_e2 = new RoadEdge(1, 1);
+				new_e2->addPoint(roads2->graph[s]->getPt());
+				new_e2->addPoint(roads2->graph[t2]->getPt());
+				std::pair<RoadEdgeDesc, bool> new_e2_pair = boost::add_edge(s, t2, roads2->graph);
+				roads2->graph[new_e2_pair.first] = new_e2;
+
+				// エッジABを無効にする
+				RoadEdgeDesc e1 = getEdge(roads1, src, tgt);
+				roads1->graph[e1]->valid = false;
+
+				// AとBの兄弟の間にエッジを作成する
+				RoadEdge* new_e1 = new RoadEdge(1, 1);
+				new_e1->addPoint(roads1->graph[src]->getPt());
+				new_e1->addPoint(roads1->graph[t]->getPt());
+				std::pair<RoadEdgeDesc, bool> new_e1_pair = boost::add_edge(src, t, roads1->graph);
+				roads1->graph[new_e1_pair.first] = new_e1;
+
+				matched = true;
+				break;
+			}
+		}
+
+		if (matched) break;
+	}
+
+	return matched;
+}
+
+/**
+ * 第５ステップの対策(a) - 4
+ * roads1の頂点ABについて、兄弟を使って対応するエッジを見つけ、それに基づいてエッジを更新する。
+ * 4) Aの対応点A'の兄弟と、Bの対応点B'の兄弟との間にエッジがないか、調べる。
+ *    もしあれば、そのエッジを無効にし、代わりに、A'とB'の間にエッジを作成する。
+ */
+bool Morph::updateEdgeWithSibling4(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt) {
+	bool matched = false;
+
+	// 対応点A', B'を取得
+	RoadVertexDesc s = neighbor1->value(src);
+	RoadVertexDesc t = neighbor1->value(tgt);
+
+	// 対応点A'の兄弟について
+	for (int i = 0; i < roads2->siblings[s].size(); i++) {
+		// A'の兄弟を取得
+		RoadVertexDesc s2 = roads2->siblings[s][i];
+
+		for (int j = 0; j < roads2->siblings[t].size(); j++) {
+			// Bの兄弟を取得
+			RoadVertexDesc t2 = roads2->siblings[t][j];
+
+			// A'の兄弟がA'で、B'の兄弟がB'なら、意味が無いのでスキップ。
+			if (s == s2 && t == t2) continue;
+
+			if (hasOriginalEdge(roads2, s2, t2)) {
+				// A'の兄弟とB'の兄弟の間のエッジを無効にする
+				RoadEdgeDesc e1 = getEdge(roads2, s2, t2);
+				roads2->graph[e1]->valid = false;
+
+				// A'とB'の間にエッジを作成
+				RoadEdge* new_e = new RoadEdge(1, 1);
+				new_e->addPoint(roads2->graph[s]->getPt());
+				new_e->addPoint(roads2->graph[t]->getPt());
+				std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(s, t, roads2->graph);
+				roads2->graph[new_e_pair.first] = new_e;
+
+				matched = true;
+				break;
+			}
+		}
+
+		if (matched) break;
 	}
 
 	return matched;
@@ -687,13 +1030,42 @@ bool Morph::hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2
 	return false;
 }
 
+/**
+ * ２つの頂点間にエッジがあるか、または、もともとエッジがあったかチェックする。
+ */
+bool Morph::hasOriginalEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2) {
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads->graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+		if (src == desc1 && tgt == desc2) return true;
+		if (tgt == desc1 && src == desc2) return true;
+	}
+
+	return false;
+}
+
 RoadEdgeDesc Morph::getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt) {
 	RoadOutEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::out_edges(src, roads->graph); ei != eend; ++ei) {
-		if (!roads->graph[*ei]->valid) continue;
+		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
 
 		if (boost::target(*ei, roads->graph) == tgt) return *ei;
 	}
 
 	throw "No edge found.";
+}
+
+void Morph::setupSiblings(RoadGraph* roads) {
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->siblings.contains(*vi)) {
+			std::vector<RoadVertexDesc> sibling;
+			sibling.push_back(*vi);
+			roads->siblings[*vi] = sibling;
+		}
+	}
 }
