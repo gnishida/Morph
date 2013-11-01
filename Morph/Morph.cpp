@@ -28,10 +28,12 @@ void Morph::paintEvent(QPaintEvent *) {
 	drawGraph(&painter, roads2, QColor(255, 0, 0));
 	drawRelation(&painter, roads1, neighbor1, roads2, neighbor2);
 	*/
-	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255));
+
+	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), 1500);
+	//drawGraph(&painter, roadsB, QColor(0, 0, 255), 1500);
 }
 
-void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col) {
+void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset) {
 	if (roads == NULL) return;
 
 	painter->setRenderHint(QPainter::Antialiasing, true);
@@ -44,7 +46,11 @@ void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col) {
 		if (!edge->valid) continue;
 
 		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {
-			painter->drawLine(edge->getPolyLine()[i].x(), edge->getPolyLine()[i].y(), edge->getPolyLine()[i+1].x(), edge->getPolyLine()[i+1].y());
+			int x1 = (edge->getPolyLine()[i].x() + offset) / 4;
+			int y1 = (-edge->getPolyLine()[i].y() + offset) / 4;
+			int x2 = (edge->getPolyLine()[i+1].x() + offset) / 4;
+			int y2 = (-edge->getPolyLine()[i+1].y() + offset) / 4;
+			painter->drawLine(x1, y1, x2, y2);
 		}
 	}
 
@@ -52,7 +58,9 @@ void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col) {
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 		RoadVertex* v = roads->graph[*vi];
 
-		painter->fillRect((int)v->getPt().x() - 3, (int)v->getPt().y() - 3, 6, 6, col);
+		int x = (v->getPt().x() + offset) / 4;
+		int y = (-v->getPt().y() + offset) / 4;
+		painter->fillRect(x - 3, y - 3, 6, 6, col);
 	}
 }
 
@@ -71,20 +79,20 @@ void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDe
 }
 
 void Morph::start() {
+	FILE* fp1 = fopen("roads1.gsm", "rb");
+	FILE* fp2 = fopen("roads2.gsm", "rb");
 	if (roadsA != NULL) {
 		delete roadsA;
 	}
 	if (roadsB != NULL) {
 		delete roadsB;
 	}
-	roadsA = buildGraph1();
-	roadsB = buildGraph2();
-	/*
+	//roadsA = buildGraph1();
+	//roadsB = buildGraph2();
 	roadsA = new RoadGraph();
-	roadsA->load("roads1.gsm");
+	roadsA->load(fp1, 2);
 	roadsB = new RoadGraph();
-	roadsB->load("roads2.gsm");
-	*/
+	roadsB->load(fp2, 2);
 
 	// 第１ステップ：各頂点について、直近の対応を探す
 	neighbor1 = findNearestNeighbors(roadsA, roadsB);
@@ -127,7 +135,7 @@ void Morph::start() {
 
 	t = 1.0f;
 
-	timer->start(200);
+	timer->start(100);
 }
 
 void Morph::tick() {
@@ -138,7 +146,7 @@ void Morph::tick() {
 
 	update();
 
-	t -= 0.05f;
+	t -= 0.02f;
 	if (t < 0.0f) {
 		t = 0.0f;
 		timer->stop();

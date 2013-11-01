@@ -34,7 +34,8 @@ public:
 	~RoadGraph();
 
 	void clear();
+	void load(FILE* fp, int roadType);
 
-
+	void removeIsolatedVertices();
 };
 
