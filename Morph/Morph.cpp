@@ -29,11 +29,11 @@ void Morph::paintEvent(QPaintEvent *) {
 	drawRelation(&painter, roads1, neighbor1, roads2, neighbor2);
 	*/
 
-	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), 1500);
-	//drawGraph(&painter, roadsB, QColor(0, 0, 255), 1500);
+	//drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), 5300, 0.05f);
+	drawGraph(&painter, roadsB, QColor(0, 0, 255), 5300, 0.05f);
 }
 
-void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset) {
+void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
 	if (roads == NULL) return;
 
 	painter->setRenderHint(QPainter::Antialiasing, true);
@@ -46,10 +46,10 @@ void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offse
 		if (!edge->valid) continue;
 
 		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {
-			int x1 = (edge->getPolyLine()[i].x() + offset) / 4;
-			int y1 = (-edge->getPolyLine()[i].y() + offset) / 4;
-			int x2 = (edge->getPolyLine()[i+1].x() + offset) / 4;
-			int y2 = (-edge->getPolyLine()[i+1].y() + offset) / 4;
+			int x1 = (edge->getPolyLine()[i].x() + offset) * scale;
+			int y1 = (-edge->getPolyLine()[i].y() + offset) * scale;
+			int x2 = (edge->getPolyLine()[i+1].x() + offset) * scale;
+			int y2 = (-edge->getPolyLine()[i+1].y() + offset) * scale;
 			painter->drawLine(x1, y1, x2, y2);
 		}
 	}
@@ -97,6 +97,8 @@ void Morph::start() {
 	// 第１ステップ：各頂点について、直近の対応を探す
 	neighbor1 = findNearestNeighbors(roadsA, roadsB);
 	neighbor2 = findNearestNeighbors(roadsB, roadsA);
+
+	// ここで、直近が遠すぎる場合は、近くに頂点を強制的に追加する。
 
 	// 第２ステップ：相思相愛の頂点をマークする
 	checkExclusivePair(roadsA, &neighbor1, &neighbor2);
