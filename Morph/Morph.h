@@ -1,4 +1,4 @@
-#ifndef MORPH_H
+﻿#ifndef MORPH_H
 #define MORPH_H
 
 #include <QtGui/QMainWindow>
@@ -13,21 +13,13 @@ class Morph : public QMainWindow {
 private:
 	QTimer* timer;
 	float t;
-	RoadGraph* roads1;
-	RoadGraph* roads2;
-	RoadGraph* roads;
-	RoadGraph* new_roads1;
-	RoadGraph* new_roads2;
-	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > corr1;
-	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > corr2;
+	RoadGraph* roadsA;
+	RoadGraph* roadsB;
+	RoadGraph* interpolated_roads;
 
 	// neighbor
 	QMap<RoadVertexDesc, RoadVertexDesc> neighbor1;
 	QMap<RoadVertexDesc, RoadVertexDesc> neighbor2;
-
-	// siblings
-	//QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > sibling1;
-	//QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > sibling2;
 
 public:
 	Morph(QWidget *parent = 0, Qt::WFlags flags = 0);
@@ -46,25 +38,37 @@ private slots:
 public:
 	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col);
 	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2);
-	RoadGraph* interpolate(RoadGraph* roads1, RoadGraph* roads2, float t);
+	RoadGraph* interpolate(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, float t);
 	RoadGraph* buildGraph1();
 	RoadGraph* buildGraph2();
-	void buildCorrespondence(RoadGraph* roads1, RoadGraph* roads2);
 
 	void addNodesOnEdges(RoadGraph* roads, int numNodes);
 
-	void findNearestNeighbors(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
-	void removeVirtVertices(RoadGraph* roads);
-	void checkEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
-	void augmentGraph();
-	void findExclusiveNearestNeighbor(RoadGraph* roads1, RoadGraph* roads2);
-	RoadVertexDesc findNearestNeighbor(RoadGraph* roads, QVector2D pt, RoadVertexDesc ignore);
-	void buildEdges(RoadGraph* roads1, RoadGraph* roads2);
-	RoadGraph* copyGraphVertices(RoadGraph* roads);
+	// 第１ステップ
+	QMap<RoadVertexDesc, RoadVertexDesc> findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2);
 
-	bool isSibling(QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > sibling, RoadVertexDesc desc1, RoadVertexDesc desc2);
+	// 第２ステップ
+	void checkExclusivePair(RoadGraph* roads, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
+
+	// 第３ステップ
+	void changeAloneToPair(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
+
+	// 第４ステップ
+	void augmentGraph(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
+
+	// 第５ステップ
+	//void updateEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
+
+	// 第５ステップ
+	void checkEdges(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
+	
+	bool updateEdgeWithSibling(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt);
+	void updateEdgeWithSplit(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt);
+
+	RoadVertexDesc findNearestNeighbor(RoadGraph* roads, QVector2D pt, RoadVertexDesc ignore);
+
 	bool hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2);
-	bool hasExclusiveEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2);
+	RoadEdgeDesc getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt);
 };
 
 

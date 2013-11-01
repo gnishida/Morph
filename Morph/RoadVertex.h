@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <qvector2d.h>
 
 class RoadVertex {
@@ -8,6 +9,9 @@ public:
 	int ref;
 	bool orig;
 	bool virt;
+	bool pair;
+	bool finalized;
+	//std::vector<unsigned int> sibling;
 
 public:
 	RoadVertex();

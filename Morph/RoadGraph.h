@@ -27,7 +27,7 @@ typedef graph_traits<BGLGraph>::in_edge_iterator RoadInEdgeIter;
 class RoadGraph {
 public:
 	BGLGraph graph;
-	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > sibling;
+	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > siblings;
 
 public:
 	RoadGraph();
