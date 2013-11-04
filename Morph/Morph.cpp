@@ -4,6 +4,8 @@
 #include <qpainter.h>
 #include <qcolor.h>
 #include <limits>
+#include <time.h>
+#include <qdebug.h>
 
 Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	ui.setupUi(this);
@@ -13,7 +15,8 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	connect(ui.actionStart, SIGNAL(triggered()), this, SLOT(start()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(tick()) );
 
-	width = height = 2000;
+	//width = height = 2000;
+	width = height = 10000;
 	cellLength = 1000;
 
 	interpolated_roads = NULL;
@@ -33,7 +36,7 @@ void Morph::paintEvent(QPaintEvent *) {
 	drawRelation(&painter, roads1, neighbor1, roads2, neighbor2);
 	*/
 
-	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), 1300, 0.25f);
+	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), width / 2 + 150, 500.0f / width);
 	//drawGraph(&painter, roadsB, QColor(0, 0, 255), 5300, 0.05f);
 }
 
@@ -83,61 +86,104 @@ void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDe
 }
 
 void Morph::start() {
-	FILE* fp1 = fopen("roads1.gsm", "rb");
-	FILE* fp2 = fopen("roads2.gsm", "rb");
+	clock_t start, end;
+	
+	//FILE* fp1 = fopen("roads1.gsm", "rb");
+	//FILE* fp2 = fopen("roads2.gsm", "rb");
+	FILE* fp1 = fopen("london_10000.gsm", "rb");
+	FILE* fp2 = fopen("paris_10000.gsm", "rb");
 	if (roadsA != NULL) {
 		delete roadsA;
 	}
 	if (roadsB != NULL) {
 		delete roadsB;
 	}
+
+	start = clock();
+
 	//roadsA = buildGraph1();
 	//roadsB = buildGraph2();
 	roadsA = new RoadGraph();
 	roadsA->load(fp1, 2);
+	end = clock();
+	qDebug() << "Roads A is loaded[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
+
+	start = clock();
+
 	roadsB = new RoadGraph();
 	roadsB->load(fp2, 2);
+	end = clock();
+	qDebug() << "Roads B is loaded[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
 	// 第１ステップ：各頂点について、直近の対応を探す
+	start = clock();
 	neighbor1 = findNearestNeighbors(roadsA, roadsB, width, height, cellLength);
+	end = clock();
+	qDebug() << "Roads A found the nearest neighbor[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
+	start = clock();
 	neighbor2 = findNearestNeighbors(roadsB, roadsA, width, height, cellLength);
-
-	// ここで、直近が遠すぎる場合は、近くに頂点を強制的に追加する。
+	end = clock();
+	qDebug() << "Roads B found the nearest neighbor[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
 	// 第２ステップ：相思相愛の頂点をマークする
+	start = clock();
 	checkExclusivePair(roadsA, &neighbor1, &neighbor2);
+	end = clock();
+	qDebug() << "Roads A marked all the pairs[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
+	start = clock();
 	checkExclusivePair(roadsB, &neighbor2, &neighbor1);
+	end = clock();
+	qDebug() << "Roads B marked all the pairs[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
 	// 第３ステップ：一人ぼっちの頂点について、可能なら相思相愛にする
+	start = clock();
 	changeAloneToPair(roadsA, &neighbor1, roadsB, &neighbor2);
+	end = clock();
+	qDebug() << "Roads A changed single to have a partner[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
+	start = clock();
 	changeAloneToPair(roadsB, &neighbor2, roadsA, &neighbor1);
-
-	for (QMap<RoadVertexDesc, RoadVertexDesc>::iterator it = neighbor1.begin(); it != neighbor1.end(); ++it) {
-		int aaa = it.key();
-		int kkk = neighbor1[it.key()];
-		int ccc = 0;
-	}
-	for (QMap<RoadVertexDesc, RoadVertexDesc>::iterator it = neighbor2.begin(); it != neighbor2.end(); ++it) {
-		int aaa = it.key();
-		int kkk = neighbor2[it.key()];
-		int ccc = 0;
-	}
+	end = clock();
+	qDebug() << "Roads B changed single to have a partner[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
 	// 第４ステップ：重複頂点に対し、頂点を増やして１対１対応にさせる
+	start = clock();
 	augmentGraph(roadsA, &neighbor1, roadsB, &neighbor2);
+	end = clock();
+	qDebug() << "Roads A added some vertices to make pairs[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
+	start = clock();
 	augmentGraph(roadsB, &neighbor2, roadsA, &neighbor1);
+	end = clock();
+	qDebug() << "Roads B added some vertices to make pairs[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
 	// 兄弟がない頂点についても、擬似的に、自分自身１人を兄弟として登録する
+	start = clock();
 	setupSiblings(roadsA);
+	end = clock();
+	qDebug() << "Roads A added some siblings[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
+	start = clock();
 	setupSiblings(roadsB);
+	end = clock();
+	qDebug() << "Roads B added some siblings[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
 	// 第５ステップ：エッジの対応チェック
+	start = clock();
 	updateEdges(roadsA, &neighbor1, roadsB, &neighbor2);
+	end = clock();
+	qDebug() << "Roads A checked corresponding edges[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
+	start = clock();
 	updateEdges(roadsB, &neighbor2, roadsA, &neighbor1);
+	end = clock();
+	qDebug() << "Roads B checked corresponding edges[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
 	// 第６ステップ：エッジの対応チェック２
+	start = clock();
 	updateEdges2(roadsA, &neighbor1, roadsB, &neighbor2);
+	end = clock();
+	qDebug() << "Roads A updated corresponding edges[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
+	start = clock();
 	updateEdges2(roadsB, &neighbor2, roadsA, &neighbor1);
+	end = clock();
+	qDebug() << "Roads B updated corresponding edges[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
 	t = 1.0f;
 
