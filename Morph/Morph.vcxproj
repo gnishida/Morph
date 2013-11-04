@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BBox.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_Morph.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -193,6 +194,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BBox.h" />
     <ClInclude Include="GeneratedFiles\ui_Morph.h" />
     <ClInclude Include="RoadEdge.h" />
     <ClInclude Include="RoadGraph.h" />

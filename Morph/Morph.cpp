@@ -1,4 +1,5 @@
 ﻿#include "Morph.h"
+#include "BBox.h"
 #include <qset.h>
 #include <qpainter.h>
 #include <qcolor.h>
@@ -11,6 +12,9 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 
 	connect(ui.actionStart, SIGNAL(triggered()), this, SLOT(start()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(tick()) );
+
+	width = height = 2000;
+	cellLength = 1000;
 
 	interpolated_roads = NULL;
 	roadsA = NULL;
@@ -29,8 +33,8 @@ void Morph::paintEvent(QPaintEvent *) {
 	drawRelation(&painter, roads1, neighbor1, roads2, neighbor2);
 	*/
 
-	//drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), 5300, 0.05f);
-	drawGraph(&painter, roadsB, QColor(0, 0, 255), 5300, 0.05f);
+	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), 1300, 0.25f);
+	//drawGraph(&painter, roadsB, QColor(0, 0, 255), 5300, 0.05f);
 }
 
 void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -58,8 +62,8 @@ void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offse
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 		RoadVertex* v = roads->graph[*vi];
 
-		int x = (v->getPt().x() + offset) / 4;
-		int y = (-v->getPt().y() + offset) / 4;
+		int x = (v->getPt().x() + offset) * scale;
+		int y = (-v->getPt().y() + offset) * scale;
 		painter->fillRect(x - 3, y - 3, 6, 6, col);
 	}
 }
@@ -95,8 +99,8 @@ void Morph::start() {
 	roadsB->load(fp2, 2);
 
 	// 第１ステップ：各頂点について、直近の対応を探す
-	neighbor1 = findNearestNeighbors(roadsA, roadsB);
-	neighbor2 = findNearestNeighbors(roadsB, roadsA);
+	neighbor1 = findNearestNeighbors(roadsA, roadsB, width, height, cellLength);
+	neighbor2 = findNearestNeighbors(roadsB, roadsA, width, height, cellLength);
 
 	// ここで、直近が遠すぎる場合は、近くに頂点を強制的に追加する。
 
@@ -453,13 +457,36 @@ void Morph::addNodesOnEdges(RoadGraph* roads, int numNodes) {
 
 /**
  * 第１ステップ：Roads1の各頂点について、roads2の中から最も近い頂点を探し、対応関係をマップに入れて返却する。
+ * セルの中だけで、最も近い頂点を探す。もし、対応グラフの対応セル内に１つも頂点がない場合は、対応グラフに擬似頂点を
+ * 作成する。
  */
-QMap<RoadVertexDesc, RoadVertexDesc> Morph::findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2) {
+QMap<RoadVertexDesc, RoadVertexDesc> Morph::findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2, int width, int height, int cellLength) {
 	QMap<RoadVertexDesc, RoadVertexDesc> neighbor1;
 
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
-		RoadVertexDesc v2_desc = findNearestNeighbor(roads2, roads1->graph[*vi]->getPt(), -1);
+		RoadVertex* v = roads1->graph[*vi];
+
+		int x0 = (v->getPt().x() + width / 2) / cellLength;
+		int y0 = (v->getPt().y() + height / 2) / cellLength;
+		x0 = x0 * cellLength - width / 2;
+		y0 = y0 * cellLength - height / 2;
+		int x1 = x0 + cellLength;
+		int y1 = y0 + cellLength;
+
+		BBox area;
+		area.addPoint(QVector3D(x0, y0, 0.0f));
+		area.addPoint(QVector3D(x1, y1, 0.0f));
+
+		RoadVertexDesc v2_desc;
+		try {
+			v2_desc = findNearestNeighbor(roads2, v->getPt(), area);
+		} catch (const char* ex) {
+			RoadVertex* v2 = new RoadVertex(v->getPt());
+			v2_desc = boost::add_vertex(roads2->graph);
+			roads2->graph[v2_desc] = v2;
+		}
+
 		neighbor1.insert(*vi, v2_desc);
 	}
 
@@ -1003,7 +1030,7 @@ void Morph::updateEdgeWithSplit(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVert
  * 対象グラフの中から、指定した点に最も近い頂点descを返却する。
  * ただし、ignore頂点は、検索対象から外す。
  */
-RoadVertexDesc Morph::findNearestNeighbor(RoadGraph* roads, QVector2D pt, RoadVertexDesc ignore) {
+RoadVertexDesc Morph::findNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc ignore) {
 	RoadVertexDesc nearest_desc;
 	float min_dist = std::numeric_limits<float>::max();
 
@@ -1017,6 +1044,30 @@ RoadVertexDesc Morph::findNearestNeighbor(RoadGraph* roads, QVector2D pt, RoadVe
 			min_dist = dist;
 		}
 	}
+
+	return nearest_desc;
+}
+
+/**
+ * 対象グラフの指定範囲の中から、指定した点に最も近い頂点descを返却する。
+ */
+RoadVertexDesc Morph::findNearestNeighbor(RoadGraph* roads, const QVector2D &pt, const BBox &area) {
+	RoadVertexDesc nearest_desc;
+	float min_dist = std::numeric_limits<float>::max();
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		RoadVertex* v = roads->graph[*vi];
+		if (!area.contains(QVector3D(v->getPt().x(), v->getPt().y(), 0.0f))) continue;
+
+		float dist = (roads->graph[*vi]->getPt() - pt).length();
+		if (dist < min_dist) {
+			nearest_desc = *vi;
+			min_dist = dist;
+		}
+	}
+
+	if (min_dist == std::numeric_limits<float>::max()) throw "No vertex found.";
 
 	return nearest_desc;
 }

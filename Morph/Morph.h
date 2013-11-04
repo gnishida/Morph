@@ -3,6 +3,7 @@
 
 #include <QtGui/QMainWindow>
 #include "RoadGraph.h"
+#include "BBox.h"
 #include "ui_Morph.h"
 #include <qmap.h>
 #include <qtimer.h>
@@ -13,6 +14,12 @@ class Morph : public QMainWindow {
 private:
 	QTimer* timer;
 	float t;
+
+	int width;
+	int height;
+	int cellLength;
+
+	// roads
 	RoadGraph* roadsA;
 	RoadGraph* roadsB;
 	RoadGraph* interpolated_roads;
@@ -48,7 +55,7 @@ public:
 	void addNodesOnEdges(RoadGraph* roads, int numNodes);
 
 	// 第１ステップ
-	QMap<RoadVertexDesc, RoadVertexDesc> findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2);
+	QMap<RoadVertexDesc, RoadVertexDesc> findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2, int width, int height, int cellLength);
 
 	// 第２ステップ
 	void checkExclusivePair(RoadGraph* roads, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
@@ -71,7 +78,8 @@ public:
 	bool updateEdgeWithSibling4(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt);
 	void updateEdgeWithSplit(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, RoadVertexDesc src, RoadVertexDesc tgt);
 
-	RoadVertexDesc findNearestNeighbor(RoadGraph* roads, QVector2D pt, RoadVertexDesc ignore);
+	RoadVertexDesc findNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc ignore);
+	RoadVertexDesc findNearestNeighbor(RoadGraph* roads, const QVector2D &pt, const BBox &area);
 
 	bool hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2);
 	bool hasOriginalEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2);

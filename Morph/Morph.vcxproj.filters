@@ -59,6 +59,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_Morph.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="BBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Morph.h">
@@ -82,6 +85,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RoadVertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BBox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
