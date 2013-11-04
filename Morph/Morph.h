@@ -86,6 +86,7 @@ public:
 	bool hasOriginalEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2);
 	RoadEdgeDesc getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt);
 	void setupSiblings(RoadGraph* roads);
+	bool isReachable(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt);
 };
 
 

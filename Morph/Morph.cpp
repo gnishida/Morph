@@ -6,6 +6,7 @@
 #include <limits>
 #include <time.h>
 #include <qdebug.h>
+#include <boost/graph/graph_utility.hpp>
 
 Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	ui.setupUi(this);
@@ -15,9 +16,9 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	connect(ui.actionStart, SIGNAL(triggered()), this, SLOT(start()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(tick()) );
 
-	//width = height = 2000;
-	width = height = 10000;
-	cellLength = 1000;
+	width = height = 2000;
+	//width = height = 10000;
+	cellLength = 300;
 
 	interpolated_roads = NULL;
 	roadsA = NULL;
@@ -36,7 +37,7 @@ void Morph::paintEvent(QPaintEvent *) {
 	drawRelation(&painter, roads1, neighbor1, roads2, neighbor2);
 	*/
 
-	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), width / 2 + 150, 500.0f / width);
+	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
 	//drawGraph(&painter, roadsB, QColor(0, 0, 255), 5300, 0.05f);
 }
 
@@ -44,7 +45,7 @@ void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offse
 	if (roads == NULL) return;
 
 	painter->setRenderHint(QPainter::Antialiasing, true);
-	painter->setPen(QPen(col, 2, Qt::SolidLine, Qt::RoundCap));
+	painter->setPen(QPen(col, 1, Qt::SolidLine, Qt::RoundCap));
 	painter->setBrush(QBrush(Qt::green, Qt::SolidPattern));
 
 	RoadEdgeIter ei, eend;
@@ -61,14 +62,16 @@ void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offse
 		}
 	}
 
+	/*
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 		RoadVertex* v = roads->graph[*vi];
 
 		int x = (v->getPt().x() + offset) * scale;
 		int y = (-v->getPt().y() + offset) * scale;
-		painter->fillRect(x - 3, y - 3, 6, 6, col);
+		painter->fillRect(x - 1, y - 1, 3, 3, col);
 	}
+	*/
 }
 
 void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2) {
@@ -87,7 +90,8 @@ void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDe
 
 void Morph::start() {
 	if (roadsA == NULL || roadsB == NULL) {
-		initRoads("london_10000.gsm", "paris_10000.gsm");
+		//initRoads("london_10000.gsm", "paris_10000.gsm");
+		initRoads("roads1.gsm", "roads2.gsm");
 	}
 
 	t = 1.0f;
@@ -1127,6 +1131,22 @@ RoadVertexDesc Morph::findNearestNeighbor(RoadGraph* roads, const QVector2D &pt,
  * ただし、無効フラグの立っているエッジは、エッジがないとみなす。
  */
 bool Morph::hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2) {
+	RoadOutEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::out_edges(desc1, roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+		if (tgt == desc2) return true;
+	}
+
+	for (boost::tie(ei, eend) = boost::out_edges(desc2, roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+		if (tgt == desc1) return true;
+	}
+
+	/*
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
 		if (!roads->graph[*ei]->valid) continue;
@@ -1137,6 +1157,7 @@ bool Morph::hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2
 		if (src == desc1 && tgt == desc2) return true;
 		if (tgt == desc1 && src == desc2) return true;
 	}
+	*/
 
 	return false;
 }
@@ -1145,6 +1166,22 @@ bool Morph::hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2
  * ２つの頂点間にエッジがあるか、または、もともとエッジがあったかチェックする。
  */
 bool Morph::hasOriginalEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2) {
+	RoadOutEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::out_edges(desc1, roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
+
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+		if (tgt == desc2) return true;
+	}
+
+	for (boost::tie(ei, eend) = boost::out_edges(desc2, roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
+
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+		if (tgt == desc1) return true;
+	}
+
+	/*
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
 		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
@@ -1155,6 +1192,7 @@ bool Morph::hasOriginalEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDe
 		if (src == desc1 && tgt == desc2) return true;
 		if (tgt == desc1 && src == desc2) return true;
 	}
+	*/
 
 	return false;
 }
@@ -1166,6 +1204,22 @@ RoadEdgeDesc Morph::getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc
 
 		if (boost::target(*ei, roads->graph) == tgt) return *ei;
 	}
+
+	for (boost::tie(ei, eend) = boost::out_edges(tgt, roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
+
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+		if (boost::target(*ei, roads->graph) == src) return *ei;
+	}
+
+	/*
+	RoadOutEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::out_edges(src, roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
+
+		if (boost::target(*ei, roads->graph) == tgt) return *ei;
+	}
+	*/
 
 	throw "No edge found.";
 }
@@ -1179,4 +1233,12 @@ void Morph::setupSiblings(RoadGraph* roads) {
 			roads->siblings[*vi] = sibling;
 		}
 	}
+}
+
+/**
+ * srcからtgtに到達可能かどうかチェックする。
+ */
+bool Morph::isReachable(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt) {
+	std::vector<boost::default_color_type> color(boost::num_vertices(roads->graph), boost::white_color);
+	return boost::is_reachable(src, tgt, roads, color);
 }
