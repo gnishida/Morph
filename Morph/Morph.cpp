@@ -116,7 +116,12 @@ void Morph::tick() {
 
 void Morph::initRoads(const char* filename1, const char* filename2) {
 	clock_t start, end;
-	
+
+	/*
+	roadsA = buildGraph1();
+	roadsB = buildGraph2();
+	*/
+
 	FILE* fp1 = fopen(filename1, "rb");
 	FILE* fp2 = fopen(filename2, "rb");
 	if (roadsA != NULL) {
@@ -128,8 +133,6 @@ void Morph::initRoads(const char* filename1, const char* filename2) {
 
 	start = clock();
 
-	//roadsA = buildGraph1();
-	//roadsB = buildGraph2();
 	roadsA = new RoadGraph();
 	roadsA->load(fp1, 2);
 	end = clock();
@@ -144,11 +147,13 @@ void Morph::initRoads(const char* filename1, const char* filename2) {
 
 	// 第１ステップ：各頂点について、直近の対応を探す
 	start = clock();
-	neighbor1 = findNearestNeighbors(roadsA, roadsB, width, height, cellLength);
+	//neighbor1 = findNearestNeighbors(roadsA, roadsB, width, height, cellLength);
+	findBestPairs(roadsA, &neighbor1, roadsB, &neighbor2, 1000);
 	end = clock();
 	qDebug() << "Roads A found the nearest neighbor[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 	start = clock();
-	neighbor2 = findNearestNeighbors(roadsB, roadsA, width, height, cellLength);
+	//neighbor2 = findNearestNeighbors(roadsB, roadsA, width, height, cellLength);
+	findBestPairs(roadsB, &neighbor2, roadsA, &neighbor1, 1000);
 	end = clock();
 	qDebug() << "Roads B found the nearest neighbor[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
@@ -550,24 +555,93 @@ QMap<RoadVertexDesc, RoadVertexDesc> Morph::findNearestNeighbors(RoadGraph* road
 
 /**
  * 第１ステップ（代替案）：Roads1の各頂点について、roads2の中からベストのペアを探す。
- * 　１）隠せるの中で、最も短い距離のペアを探し、それだけペアにする。
- * 　　　相手グラフに頂点が一つもない場合は、適当に頂点を追加して、ペアにする。
+ * 　１）ある閾値の範囲で、最も短い距離のペアを探し、それだけペアにする。
+ * 　　　ペアが１つもできない場合は、相手グラフに頂点を追加して、強引にペアにする。
  *   ２）ペアができた頂点の隣接頂点について、その対応点を、１）の対応点の隣接頂点（１）の対応点も含めて）の中から選ぶ。
  * 　３）２）を繰り返す
  * 　４）この時点で、１）でペアになった頂点と繋がっていない頂点はとり残されている。
  * 　　　取り残された頂点について、再度、１）から繰り返す。
  * 　　　取り残された頂点がなくなるまで、繰り返す。
  */
-QMap<RoadVertexDesc, RoadVertexDesc> Morph::findBestPair(RoadGraph* roads1, RoadGraph* roads2, int width, int height, int cellLength) {
-	QMap<RoadVertexDesc, RoadVertexDesc> neighbor1;
+void Morph::findBestPairs(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, float threshold) {
+	while (true) {
+		// １）ある閾値の範囲で、最も短い距離のペアを探し、それだけペアにする。
+		float min_dist = std::numeric_limits<float>::max();
+		RoadVertexDesc min_v1_desc;
+		RoadVertexDesc min_v2_desc;
 
-	for (int row = 0; row < height / cellLength; row++) {
-		for (int col = 0; col < width / cellLength; col++) {
+		RoadVertexIter vi, vend;
+		int count = 0;
+		for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+			if (neighbor1->contains(*vi)) continue;
 
+			count++;
+			RoadVertexDesc v2_desc = findNearestNeighbor(roads2, roads1->graph[*vi]->getPt(), -1);
+			float dist = (roads1->graph[*vi]->getPt() - roads2->graph[v2_desc]->getPt()).length();
+			if (dist < min_dist) {
+				min_dist = dist;
+				min_v1_desc = *vi;
+				min_v2_desc = v2_desc;
+			}
+		}
+
+		// 頂点が１つもない場合は、終了
+		if (count == 0) break;;
+
+		// ペアを作成
+		neighbor1->insert(min_v1_desc, min_v2_desc);
+		if (!neighbor2->contains(min_v2_desc)) {
+			neighbor2->insert(min_v2_desc, min_v1_desc);
+		}
+
+		propagatePairs(roads1, min_v1_desc, neighbor1, roads2, min_v2_desc, neighbor2);
+	}
+}
+
+/**
+ * ペアを広げていく。
+ */
+void Morph::propagatePairs(RoadGraph* roads1, RoadVertexDesc v1_desc_seed, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, RoadVertexDesc v2_desc_seed, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2) {
+	QList<RoadVertexDesc> v1_desc_queue;
+	QList<RoadVertexDesc> v2_desc_queue;
+
+	v1_desc_queue.push_back(v1_desc_seed);
+	v2_desc_queue.push_back(v2_desc_seed);
+
+	while (!v1_desc_queue.empty()) {
+		RoadVertexDesc v1_desc = v1_desc_queue[0];
+		v1_desc_queue.pop_front();
+		RoadVertexDesc v2_desc = v2_desc_queue[0];
+		v2_desc_queue.pop_front();
+
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(v1_desc, roads1->graph); ei != eend; ++ei) {
+			RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
+			if (neighbor1->contains(v1b)) continue;
+
+			float min_dist = (roads1->graph[v1b]->getPt() - roads2->graph[v2_desc]->getPt()).length();
+			RoadVertexDesc min_v2_desc = v2_desc;
+
+			RoadOutEdgeIter ei2, eend2;
+			for (boost::tie(ei2, eend2) = boost::out_edges(v2_desc, roads2->graph); ei2 != eend2; ++ei2) {
+				RoadVertexDesc v2b = boost::target(*ei2, roads2->graph);
+			
+				float dist = (roads1->graph[v1b]->getPt() - roads2->graph[v2b]->getPt()).length();
+				if (dist < min_dist) {
+					min_dist = dist;
+					min_v2_desc = v2b;
+				}
+			}
+
+			neighbor1->insert(v1b, min_v2_desc);
+			if (!neighbor2->contains(min_v2_desc)) {
+				neighbor2->insert(min_v2_desc, v1b);
+			}
+
+			v1_desc_queue.push_back(v1b);
+			v2_desc_queue.push_back(min_v2_desc);
 		}
 	}
-
-	return neighbor1;
 }
 
 /**
@@ -1215,19 +1289,6 @@ bool Morph::hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2
 		if (tgt == desc1) return true;
 	}
 
-	/*
-	RoadEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
-		if (!roads->graph[*ei]->valid) continue;
-
-		RoadVertexDesc src = boost::source(*ei, roads->graph);
-		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
-
-		if (src == desc1 && tgt == desc2) return true;
-		if (tgt == desc1 && src == desc2) return true;
-	}
-	*/
-
 	return false;
 }
 
@@ -1250,19 +1311,6 @@ bool Morph::hasOriginalEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDe
 		if (tgt == desc1) return true;
 	}
 
-	/*
-	RoadEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
-		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
-
-		RoadVertexDesc src = boost::source(*ei, roads->graph);
-		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
-
-		if (src == desc1 && tgt == desc2) return true;
-		if (tgt == desc1 && src == desc2) return true;
-	}
-	*/
-
 	return false;
 }
 
@@ -1280,15 +1328,6 @@ RoadEdgeDesc Morph::getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc
 		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
 		if (boost::target(*ei, roads->graph) == src) return *ei;
 	}
-
-	/*
-	RoadOutEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::out_edges(src, roads->graph); ei != eend; ++ei) {
-		if (!roads->graph[*ei]->valid && !roads->graph[*ei]->orig) continue;
-
-		if (boost::target(*ei, roads->graph) == tgt) return *ei;
-	}
-	*/
 
 	throw "No edge found.";
 }

@@ -57,7 +57,9 @@ public:
 
 	// 第１ステップ
 	QMap<RoadVertexDesc, RoadVertexDesc> findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2, int width, int height, int cellLength);
-	QMap<RoadVertexDesc, RoadVertexDesc> findBestPair(RoadGraph* roads1, RoadGraph* roads2, int width, int height, int cellLength);
+	void findBestPairs(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, float threshold);
+	void propagatePairs(RoadGraph* roads1, RoadVertexDesc v1_desc, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, RoadVertexDesc v2_desc, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
+
 	// 第２ステップ
 	void checkExclusivePair(RoadGraph* roads, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
 
