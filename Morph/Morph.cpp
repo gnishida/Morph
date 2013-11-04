@@ -18,7 +18,7 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 
 	width = height = 2000;
 	//width = height = 10000;
-	cellLength = 300;
+	cellLength = 1000;
 
 	interpolated_roads = NULL;
 	roadsA = NULL;
@@ -535,6 +535,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> Morph::findNearestNeighbors(RoadGraph* road
 		RoadVertexDesc v2_desc;
 		try {
 			v2_desc = findNearestNeighbor(roads2, v->getPt(), area);
+			//v2_desc = findBestConnectedNeighbor(roads1, *vi, &neighbor1, roads2, 1000);
 		} catch (const char* ex) {
 			RoadVertex* v2 = new RoadVertex(v->getPt());
 			v2_desc = boost::add_vertex(roads2->graph);
@@ -542,6 +543,28 @@ QMap<RoadVertexDesc, RoadVertexDesc> Morph::findNearestNeighbors(RoadGraph* road
 		}
 
 		neighbor1.insert(*vi, v2_desc);
+	}
+
+	return neighbor1;
+}
+
+/**
+ * 第１ステップ（代替案）：Roads1の各頂点について、roads2の中からベストのペアを探す。
+ * 　１）隠せるの中で、最も短い距離のペアを探し、それだけペアにする。
+ * 　　　相手グラフに頂点が一つもない場合は、適当に頂点を追加して、ペアにする。
+ *   ２）ペアができた頂点の隣接頂点について、その対応点を、１）の対応点の隣接頂点（１）の対応点も含めて）の中から選ぶ。
+ * 　３）２）を繰り返す
+ * 　４）この時点で、１）でペアになった頂点と繋がっていない頂点はとり残されている。
+ * 　　　取り残された頂点について、再度、１）から繰り返す。
+ * 　　　取り残された頂点がなくなるまで、繰り返す。
+ */
+QMap<RoadVertexDesc, RoadVertexDesc> Morph::findBestPair(RoadGraph* roads1, RoadGraph* roads2, int width, int height, int cellLength) {
+	QMap<RoadVertexDesc, RoadVertexDesc> neighbor1;
+
+	for (int row = 0; row < height / cellLength; row++) {
+		for (int col = 0; col < width / cellLength; col++) {
+
+		}
 	}
 
 	return neighbor1;
@@ -1127,6 +1150,52 @@ RoadVertexDesc Morph::findNearestNeighbor(RoadGraph* roads, const QVector2D &pt,
 }
 
 /**
+ * 相手グラフの中から、自グラフの指定頂点V1に近い頂点候補を抽出し、その中で、Aの隣接頂点Bと対応する点と繋がっている点を選択する。
+ */
+RoadVertexDesc Morph::findBestConnectedNeighbor(RoadGraph* roads1, RoadVertexDesc v1_desc, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, float threshold) {
+	RoadVertex* v1 = roads1->graph[v1_desc];
+
+	std::vector<RoadVertexDesc> nearest_descs;
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
+		RoadVertex* v2 = roads2->graph[*vi];
+
+		if ((v2->getPt() - v1->getPt()).length() <= threshold) {
+			nearest_descs.push_back(*vi);
+		}
+	}
+
+	for (int i = 0; i < nearest_descs.size(); i++) {
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(v1_desc, roads1->graph); ei != eend; ++ei) {
+			RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
+			if (!neighbor1->contains(v1b)) continue;
+
+			RoadVertexDesc v2b = neighbor1->value(v1b);
+			if (isReachable(roads2, nearest_descs[i], v2b)) {
+				return nearest_descs[i];
+			}
+		}
+	}
+
+	// もし、隣接頂点に、まだ対応関係がない場合は、最も近い相手を選択する
+	float min_dist = std::numeric_limits<float>::max();
+	RoadVertexDesc nearest_desc;
+	for (int i = 0; i < nearest_descs.size(); i++) {
+		float dist = (roads2->graph[nearest_descs[i]]->getPt() - v1->getPt()).length();
+		if (dist < min_dist) {
+			nearest_desc = nearest_descs[i];
+			min_dist = dist;
+		}
+	}
+
+	if (min_dist == std::numeric_limits<float>::max()) throw "No vertex found.";
+
+	return nearest_desc;
+}
+
+/**
  * ２つの頂点間にエッジがあるかチェックする。
  * ただし、無効フラグの立っているエッジは、エッジがないとみなす。
  */
@@ -1240,5 +1309,5 @@ void Morph::setupSiblings(RoadGraph* roads) {
  */
 bool Morph::isReachable(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt) {
 	std::vector<boost::default_color_type> color(boost::num_vertices(roads->graph), boost::white_color);
-	return boost::is_reachable(src, tgt, roads, color);
+	return boost::is_reachable(src, tgt, roads->graph, color.data());
 }

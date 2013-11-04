@@ -57,7 +57,7 @@ public:
 
 	// 第１ステップ
 	QMap<RoadVertexDesc, RoadVertexDesc> findNearestNeighbors(RoadGraph* roads1, RoadGraph* roads2, int width, int height, int cellLength);
-
+	QMap<RoadVertexDesc, RoadVertexDesc> findBestPair(RoadGraph* roads1, RoadGraph* roads2, int width, int height, int cellLength);
 	// 第２ステップ
 	void checkExclusivePair(RoadGraph* roads, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2);
 
@@ -81,6 +81,7 @@ public:
 
 	RoadVertexDesc findNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc ignore);
 	RoadVertexDesc findNearestNeighbor(RoadGraph* roads, const QVector2D &pt, const BBox &area);
+	RoadVertexDesc findBestConnectedNeighbor(RoadGraph* roads1, RoadVertexDesc v1, QMap<RoadVertexDesc, RoadVertexDesc> *neighbor1, RoadGraph* roads2, float threshold);
 
 	bool hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2);
 	bool hasOriginalEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2);
