@@ -86,12 +86,35 @@ void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDe
 }
 
 void Morph::start() {
+	if (roadsA == NULL || roadsB == NULL) {
+		initRoads("london_10000.gsm", "paris_10000.gsm");
+	}
+
+	t = 1.0f;
+
+	timer->start(100);
+}
+
+void Morph::tick() {
+	if (interpolated_roads != NULL) {
+		delete interpolated_roads;
+	}
+	interpolated_roads = interpolate(roadsA, &neighbor1, roadsB, &neighbor2, t);
+
+	update();
+
+	t -= 0.02f;
+	if (t < 0.0f) {
+		t = 0.0f;
+		timer->stop();
+	}
+}
+
+void Morph::initRoads(const char* filename1, const char* filename2) {
 	clock_t start, end;
 	
-	//FILE* fp1 = fopen("roads1.gsm", "rb");
-	//FILE* fp2 = fopen("roads2.gsm", "rb");
-	FILE* fp1 = fopen("london_10000.gsm", "rb");
-	FILE* fp2 = fopen("paris_10000.gsm", "rb");
+	FILE* fp1 = fopen(filename1, "rb");
+	FILE* fp2 = fopen(filename2, "rb");
 	if (roadsA != NULL) {
 		delete roadsA;
 	}
@@ -184,25 +207,6 @@ void Morph::start() {
 	updateEdges2(roadsB, &neighbor2, roadsA, &neighbor1);
 	end = clock();
 	qDebug() << "Roads B updated corresponding edges[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
-
-	t = 1.0f;
-
-	timer->start(100);
-}
-
-void Morph::tick() {
-	if (interpolated_roads != NULL) {
-		delete interpolated_roads;
-	}
-	interpolated_roads = interpolate(roadsA, &neighbor1, roadsB, &neighbor2, t);
-
-	update();
-
-	t -= 0.02f;
-	if (t < 0.0f) {
-		t = 0.0f;
-		timer->stop();
-	}
 }
 
 RoadGraph* Morph::interpolate(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, float t) {

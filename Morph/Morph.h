@@ -43,6 +43,7 @@ private slots:
 	void tick();
 
 public:
+	void initRoads(const char* filename1, const char* filename2);
 	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
 	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2);
 	RoadGraph* interpolate(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>* neighbor2, float t);
