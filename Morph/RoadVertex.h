@@ -11,6 +11,7 @@ public:
 	bool virt;
 	bool pair;
 	bool finalized;
+	bool valid;
 
 public:
 	RoadVertex();

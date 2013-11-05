@@ -11,7 +11,7 @@
 class Morph : public QMainWindow {
 	Q_OBJECT
 
-private:
+public:
 	QTimer* timer;
 	float t;
 

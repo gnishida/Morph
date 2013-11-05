@@ -1,5 +1,6 @@
 ﻿#include "Morph.h"
 #include "BBox.h"
+#include "MMT.h"
 #include <qset.h>
 #include <qpainter.h>
 #include <qcolor.h>
@@ -37,8 +38,8 @@ void Morph::paintEvent(QPaintEvent *) {
 	drawRelation(&painter, roads1, neighbor1, roads2, neighbor2);
 	*/
 
-	drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
-	//drawGraph(&painter, roadsB, QColor(0, 0, 255), 5300, 0.05f);
+	//drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
+	drawGraph(&painter, roadsA, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
 }
 
 void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -91,12 +92,15 @@ void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDe
 void Morph::start() {
 	if (roadsA == NULL || roadsB == NULL) {
 		//initRoads("london_10000.gsm", "paris_10000.gsm");
-		initRoads("roads1.gsm", "roads2.gsm");
+		//initRoads("roads1.gsm", "roads2.gsm");
 	}
 
 	t = 1.0f;
 
-	timer->start(100);
+	//timer->start(100);
+
+	MMT mmt(this, "roads1.gsm");
+	mmt.buildTree();
 }
 
 void Morph::tick() {

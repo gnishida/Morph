@@ -6,6 +6,7 @@ RoadVertex::RoadVertex() {
 	this->virt = false;
 	this->pair = false;
 	this->finalized = false;
+	this->valid = true;
 }
 
 RoadVertex::RoadVertex(const QVector2D &pt) {
@@ -14,6 +15,7 @@ RoadVertex::RoadVertex(const QVector2D &pt) {
 	this->virt = false;
 	this->pair = false;
 	this->finalized = false;
+	this->valid = true;
 }
 
 const QVector2D& RoadVertex::getPt() const {
