@@ -16,6 +16,15 @@ int RoadEdge::getNumLanes() {
 }
 
 float RoadEdge::getLength() {
+	float length = 0.0f;
+	for (int i = 0; i < polyLine.size() - 1; i++) {
+		length += (polyLine[i + 1] - polyLine[i]).length();
+	}
+
+	if (length == 0.0f) {
+		int k = 0;
+	}
+
 	return length;
 }
 

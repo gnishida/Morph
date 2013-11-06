@@ -30,5 +30,6 @@ public:
 
 	void buildTree();
 	void collapse(RoadGraph* roads);
+	void expand(RoadGraph* roads);
 };
 

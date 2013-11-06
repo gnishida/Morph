@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "RoadVertex.h"
 #include "RoadEdge.h"
@@ -22,12 +22,26 @@ typedef graph_traits<BGLGraph>::out_edge_iterator RoadOutEdgeIter;
 typedef graph_traits<BGLGraph>::in_edge_iterator RoadInEdgeIter;
 
 
-
+class CollapseAction {
+public:
+	RoadVertexDesc childNode;
+	RoadVertexDesc parentNode;
+	std::vector<RoadEdgeDesc> removedEdges;
+	std::vector<RoadEdgeDesc> addedEdges;
+};
 
 class RoadGraph {
 public:
 	BGLGraph graph;
 	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > siblings;
+
+	/** 木構造を作成するため、親子関係を保持する */
+	QMap<RoadVertexDesc, RoadVertexDesc> childrenToParent;
+	QMap<RoadVertexDesc, std::vector<RoadEdgeDesc> > childrenRemovedEdges;
+	QMap<RoadVertexDesc, std::vector<RoadEdgeDesc> > parentAddedEdges;
+
+	/** collapseヒストリ */
+	std::vector<CollapseAction> collapseHistory;
 
 public:
 	RoadGraph();

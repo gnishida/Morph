@@ -150,6 +150,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MMT.cpp" />
     <ClCompile Include="Morph.cpp" />
+    <ClCompile Include="Morphing.cpp" />
     <ClCompile Include="RoadEdge.cpp" />
     <ClCompile Include="RoadGraph.cpp" />
     <ClCompile Include="RoadVertex.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="GeneratedFiles\ui_Morph.h" />
     <ClInclude Include="GraphUtil.h" />
     <ClInclude Include="MMT.h" />
+    <ClInclude Include="Morphing.h" />
     <ClInclude Include="RoadEdge.h" />
     <ClInclude Include="RoadGraph.h" />
     <ClInclude Include="RoadVertex.h" />
