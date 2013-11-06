@@ -16,6 +16,7 @@ public:
 	static bool isReachable(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt);
 	static bool hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2, bool onlyValidEdge = true);
 	static RoadEdgeDesc getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, bool onlyValidEdge = true);
+	static int getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge = true);
 	static RoadVertexDesc findNearestNeighbor(RoadGraph* roads, const QVector2D &pt);
 	static RoadVertexDesc findNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc ignore);
 	static std::vector<RoadVertexDesc> getChildren(RoadGraph* roads, RoadVertexDesc v);

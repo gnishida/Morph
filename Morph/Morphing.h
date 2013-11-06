@@ -14,8 +14,8 @@ public:
 	QMap<RoadVertexDesc, RoadVertexDesc> neighbor2;
 
 public:
-	Morphing(void);
-	~Morphing(void);
+	Morphing();
+	~Morphing();
 
 	void initRoads(const char* filename1, const char* filename2);
 	RoadGraph* interpolate(float t);

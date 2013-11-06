@@ -165,6 +165,23 @@ RoadEdgeDesc GraphUtil::getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertex
 }
 
 /**
+ * 指定した頂点のDegreeを返却する。
+ * onlyValidEdge = trueの場合は、validのエッジのみをカウントする。
+ */
+int GraphUtil::getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge = true) {
+	if (onlyValidEdge) {
+		int count = 0;
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(v, roads->graph); ei != eend; ++ei) {
+			if (roads->graph[*ei]->valid) count++;
+		}
+		return count;
+	} else {
+		return boost::degree(v, roads->graph);
+	}
+}
+
+/**
  * 対象グラフの中から、指定した点に最も近い頂点descを返却する。
  */
 RoadVertexDesc GraphUtil::findNearestNeighbor(RoadGraph* roads, const QVector2D &pt) {
