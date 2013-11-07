@@ -62,9 +62,6 @@
     <ClCompile Include="BBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MMT.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GraphUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -75,6 +72,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BFS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MTT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -105,9 +108,6 @@
     <ClInclude Include="BBox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MMT.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GraphUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -118,6 +118,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BFS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MTT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

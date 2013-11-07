@@ -6,7 +6,8 @@
 #include "BBox.h"
 #include "Morphing.h"
 #include "Morphing2.h"
-#include "MMT.h"
+#include "BFS.h"
+#include "MTT.h"
 #include "ui_Morph.h"
 #include <qmap.h>
 #include <qtimer.h>
@@ -24,7 +25,8 @@ public:
 
 	Morphing* morphing;
 	Morphing2* morphing2;
-	MMT* mmt;
+	BFS* bfs;
+	MTT* mtt;
 
 	int mode;
 
@@ -41,7 +43,8 @@ private:
 private slots:
 	void startNearestNeighbor();
 	void startNearestNeighborConnectivity();
-	void startMMT();
+	void startBFS();
+	void startMTT();
 	void tick();
 
 public:

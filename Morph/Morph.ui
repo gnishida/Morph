@@ -29,7 +29,8 @@
     </property>
     <addaction name="actionNearestNeighbor"/>
     <addaction name="actionNearestNeighborConnectivity"/>
-    <addaction name="actionMMT"/>
+    <addaction name="actionBFS"/>
+    <addaction name="actionMTT"/>
    </widget>
    <addaction name="menuMorphing"/>
   </widget>
@@ -52,9 +53,14 @@
     <string>Nearest Neighbor with Connectivity</string>
    </property>
   </action>
-  <action name="actionMMT">
+  <action name="actionBFS">
    <property name="text">
-    <string>MMT</string>
+    <string>BFS</string>
+   </property>
+  </action>
+  <action name="actionMTT">
+   <property name="text">
+    <string>MTT</string>
    </property>
   </action>
  </widget>

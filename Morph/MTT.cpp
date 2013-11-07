@@ -1,4 +1,4 @@
-﻿#include "MMT.h"
+﻿#include "MTT.h"
 #include "GraphUtil.h"
 #include "Morph.h"
 #include <queue>
@@ -15,7 +15,7 @@ VertexPriority::VertexPriority(RoadVertexDesc desc, float priority) {
 	this->priority = priority;
 }
 
-MMT::MMT(Morph* morph, const char* filename1, const char* filename2) {
+MTT::MTT(Morph* morph, const char* filename1, const char* filename2) {
 	this->morph = morph;
 
 	FILE* fp = fopen(filename1, "rb");
@@ -35,7 +35,7 @@ MMT::MMT(Morph* morph, const char* filename1, const char* filename2) {
 	fclose(fp);
 }
 
-void MMT::draw(QPainter* painter, float t, int offset, float scale) {
+void MTT::draw(QPainter* painter, float t, int offset, float scale) {
 	if (roads1 == NULL) return;
 
 	//drawGraph(painter, roads2, QColor(0, 0, 255), offset, scale);
@@ -43,12 +43,12 @@ void MMT::draw(QPainter* painter, float t, int offset, float scale) {
 	RoadGraph* interpolated = interpolate(t);
 	drawGraph(painter, interpolated, QColor(0, 0, 255), offset, scale);
 	if (t > 0.0f && t < 1.0f) {
-		interpolated->clear();
-		delete interpolated;
+		//interpolated->clear();
+		//delete interpolated;
 	}
 }
 
-void MMT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
+void MTT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
 	if (roads == NULL) return;
 
 	painter->setRenderHint(QPainter::Antialiasing, true);
@@ -79,7 +79,7 @@ void MMT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset,
 	}
 }
 
-RoadGraph* MMT::interpolate(float t) {
+RoadGraph* MTT::interpolate(float t) {
 	if (t == 1.0f) return roads1;
 	if (t == 0.0f) return roads2;
 
@@ -92,12 +92,19 @@ RoadGraph* MMT::interpolate(float t) {
 	RoadVertexDesc v_root_desc = boost::add_vertex(roads->graph);
 	roads->graph[v_root_desc] = v_root;
 
-	// 木構造を使って、頂点を登録していく
+	// ルート頂点をシードに入れる
 	std::list<RoadVertexDesc> seeds;
+	std::list<RoadVertexDesc> seeds_new;
 	seeds.push_back(root1);
+	seeds_new.push_back(v_root_desc);
+
+	// 木構造を使って、頂点を登録していく
 	while (!seeds.empty()) {
 		RoadVertexDesc parent = seeds.front();
 		seeds.pop_front();
+
+		RoadVertexDesc parent_new = seeds_new.front();
+		seeds_new.pop_front();
 
 		// 子ノードリストを取得
 		for (int i = 0; i < tree1[parent].size(); i++) {
@@ -114,17 +121,20 @@ RoadGraph* MMT::interpolate(float t) {
 
 			// エッジを作成
 			RoadEdge* new_e = new RoadEdge(1, 1);
-			std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(parent, new_v_desc, roads->graph);
+			new_e->addPoint(roads->graph[parent_new]->getPt());
+			new_e->addPoint(roads->graph[new_v_desc]->getPt());
+			std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(parent_new, new_v_desc, roads->graph);
 			roads->graph[new_e_pair.first] = new_e;
 
 			seeds.push_back(child1);
+			seeds_new.push_back(new_v_desc);
 		}
 	}
 
 	return roads;
 }
 
-void MMT::buildTree() {
+void MTT::buildTree() {
 	// 頂点の中で、degreeが1のものをcollapseしていく
 	collapse(roads1);
 
@@ -140,7 +150,7 @@ void MMT::buildTree() {
 	expand(roads1);
 }
 
-void MMT::buildTree2() {
+void MTT::buildTree2() {
 	// 最も短い距離のペアを探し、そのペアをルートとしてBFSを実施
 	float min_dist = std::numeric_limits<float>::max();
 	RoadVertexDesc min_v1_desc;
@@ -168,8 +178,8 @@ void MMT::buildTree2() {
 	root2 = min_v2_desc;
 
 	// 木構造を構築する
-	tree1 = bfs(roads1, root1);
-	tree2 = bfs(roads2, root2);
+	bfs(roads1, root1, &tree1);
+	bfs(roads2, root2, &tree2);
 
 	correspondence = findCorrespondence(roads1, root1, &tree1, roads2, root2, &tree2);
 }
@@ -177,12 +187,11 @@ void MMT::buildTree2() {
 /**
  * BFSアプローチで、ルートからノードをたどり、木構造を作成する
  */
-QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > MMT::bfs(RoadGraph* roads, RoadVertexDesc root) {
-	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > tree;
-
+void MTT::bfs(RoadGraph* roads, RoadVertexDesc root, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree) {
 	std::list<RoadVertexDesc> seeds;
 	seeds.push_back(root);
 	QMap<RoadVertexDesc, bool> visited;
+	visited[root] = true;
 
 	while (!seeds.empty()) {
 		RoadVertexDesc parent = seeds.front();
@@ -209,16 +218,14 @@ QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > MMT::bfs(RoadGraph* roads, Ro
 			}
 		}
 
-		tree[parent] = children;
+		tree->insert(parent, children);
 	}
-
-	return tree;
 }
 
 /**
  * ２つの道路網を、木構造を使ってマッチングさせる。
  */
-QMap<RoadVertexDesc, RoadVertexDesc> MMT::findCorrespondence(RoadGraph* roads1, RoadVertexDesc root1, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree1, RoadGraph* roads2, RoadVertexDesc root2, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree2) {
+QMap<RoadVertexDesc, RoadVertexDesc> MTT::findCorrespondence(RoadGraph* roads1, RoadVertexDesc root1, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree1, RoadGraph* roads2, RoadVertexDesc root2, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree2) {
 	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
 
 	std::list<RoadVertexDesc> seeds1;
@@ -268,7 +275,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> MMT::findCorrespondence(RoadGraph* roads1, 
  * まずは、ペアになっていないノードから候補を探す。
  * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
  */
-bool MMT::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree1, std::vector<bool>* paired1, RoadGraph* roads2, RoadVertexDesc parent2, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree2, std::vector<bool>* paired2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+bool MTT::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree1, std::vector<bool>* paired1, RoadGraph* roads2, RoadVertexDesc parent2, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree2, std::vector<bool>* paired2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
 	float min_angle = std::numeric_limits<float>::max();
 	int min_id1;
 	int min_id2;
@@ -361,22 +368,17 @@ bool MMT::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVerte
  * 頂点を、順番にcollapseしていく。
  * ただし、当該頂点から出るエッジの長さが短いものから、優先的にcollapseしていく。
  */
-void MMT::collapse(RoadGraph* roads) {
+void MTT::collapse(RoadGraph* roads) {
 	qDebug() << "collapse start.";
 
 	RoadOutEdgeIter oei, oeend;
 	for (boost::tie(oei, oeend) = boost::out_edges(33, roads->graph); oei != oeend; ++oei) {
 		RoadVertexDesc tgt = boost::target(*oei, roads->graph);
-		int k = 0;
 	}
 
 	int count = 0;
 
 	while (true) {
-		if (count == 27) {
-			int k = 0;
-		}
-
 		float min_len = std::numeric_limits<float>::max();
 		RoadEdgeDesc min_e_desc;
 
@@ -411,7 +413,7 @@ void MMT::collapse(RoadGraph* roads) {
 /**
  * Collapseした道路網を、親子関係の木構造を使って、元に戻す。
  */
-void MMT::expand(RoadGraph* roads) {
+void MTT::expand(RoadGraph* roads) {
 	qDebug() << "expand start.";
 
 	for (int i = roads->collapseHistory.size() - 1; i >= 0; i--) {

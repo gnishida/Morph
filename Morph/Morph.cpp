@@ -14,7 +14,8 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 
 	connect(ui.actionNearestNeighbor, SIGNAL(triggered()), this, SLOT(startNearestNeighbor()));
 	connect(ui.actionNearestNeighborConnectivity, SIGNAL(triggered()), this, SLOT(startNearestNeighborConnectivity()));
-	connect(ui.actionMMT, SIGNAL(triggered()), this, SLOT(startMMT()));
+	connect(ui.actionBFS, SIGNAL(triggered()), this, SLOT(startBFS()));
+	connect(ui.actionMTT, SIGNAL(triggered()), this, SLOT(startMTT()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(tick()) );
 
 	width = height = 2000;
@@ -23,7 +24,8 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 
 	morphing = NULL;
 	morphing2 = NULL;
-	mmt = NULL;
+	bfs = NULL;
+	mtt = NULL;
 
 	mode = 0;
 }
@@ -42,8 +44,12 @@ void Morph::paintEvent(QPaintEvent *) {
 		morphing2->draw(&painter, t, width / 2 + 150, 800.0f / width);
 	}
 
-	if (mode == 3 && mmt != NULL) {
-		mmt->draw(&painter, t, width / 2 + 150, 800.0f / width);
+	if (mode == 3 && bfs != NULL) {
+		bfs->draw(&painter, t, width / 2 + 150, 800.0f / width);
+	}
+
+	if (mode == 4 && mtt != NULL) {
+		mtt->draw(&painter, t, width / 2 + 150, 800.0f / width);
 	}
 }
 
@@ -75,15 +81,29 @@ void Morph::startNearestNeighborConnectivity() {
 	timer->start(100);
 }
 
-void Morph::startMMT() {
+void Morph::startBFS() {
 	timer->stop();
 
-	if (mmt == NULL) {
-		mmt = new MMT(this, "roads1.gsm", "roads2.gsm");
-		mmt->buildTree2();
+	if (bfs == NULL) {
+		bfs = new BFS(this, "roads1.gsm", "roads2.gsm");
+		bfs->buildTree();
 	}
 
 	mode = 3;
+
+	t = 1.0f;
+	timer->start(100);
+}
+
+void Morph::startMTT() {
+	timer->stop();
+
+	if (mtt == NULL) {
+		mtt = new MTT(this, "roads1.gsm", "roads2.gsm");
+		mtt->buildTree2();
+	}
+
+	mode = 4;
 
 	t = 1.0f;
 	timer->start(100);

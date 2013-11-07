@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BBox.cpp" />
+    <ClCompile Include="BFS.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_Morph.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -148,7 +149,7 @@
     </ClCompile>
     <ClCompile Include="GraphUtil.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="MMT.cpp" />
+    <ClCompile Include="MTT.cpp" />
     <ClCompile Include="Morph.cpp" />
     <ClCompile Include="Morphing.cpp" />
     <ClCompile Include="Morphing2.cpp" />
@@ -200,9 +201,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BBox.h" />
+    <ClInclude Include="BFS.h" />
     <ClInclude Include="GeneratedFiles\ui_Morph.h" />
     <ClInclude Include="GraphUtil.h" />
-    <ClInclude Include="MMT.h" />
+    <ClInclude Include="MTT.h" />
     <ClInclude Include="Morphing.h" />
     <ClInclude Include="Morphing2.h" />
     <ClInclude Include="RoadEdge.h" />

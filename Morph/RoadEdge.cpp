@@ -21,10 +21,6 @@ float RoadEdge::getLength() {
 		length += (polyLine[i + 1] - polyLine[i]).length();
 	}
 
-	if (length == 0.0f) {
-		int k = 0;
-	}
-
 	return length;
 }
 
