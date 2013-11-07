@@ -79,7 +79,7 @@ void MMT::collapse(RoadGraph* roads) {
 		GraphUtil::removeEdge(roads, min_e_desc);
 
 		// 再描画
-		morph->roadsA = roads;
+		morph->roads = roads;
 		morph->update();
 
 		qDebug() << "remove edge." << (++count);
@@ -123,7 +123,7 @@ void MMT::expand(RoadGraph* roads) {
 		}
 
 		// 再描画
-		morph->roadsA = roads;
+		morph->roads = roads;
 		morph->update();
 
 		// 300ミリ秒待機

@@ -22,7 +22,8 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	//cellLength = 1000;
 
 	morphing = NULL;
-	roadsA = NULL;
+	morphing2 = NULL;
+	roads = NULL;
 }
 
 Morph::~Morph() {
@@ -38,7 +39,7 @@ void Morph::paintEvent(QPaintEvent *) {
 	*/
 
 	//drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
-	drawGraph(&painter, roadsA, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
+	drawGraph(&painter, roads, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
 }
 
 void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -87,28 +88,28 @@ void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDe
 }
 
 void Morph::start() {
-	/*
-	if (morphing == NULL) {
+	if (morphing2 == NULL) {
 		//initRoads("london_10000.gsm", "paris_10000.gsm");	
-		morphing = new Morphing();
-		morphing->initRoads("roads1.gsm", "roads2.gsm");
+		morphing2 = new Morphing2();
+		morphing2->initRoads("roads1.gsm", "roads2.gsm");
 	}
-	*/
 
 	t = 1.0f;
 
-	//timer->start(100);
+	timer->start(100);
 
+	/*
 	MMT mmt(this, "roads1.gsm");
 	mmt.buildTree();
+	*/
 }
 
 void Morph::tick() {
-	if (roadsA != NULL) {
-		roadsA->clear();
-		delete roadsA;
+	if (roads != NULL) {
+		roads->clear();
+		delete roads;
 	}
-	roadsA = morphing->interpolate(t);
+	roads = morphing2->interpolate(t);
 
 	update();
 

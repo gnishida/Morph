@@ -145,6 +145,15 @@ bool GraphUtil::hasEdge(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc d
 }
 
 /**
+ * ２つの頂点が直接接続されているか、チェックする。
+ * ２つの頂点が同じ頂点の場合も、trueを返却する。
+ */
+bool GraphUtil::isDirectlyConnected(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2, bool onlyValidEdge) {
+	if (desc1 == desc2) return true;
+	return hasEdge(roads, desc1, desc2, onlyValidEdge);
+}
+
+/**
  * srcとtgtの間のエッジを返却する。
  */
 RoadEdgeDesc GraphUtil::getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, bool onlyValidEdge) {
@@ -168,7 +177,7 @@ RoadEdgeDesc GraphUtil::getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertex
  * 指定した頂点のDegreeを返却する。
  * onlyValidEdge = trueの場合は、validのエッジのみをカウントする。
  */
-int GraphUtil::getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge = true) {
+int GraphUtil::getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge) {
 	if (onlyValidEdge) {
 		int count = 0;
 		RoadOutEdgeIter ei, eend;
@@ -220,6 +229,47 @@ RoadVertexDesc GraphUtil::findNearestNeighbor(RoadGraph* roads, const QVector2D 
 	}
 
 	return nearest_desc;
+}
+
+/**
+ * 指定したノードvと接続されたノードの中で、指定した座標に最も近いノードを返却する。
+ */
+RoadVertexDesc GraphUtil::findConnectedNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc v) {
+	QMap<RoadVertexDesc, bool> visited;
+	std::list<RoadVertexDesc> seeds;
+	seeds.push_back(v);
+
+	float min_dist = std::numeric_limits<float>::max();
+	RoadVertexDesc min_desc;
+
+	while (!seeds.empty()) {
+		RoadVertexDesc seed = seeds.front();
+		seeds.pop_front();
+
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(seed, roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
+			RoadVertexDesc v2 = boost::target(*ei, roads->graph);
+			if (visited.contains(v2)) continue;
+
+			// 指定したノードvは除く（除かない方が良いのか？検討中。。。。）
+			//if (v2 == v) continue;
+
+			visited[v2] = true;
+
+			// 指定した座標との距離をチェック
+			float dist = (roads->graph[v2]->getPt() - pt).length();
+			if (dist < min_dist) {
+				min_dist = dist;
+				min_desc = v2;
+			}
+
+			seeds.push_back(v2);
+		}
+	}
+
+	return min_desc;
 }
 
 /**

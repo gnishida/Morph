@@ -5,6 +5,7 @@
 #include "RoadGraph.h"
 #include "BBox.h"
 #include "Morphing.h"
+#include "Morphing2.h"
 #include "ui_Morph.h"
 #include <qmap.h>
 #include <qtimer.h>
@@ -21,15 +22,10 @@ public:
 	//int cellLength;
 
 	Morphing* morphing;
+	Morphing2* morphing2;
 
 	// roads
-	RoadGraph* roadsA;
-	//RoadGraph* roadsB;
-	//RoadGraph* interpolated_roads;
-
-	// neighbor
-	//QMap<RoadVertexDesc, RoadVertexDesc> neighbor1;
-	//QMap<RoadVertexDesc, RoadVertexDesc> neighbor2;
+	RoadGraph* roads;
 
 public:
 	Morph(QWidget *parent = 0, Qt::WFlags flags = 0);
