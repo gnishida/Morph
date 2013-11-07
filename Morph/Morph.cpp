@@ -39,9 +39,10 @@ void Morph::paintEvent(QPaintEvent *) {
 	*/
 
 	//drawGraph(&painter, interpolated_roads, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
-	drawGraph(&painter, roads, QColor(0, 0, 255), width / 2 + 150, 800.0f / width);
+	morphing2->draw(&painter, width / 2 + 150, 800.0f / width);
 }
 
+/*
 void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
 	if (roads == NULL) return;
 
@@ -72,6 +73,7 @@ void Morph::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offse
 		painter->fillRect(x - 1, y - 1, 3, 3, col);
 	}
 }
+*/
 
 void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2) {
 	if (roads1 == NULL || roads2 == NULL) return;
@@ -88,9 +90,11 @@ void Morph::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDe
 }
 
 void Morph::start() {
+	timer->stop();
+
 	if (morphing2 == NULL) {
 		//initRoads("london_10000.gsm", "paris_10000.gsm");	
-		morphing2 = new Morphing2();
+		morphing2 = new Morphing2(this);
 		morphing2->initRoads("roads1.gsm", "roads2.gsm");
 	}
 
@@ -106,8 +110,8 @@ void Morph::start() {
 
 void Morph::tick() {
 	if (roads != NULL) {
-		roads->clear();
-		delete roads;
+		//roads->clear();
+		//delete roads;
 	}
 	roads = morphing2->interpolate(t);
 
@@ -116,7 +120,7 @@ void Morph::tick() {
 	t -= 0.02f;
 	if (t < 0.0f) {
 		t = 0.0f;
-		timer->stop();
+		//timer->stop();
 	}
 }
 

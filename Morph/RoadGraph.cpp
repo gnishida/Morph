@@ -1,4 +1,5 @@
 ﻿#include "RoadGraph.h"
+#include "GraphUtil.h"
 #include <iostream>
 
 #define _USE_MATH_DEFINES
@@ -120,3 +121,4 @@ void RoadGraph::removeIsolatedVertices() {
 		}
 	} while (deleted);
 }
+

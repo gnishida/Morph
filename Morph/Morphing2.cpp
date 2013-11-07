@@ -1,14 +1,67 @@
 ﻿#include "Morphing2.h"
+#include "Morph.h"
 #include "GraphUtil.h"
 #include <qdebug.h>
 #include <time.h>
 
-Morphing2::Morphing2() {
+Morphing2::Morphing2(Morph* morph) {
+	this->morph = morph;
 	roadsA = NULL;
 	roadsB = NULL;
 }
 
 Morphing2::~Morphing2() {
+	for (QMap<RoadVertexDesc, QSet<RoadVertexDesc>* >::iterator it = correspond1.begin(); it != correspond1.end(); ++it) {
+		correspond1[it.key()]->clear();
+		delete correspond1[it.key()];
+	}
+	correspond1.clear();
+
+	for (QMap<RoadVertexDesc, QSet<RoadVertexDesc>* >::iterator it = correspond2.begin(); it != correspond2.end(); ++it) {
+		correspond2[it.key()]->clear();
+		delete correspond2[it.key()];
+	}
+	correspond2.clear();
+
+	roadsA->clear();
+	roadsB->clear();
+}
+
+void Morphing2::draw(QPainter* painter, int offset, float scale) {
+	if (roadsA == NULL) return;
+
+	drawGraph(painter, roadsA, QColor(0, 0, 255), offset, scale);
+}
+
+void Morphing2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
+	if (roads == NULL) return;
+
+	painter->setRenderHint(QPainter::Antialiasing, true);
+	painter->setPen(QPen(col, 1, Qt::SolidLine, Qt::RoundCap));
+	painter->setBrush(QBrush(Qt::green, Qt::SolidPattern));
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		RoadEdge* edge = roads->graph[*ei];
+		if (!edge->valid) continue;
+
+		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {
+			int x1 = (edge->getPolyLine()[i].x() + offset) * scale;
+			int y1 = (-edge->getPolyLine()[i].y() + offset) * scale;
+			int x2 = (edge->getPolyLine()[i+1].x() + offset) * scale;
+			int y2 = (-edge->getPolyLine()[i+1].y() + offset) * scale;
+			painter->drawLine(x1, y1, x2, y2);
+		}
+	}
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		RoadVertex* v = roads->graph[*vi];
+
+		int x = (v->getPt().x() + offset) * scale;
+		int y = (-v->getPt().y() + offset) * scale;
+		painter->fillRect(x - 1, y - 1, 3, 3, col);
+	}
 }
 
 void Morphing2::initRoads(const char* filename1, const char* filename2) {
@@ -34,6 +87,9 @@ void Morphing2::initRoads(const char* filename1, const char* filename2) {
 
 	roadsA = new RoadGraph();
 	roadsA->load(fp1, 2);
+	GraphUtil::planarify(roadsA);
+	GraphUtil::singlify(roadsA);
+	GraphUtil::simplify(roadsA, 30, 0.0f);
 	end = clock();
 	qDebug() << "Roads A is loaded[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
@@ -41,9 +97,13 @@ void Morphing2::initRoads(const char* filename1, const char* filename2) {
 
 	roadsB = new RoadGraph();
 	roadsB->load(fp2, 2);
+	GraphUtil::planarify(roadsB);
+	GraphUtil::singlify(roadsB);
+	GraphUtil::simplify(roadsB, 30, 0.0f);
 	end = clock();
 	qDebug() << "Roads B is loaded[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
+	
 	initCorrespondence(roadsA, &correspond1);
 	initCorrespondence(roadsB, &correspond2);
 
@@ -56,11 +116,15 @@ void Morphing2::initRoads(const char* filename1, const char* filename2) {
 	//findBestPairs(roadsB, &correspond2, roadsA, &correspond1);
 	end = clock();
 	qDebug() << "Roads B found the nearest neighbor[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
-
 	// 
+	
+	morph->update();
 }
 
 RoadGraph* Morphing2::interpolate(float t) {
+	if (t == 1.0f) return roadsA;
+	if (t == 0.0f) return roadsB;
+
 	RoadGraph* roads = new RoadGraph();
 
 	QMap<RoadVertexDesc, QMap<RoadVertexDesc, RoadVertexDesc> > conv;
@@ -179,6 +243,8 @@ void Morphing2::findBestPairs(RoadGraph* roads1, QMap<RoadVertexDesc, QSet<RoadV
 		RoadVertexIter vi, vend;
 		int count = 0;
 		for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+			if (!roads1->graph[*vi]->valid) continue;
+
 			// 既にペアがあるなら、スキップ
 			if (!correspond1->value(*vi)->empty()) continue;
 
@@ -257,31 +323,6 @@ void Morphing2::propagatePairs(RoadGraph* roads1, RoadVertexDesc v1_desc_seed, Q
 			v1_desc_queue.push_back(v1b_desc);
 			v2_desc_queue.push_back(v2b_desc);
 		}
-
-
-		for (QSet<RoadVertexDesc>::iterator it = correspond1->value(11)->begin(); it != correspond1->value(11)->end(); ++it) {
-			int a = *it;
-			int k = 0;
-		}
-		for (QSet<RoadVertexDesc>::iterator it = correspond1->value(2)->begin(); it != correspond1->value(2)->end(); ++it) {
-			int a = *it;
-			int k = 0;
-		}
-		for (QSet<RoadVertexDesc>::iterator it = correspond1->value(40)->begin(); it != correspond1->value(40)->end(); ++it) {
-			int a = *it;
-			int k = 0;
-		}
-		for (QSet<RoadVertexDesc>::iterator it = correspond2->value(40)->begin(); it != correspond2->value(40)->end(); ++it) {
-			int a = *it;
-			int k = 0;
-		}
-		for (QSet<RoadVertexDesc>::iterator it = correspond2->value(41)->begin(); it != correspond2->value(41)->end(); ++it) {
-			int a = *it;
-			int k = 0;
-		}
-		for (QSet<RoadVertexDesc>::iterator it = correspond2->value(39)->begin(); it != correspond2->value(39)->end(); ++it) {
-			int a = *it;
-			int k = 0;
-		}
 	}
 }
+

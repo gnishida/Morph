@@ -1,4 +1,5 @@
 ﻿#include "GraphUtil.h"
+#include "Util.h"
 
 /**
  * 指定した頂点から出ているエッジの長さの合計を返却する
@@ -15,17 +16,40 @@ float GraphUtil::getTotalEdgeLength(RoadGraph* roads, RoadVertexDesc v) {
 	return ret;
 }
 
-void GraphUtil::removeVertex(RoadGraph* roads, RoadVertexDesc v) {
-	roads->graph[v]->valid = false;
+/**
+ * グラフのノードv1をv2にcollapseする。
+ */
+void GraphUtil::collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2) {
+	roads->graph[v1]->valid = false;
 
-	// to be implemented
+	RoadOutEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::out_edges(v1, roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		// v1の隣接ノードv1bを取得
+		RoadVertexDesc v1b = boost::target(*ei, roads->graph);
+
+		// v1 - v1b間のエッジを無効にする
+		roads->graph[*ei]->valid = false;
+
+		// v2 - v1b間が既に接続されているなら、エッジは作成しない
+		if (isDirectlyConnected(roads, v2, v1b)) continue;
+
+		// v2 - v1b間にエッジを作成する
+		RoadEdge* new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type);
+		new_e->addPoint(roads->graph[v2]->getPt());
+		new_e->addPoint(roads->graph[v1b]->getPt());
+
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(v2, v1b, roads->graph);
+		roads->graph[edge_pair.first] = new_e;
+	}
 }
 
 /**
  * グラフの指定エッジを削除する。Degreeの小さいほうの頂点を削除する。
  * また、木構造のための情報も併せて登録する。
  */
-void GraphUtil::removeEdge(RoadGraph* roads, RoadEdgeDesc e) {
+void GraphUtil::collapseEdge(RoadGraph* roads, RoadEdgeDesc e) {
 	// 当該エッジを無効にする
 	roads->graph[e]->valid = false;
 
@@ -174,6 +198,22 @@ RoadEdgeDesc GraphUtil::getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertex
 }
 
 /**
+ * 指定したエッジについて、polyLineのリストを、src頂点から並ぶようにして返却する。
+ */
+std::vector<QVector2D> GraphUtil::getOrderedPolyLine(RoadGraph* roads, RoadEdgeDesc e) {
+	std::vector<QVector2D> ret = roads->graph[e]->getPolyLine();
+
+	RoadVertexDesc src = boost::source(e, roads->graph);
+	RoadVertexDesc tgt = boost::target(e, roads->graph);
+	if ((roads->graph[src]->getPt() - roads->graph[e]->getPolyLine()[0]).length() < (roads->graph[tgt]->getPt() - roads->graph[e]->getPolyLine()[0]).length()) {
+		return ret;
+	} else {
+		std::reverse(ret.begin(), ret.end());
+		return ret;
+	}
+}
+
+/**
  * 指定した頂点のDegreeを返却する。
  * onlyValidEdge = trueの場合は、validのエッジのみをカウントする。
  */
@@ -199,6 +239,8 @@ RoadVertexDesc GraphUtil::findNearestNeighbor(RoadGraph* roads, const QVector2D 
 
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
 		float dist = (roads->graph[*vi]->getPt() - pt).length();
 		if (dist < min_dist) {
 			nearest_desc = *vi;
@@ -220,6 +262,7 @@ RoadVertexDesc GraphUtil::findNearestNeighbor(RoadGraph* roads, const QVector2D 
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 		if (*vi == ignore) continue;
+		if (!roads->graph[*vi]->valid) continue;
 
 		float dist = (roads->graph[*vi]->getPt() - pt).length();
 		if (dist < min_dist) {
@@ -285,4 +328,205 @@ std::vector<RoadVertexDesc> GraphUtil::getChildren(RoadGraph* roads, RoadVertexD
 	}
 
 	return ret;
+}
+
+/**
+ * ノード間の距離が指定した距離よりも近い場合は、１つにしてしまう。
+ * また、２つのエッジのなす角度が小さすぎる場合は、短いエッジを削除する。
+ */
+void GraphUtil::simplify(RoadGraph* roads, float dist_threshold, float angle_threshold) {
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
+		// ノード間の距離が近すぎる場合は、collapse
+		RoadVertexDesc v2 = findNearestNeighbor(roads, roads->graph[*vi]->getPt(), *vi);
+		if ((roads->graph[v2]->getPt() - roads->graph[*vi]->getPt()).length() <= dist_threshold) {
+			collapseVertex(roads, *vi, v2);
+		}
+
+		// エッジ間のなす角が小さすぎる場合は、短いエッジを削除
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
+			std::vector<QVector2D> polyLine = getOrderedPolyLine(roads, *ei);
+			float angle = atan2f((polyLine[1] - polyLine[0]).y(), (polyLine[1] - polyLine[0]).x());
+
+			RoadOutEdgeIter ei2, eend2;
+			for (boost::tie(ei2, eend2) = boost::out_edges(*vi, roads->graph); ei2 != eend2; ++ei2) {
+				if (*ei == *ei2) continue;
+				if (!roads->graph[*ei2]->valid) continue;
+
+				std::vector<QVector2D> polyLine2 = getOrderedPolyLine(roads, *ei2);
+
+				float angle2 = atan2f((polyLine2[1] - polyLine2[0]).y(), (polyLine2[1] - polyLine2[0]).x());
+				if (fabs(angle - angle2) < angle_threshold) {
+					if (roads->graph[*ei]->getLength() > roads->graph[*ei2]->getLength()) {
+						roads->graph[*ei2]->valid = false;
+					} else {
+						roads->graph[*ei]->valid = false;
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+
+/**
+ * エッジのポリゴンが3つ以上で構成されている場合、中間点を全てノードとして登録する。
+ */
+void GraphUtil::normalize(RoadGraph* roads) {
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+		if (roads->graph[*ei]->getPolyLine().size() <= 2) continue;
+
+		// 当該エッジを無効にする
+		roads->graph[*ei]->valid = false;
+
+		RoadVertexDesc src = boost::source(*ei, roads->graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+		RoadVertexDesc prev_desc;
+		RoadVertexDesc last_desc;
+		if ((roads->graph[src]->getPt() - roads->graph[*ei]->getPolyLine()[0]).length() < (roads->graph[tgt]->getPt() - roads->graph[*ei]->getPolyLine()[0]).length()) {
+			prev_desc = src;
+			last_desc = tgt;
+		} else {
+			prev_desc = tgt;
+			last_desc = src;
+		}
+
+		for (int i = 1; i < roads->graph[*ei]->getPolyLine().size() - 1; i++) {
+			// 中間点をノードとして登録
+			RoadVertex* new_v = new RoadVertex(roads->graph[*ei]->getPolyLine()[i]);
+			RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
+			roads->graph[new_v_desc] = new_v;
+
+			// エッジを作成
+			RoadEdge* new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type);
+			new_e->addPoint(roads->graph[prev_desc]->getPt());
+			new_e->addPoint(roads->graph[new_v_desc]->getPt());
+			std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(prev_desc, new_v_desc, roads->graph);
+			roads->graph[edge_pair.first] = new_e;
+
+			prev_desc = new_v_desc;
+		}
+
+		// 最後のエッジを作成
+		RoadEdge* new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type);
+		new_e->addPoint(roads->graph[prev_desc]->getPt());
+		new_e->addPoint(roads->graph[last_desc]->getPt());
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(prev_desc, last_desc, roads->graph);
+		roads->graph[edge_pair.first] = new_e;
+	}
+}
+
+/**
+ * ０番と接続されているノードのみ有効とし、それ以外のノード、およびエッジを、全て無効にする。
+ * 本実装では、事前の有効・無効フラグを考慮していない。要検討。。。
+ */
+void GraphUtil::singlify(RoadGraph* roads) {
+	// 一旦、すべてを無効にする
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		roads->graph[*vi]->valid = false;
+	}
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		roads->graph[*ei]->valid = false;
+	}
+
+	std::list<RoadVertexDesc> seeds;
+	seeds.push_back(0);
+	QMap<RoadVertexDesc, bool> visited;
+
+	while (!seeds.empty()) {
+		RoadVertexDesc seed = seeds.front();
+		seeds.pop_front();
+
+		RoadOutEdgeIter oei, oeend;
+		for (boost::tie(oei, oeend) = boost::out_edges(seed, roads->graph); oei != oeend; ++oei) {
+			RoadVertexDesc v = boost::target(*oei, roads->graph);
+
+			// 到達したノード、エッジを有効にする
+			roads->graph[v]->valid = true;
+			roads->graph[*oei]->valid = true;
+
+			if (visited.contains(v)) continue;
+
+			visited[v] = true;
+			seeds.push_back(v);
+		}
+	}
+}
+
+/**
+ * 道路網をplanarグラフにする。
+ */
+void GraphUtil::planarify(RoadGraph* roads) {
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		RoadEdge* e = roads->graph[*ei];
+		if (!e->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads->graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+		RoadEdgeIter ei2, eend2;
+		for (boost::tie(ei2, eend2) = boost::edges(roads->graph); ei2 != eend2; ++ei2) {
+			RoadEdge* e2 = roads->graph[*ei2];
+			if (!e2->valid) continue;
+
+			RoadVertexDesc src2 = boost::source(*ei2, roads->graph);
+			RoadVertexDesc tgt2 = boost::target(*ei2, roads->graph);
+
+			//if ((src == src2 && tgt == tgt2) || (src == tgt2 && tgt == src2)) continue;
+			if (src == src2 || src == tgt2 || tgt == src2 || tgt == tgt2) continue;
+
+			for (int i = 0; i < e->getPolyLine().size() - 1; i++) {
+				for (int j = 0; j < e2->getPolyLine().size() - 1; j++) {
+					float tab, tcd;
+					QVector2D intPoint;
+					if (Util::segmentSegmentIntersectXY(e->getPolyLine()[i], e->getPolyLine()[i+1], e2->getPolyLine()[j], e2->getPolyLine()[j+1], &tab, &tcd, true, intPoint)) {
+						// 交点をノードとして登録
+						RoadVertex* new_v = new RoadVertex(intPoint);
+						RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
+						roads->graph[new_v_desc] = new_v;
+
+						// もともとのエッジを無効にする
+						roads->graph[*ei]->valid = false;
+						roads->graph[*ei2]->valid = false;
+
+						// 新たなエッジを追加する
+						RoadEdge* new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type);
+						new_e->addPoint(roads->graph[src]->getPt());
+						new_e->addPoint(roads->graph[new_v_desc]->getPt());
+						std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(src, new_v_desc, roads->graph);
+						roads->graph[edge_pair.first] = new_e;
+
+						new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type);
+						new_e->addPoint(roads->graph[new_v_desc]->getPt());
+						new_e->addPoint(roads->graph[tgt]->getPt());
+						edge_pair = boost::add_edge(new_v_desc, tgt, roads->graph);
+						roads->graph[edge_pair.first] = new_e;
+
+						new_e = new RoadEdge(roads->graph[*ei2]->lanes, roads->graph[*ei2]->type);
+						new_e->addPoint(roads->graph[src2]->getPt());
+						new_e->addPoint(roads->graph[new_v_desc]->getPt());
+						edge_pair = boost::add_edge(src2, new_v_desc, roads->graph);
+						roads->graph[edge_pair.first] = new_e;
+
+						new_e = new RoadEdge(roads->graph[*ei2]->lanes, roads->graph[*ei2]->type);
+						new_e->addPoint(roads->graph[new_v_desc]->getPt());
+						new_e->addPoint(roads->graph[tgt2]->getPt());
+						edge_pair = boost::add_edge(new_v_desc, tgt2, roads->graph);
+						roads->graph[edge_pair.first] = new_e;
+					}
+				}
+			}
+		}
+	}
 }

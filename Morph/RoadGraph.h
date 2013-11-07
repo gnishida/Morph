@@ -51,5 +51,6 @@ public:
 	void load(FILE* fp, int roadType);
 
 	void removeIsolatedVertices();
+
 };
 

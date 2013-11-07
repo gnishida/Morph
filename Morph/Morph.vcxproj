@@ -155,6 +155,7 @@
     <ClCompile Include="RoadEdge.cpp" />
     <ClCompile Include="RoadGraph.cpp" />
     <ClCompile Include="RoadVertex.cpp" />
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Morph.h">
@@ -207,6 +208,7 @@
     <ClInclude Include="RoadEdge.h" />
     <ClInclude Include="RoadGraph.h" />
     <ClInclude Include="RoadVertex.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Morph.qrc">

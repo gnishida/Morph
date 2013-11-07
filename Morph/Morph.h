@@ -43,7 +43,7 @@ private slots:
 
 public:
 	
-	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
+	//void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
 	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2);
 	
 };

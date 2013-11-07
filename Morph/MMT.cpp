@@ -76,7 +76,7 @@ void MMT::collapse(RoadGraph* roads) {
 
 		if (min_len == std::numeric_limits<float>::max()) break;
 
-		GraphUtil::removeEdge(roads, min_e_desc);
+		GraphUtil::collapseEdge(roads, min_e_desc);
 
 		// 再描画
 		morph->roads = roads;
