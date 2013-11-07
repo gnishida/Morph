@@ -21,8 +21,10 @@ public:
 	Morphing2(Morph* morph);
 	~Morphing2();
 
-	void draw(QPainter* painter, int offset, float scale);
+	void draw(QPainter* painter, float t, int offset, float scale);
 	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
+	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, QSet<RoadVertexDesc>* >* correspond1, RoadGraph *roads2, int offset, float scale);
+
 	void initRoads(const char* filename1, const char* filename2);
 	RoadGraph* interpolate(float t);
 

@@ -23,6 +23,43 @@ MMT::MMT(Morph* morph, const char* filename) {
 	roads->load(fp, 2);
 }
 
+void MMT::draw(QPainter* painter, int offset, float scale) {
+	if (roads == NULL) return;
+
+	drawGraph(painter, roads, QColor(0, 0, 255), offset, scale);
+}
+
+void MMT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
+	if (roads == NULL) return;
+
+	painter->setRenderHint(QPainter::Antialiasing, true);
+	painter->setPen(QPen(col, 1, Qt::SolidLine, Qt::RoundCap));
+	painter->setBrush(QBrush(Qt::green, Qt::SolidPattern));
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		RoadEdge* edge = roads->graph[*ei];
+		if (!edge->valid) continue;
+
+		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {
+			int x1 = (edge->getPolyLine()[i].x() + offset) * scale;
+			int y1 = (-edge->getPolyLine()[i].y() + offset) * scale;
+			int x2 = (edge->getPolyLine()[i+1].x() + offset) * scale;
+			int y2 = (-edge->getPolyLine()[i+1].y() + offset) * scale;
+			painter->drawLine(x1, y1, x2, y2);
+		}
+	}
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		RoadVertex* v = roads->graph[*vi];
+
+		int x = (v->getPt().x() + offset) * scale;
+		int y = (-v->getPt().y() + offset) * scale;
+		painter->fillRect(x - 1, y - 1, 3, 3, col);
+	}
+}
+
 void MMT::buildTree() {
 	// 頂点の中で、degreeが1のものをcollapseしていく
 	collapse(roads);
@@ -79,7 +116,6 @@ void MMT::collapse(RoadGraph* roads) {
 		GraphUtil::collapseEdge(roads, min_e_desc);
 
 		// 再描画
-		morph->roads = roads;
 		morph->update();
 
 		qDebug() << "remove edge." << (++count);
@@ -123,7 +159,6 @@ void MMT::expand(RoadGraph* roads) {
 		}
 
 		// 再描画
-		morph->roads = roads;
 		morph->update();
 
 		// 300ミリ秒待機

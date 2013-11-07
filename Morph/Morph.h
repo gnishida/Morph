@@ -6,6 +6,7 @@
 #include "BBox.h"
 #include "Morphing.h"
 #include "Morphing2.h"
+#include "MMT.h"
 #include "ui_Morph.h"
 #include <qmap.h>
 #include <qtimer.h>
@@ -23,9 +24,10 @@ public:
 
 	Morphing* morphing;
 	Morphing2* morphing2;
+	MMT* mmt;
 
 	// roads
-	RoadGraph* roads;
+	//RoadGraph* roads;
 
 public:
 	Morph(QWidget *parent = 0, Qt::WFlags flags = 0);
@@ -44,7 +46,7 @@ private slots:
 public:
 	
 	//void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
-	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2);
+	//void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2);
 	
 };
 

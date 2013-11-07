@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RoadGraph.h"
+#include <qpainter.h>
 
 class Morph;
 
@@ -28,6 +29,8 @@ private:
 public:
 	MMT(Morph* morph, const char* filename);
 
+	void draw(QPainter* painter, int offset, float scale);
+	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
 	void buildTree();
 	void collapse(RoadGraph* roads);
 	void expand(RoadGraph* roads);

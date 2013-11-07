@@ -27,10 +27,20 @@ Morphing2::~Morphing2() {
 	roadsB->clear();
 }
 
-void Morphing2::draw(QPainter* painter, int offset, float scale) {
+void Morphing2::draw(QPainter* painter, float t, int offset, float scale) {
 	if (roadsA == NULL) return;
 
+	/*
 	drawGraph(painter, roadsA, QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, roadsB, QColor(255, 0, 0), offset, scale);
+	drawRelation(painter, roadsA, &correspond1, roadsB, offset, scale);
+	*/
+	RoadGraph* interpolated = interpolate(t);
+	drawGraph(painter, interpolated, QColor(0, 0, 255), offset, scale);
+	if (t > 0.0f && t < 1.0f) {
+		interpolated->clear();
+		delete interpolated;
+	}
 }
 
 void Morphing2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -61,6 +71,29 @@ void Morphing2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int o
 		int x = (v->getPt().x() + offset) * scale;
 		int y = (-v->getPt().y() + offset) * scale;
 		painter->fillRect(x - 1, y - 1, 3, 3, col);
+	}
+}
+
+void Morphing2::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, QSet<RoadVertexDesc>* >* correspond1, RoadGraph *roads2, int offset, float scale) {
+	if (roads1 == NULL || roads2 == NULL) return;
+
+	painter->setPen(QPen(Qt::black, 2, Qt::DotLine, Qt::RoundCap));
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		RoadVertex* v1 = roads1->graph[*vi];
+		if (!v1->valid) continue;
+
+		for (QSet<RoadVertexDesc>::iterator it = correspond1->value(*vi)->begin(); it != correspond1->value(*vi)->end(); ++it) {
+			RoadVertex* v2 = roads2->graph[*it];
+			if (!v2->valid) continue;
+
+			int x1 = (v1->getPt().x() + offset) * scale;
+			int y1 = (-v1->getPt().y() + offset) * scale;
+			int x2 = (v2->getPt().x() + offset) * scale;
+			int y2 = (-v2->getPt().y() + offset) * scale;
+			painter->drawLine(x1, y1, x2, y2);
+		}
 	}
 }
 
@@ -118,7 +151,7 @@ void Morphing2::initRoads(const char* filename1, const char* filename2) {
 	qDebug() << "Roads B found the nearest neighbor[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 	// 
 	
-	morph->update();
+	//morph->update();
 }
 
 RoadGraph* Morphing2::interpolate(float t) {

@@ -3,9 +3,13 @@
 #include "RoadGraph.h"
 #include "BBox.h"
 #include <qmap.h>
+#include <qpainter.h>
+
+class Morph;
 
 class Morphing {
 public:
+	Morph* morph;
 	RoadGraph* roadsA;
 	RoadGraph* roadsB;
 
@@ -14,8 +18,11 @@ public:
 	QMap<RoadVertexDesc, RoadVertexDesc> neighbor2;
 
 public:
-	Morphing();
+	Morphing(Morph* morph);
 	~Morphing();
+
+	void draw(QPainter* painter, float t, int offset, float scale);
+	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
 
 	void initRoads(const char* filename1, const char* filename2);
 	RoadGraph* interpolate(float t);
