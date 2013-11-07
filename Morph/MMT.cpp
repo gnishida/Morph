@@ -35,10 +35,17 @@ MMT::MMT(Morph* morph, const char* filename1, const char* filename2) {
 	fclose(fp);
 }
 
-void MMT::draw(QPainter* painter, int offset, float scale) {
+void MMT::draw(QPainter* painter, float t, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, roads2, QColor(0, 0, 255), offset, scale);
+
+	RoadGraph* interpolated = interpolate(t);
+	drawGraph(painter, interpolated, QColor(0, 0, 255), offset, scale);
+	if (t > 0.0f && t < 1.0f) {
+		interpolated->clear();
+		delete interpolated;
+	}
 }
 
 void MMT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -70,6 +77,51 @@ void MMT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset,
 		int y = (-v->getPt().y() + offset) * scale;
 		painter->fillRect(x - 1, y - 1, 3, 3, col);
 	}
+}
+
+RoadGraph* MMT::interpolate(float t) {
+	if (t == 1.0f) return roads1;
+	if (t == 0.0f) return roads2;
+
+	RoadGraph* roads = new RoadGraph();
+
+	QMap<RoadVertexDesc, QMap<RoadVertexDesc, RoadVertexDesc> > conv;
+
+	// ルートの頂点を作成
+	RoadVertex* v_root = new RoadVertex(roads1->graph[root1]->getPt() * t + roads2->graph[root2]->getPt() * (1 - t));
+	RoadVertexDesc v_root_desc = boost::add_vertex(roads->graph);
+	roads->graph[v_root_desc] = v_root;
+
+	// 木構造を使って、頂点を登録していく
+	std::list<RoadVertexDesc> seeds;
+	seeds.push_back(root1);
+	while (!seeds.empty()) {
+		RoadVertexDesc parent = seeds.front();
+		seeds.pop_front();
+
+		// 子ノードリストを取得
+		for (int i = 0; i < tree1[parent].size(); i++) {
+			// 子ノードを取得
+			RoadVertexDesc child1 = tree1[parent][i];
+
+			// 対応ノードを取得
+			RoadVertexDesc child2 = correspondence[child1];
+
+			// 子ノードの頂点を作成
+			RoadVertex* new_v = new RoadVertex(roads1->graph[child1]->getPt() * t + roads2->graph[child2]->getPt() * (1 - t));
+			RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
+			roads->graph[new_v_desc] = new_v;
+
+			// エッジを作成
+			RoadEdge* new_e = new RoadEdge(1, 1);
+			std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(parent, new_v_desc, roads->graph);
+			roads->graph[new_e_pair.first] = new_e;
+
+			seeds.push_back(child1);
+		}
+	}
+
+	return roads;
 }
 
 void MMT::buildTree() {
@@ -112,11 +164,14 @@ void MMT::buildTree2() {
 	// 頂点が１つもない場合は、終了
 	if (count == 0) return;
 
-	// 木構造を構築する
-	tree1 = bfs(roads1, min_v1_desc);
-	tree2 = bfs(roads2, min_v2_desc);
+	root1 = min_v1_desc;
+	root2 = min_v2_desc;
 
-	correspondence = findCorrespondence(roads1, min_v1_desc, &tree1, roads2, min_v2_desc, &tree2);
+	// 木構造を構築する
+	tree1 = bfs(roads1, root1);
+	tree2 = bfs(roads2, root2);
+
+	correspondence = findCorrespondence(roads1, root1, &tree1, roads2, root2, &tree2);
 }
 
 /**
@@ -184,22 +239,6 @@ QMap<RoadVertexDesc, RoadVertexDesc> MMT::findCorrespondence(RoadGraph* roads1, 
 		// どちらのノードにも、子ノードがない場合は、スキップ
 		if (children1.size() == 0 && children2.size() == 0) continue;
 
-		// ノード１に子ノードがない場合は、ノード１をコピーして子ノードとする
-		if (children1.size() == 0) {
-			RoadVertex* c = new RoadVertex(roads1->graph[parent1]->getPt());
-			RoadVertexDesc child1 = boost::add_vertex(roads1->graph);
-			roads1->graph[child1] = c;
-			children1.push_back(child1);
-		}
-
-		// ノード２に子ノードがない場合は、ノード１をコピーして子ノードとする
-		if (children2.size() == 0) {
-			RoadVertex* c = new RoadVertex(roads2->graph[parent1]->getPt());
-			RoadVertexDesc child2 = boost::add_vertex(roads2->graph);
-			roads1->graph[child2] = c;
-			children2.push_back(child2);
-		}
-
 		// ペアになったかのフラグ
 		std::vector<bool> paired1;
 		std::vector<bool> paired2;
@@ -209,10 +248,10 @@ QMap<RoadVertexDesc, RoadVertexDesc> MMT::findCorrespondence(RoadGraph* roads1, 
 		for (int i = 0; i < children2.size(); i++) {
 			paired2.push_back(false);
 		}
-
+		
 		while (true) {
 			RoadVertexDesc child1, child2;
-			if (!findBestPair(roads1, parent1, &children1, &paired1, roads2, parent2, &children2, &paired2, child1, child2)) break;
+			if (!findBestPair(roads1, parent1, tree1, &paired1, roads2, parent2, tree2, &paired2, child1, child2)) break;
 
 			correspondence[child1] = child2;
 
@@ -229,19 +268,23 @@ QMap<RoadVertexDesc, RoadVertexDesc> MMT::findCorrespondence(RoadGraph* roads1, 
  * まずは、ペアになっていないノードから候補を探す。
  * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
  */
-bool MMT::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, std::vector<RoadVertexDesc>* children1, std::vector<bool>* paired1, RoadGraph* roads2, RoadVertexDesc parent2, std::vector<RoadVertexDesc>* children2, std::vector<bool>* paired2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+bool MMT::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree1, std::vector<bool>* paired1, RoadGraph* roads2, RoadVertexDesc parent2, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree2, std::vector<bool>* paired2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
 	float min_angle = std::numeric_limits<float>::max();
 	int min_id1;
 	int min_id2;
 
-	for (int i = 0; i < children1->size(); i++) {
+	// 子リストを取得
+	std::vector<RoadVertexDesc> children1 = tree1->value(parent1);
+	std::vector<RoadVertexDesc> children2 = tree2->value(parent2);
+
+	for (int i = 0; i < children1.size(); i++) {
 		if (paired1->at(i)) continue;
 
-		QVector2D dir1 = roads1->graph[children1->at(i)]->getPt() - roads1->graph[parent1]->getPt();
-		for (int j = 0; j < children2->size(); j++) {
+		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
+		for (int j = 0; j < children2.size(); j++) {
 			if (paired2->at(j)) continue;
 
-			QVector2D dir2 = roads2->graph[children2->at(j)]->getPt() - roads2->graph[parent2]->getPt();
+			QVector2D dir2 = roads2->graph[children2[j]]->getPt() - roads2->graph[parent2]->getPt();
 
 			float angle = fabs(atan2(dir1.y(), dir1.x()) - atan2(dir2.y(), dir2.x()));
 			if (angle < min_angle) {
@@ -257,61 +300,55 @@ bool MMT::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, std::vector<Ro
 		paired1->at(min_id1) = true;
 		paired2->at(min_id2) = true;
 
-		child1 = children1->at(min_id1);
-		child2 = children2->at(min_id2);
+		child1 = children1[min_id1];
+		child2 = children2[min_id2];
 
 		return true;
 	}
 
 	// ベストペアが見つからない、つまり、一方のリストが、全てペアになっている場合
-	for (int i = 0; i < children1->size(); i++) {
-		QVector2D dir1 = roads1->graph[children1->at(i)]->getPt() - roads1->graph[parent1]->getPt();
+	for (int i = 0; i < children1.size(); i++) {
+		if (paired1->at(i)) continue;
 
-		for (int j = 0; j < children2->size(); j++) {
-			// 両方ともペアになっている場合は、スキップ
-			if (paired1->at(i) && paired2->at(j)) continue;
+		// 相手の親ノードをコピーしてマッチさせる
+		RoadVertex* v = new RoadVertex(roads2->graph[parent2]->getPt());
+		RoadVertexDesc v_desc = boost::add_vertex(roads2->graph);
+		roads2->graph[v_desc] = v;
 
-			QVector2D dir2 = roads2->graph[children2->at(j)]->getPt() - roads2->graph[parent2]->getPt();
+		children2.push_back(v_desc);
 
-			float angle = fabs(atan2(dir1.y(), dir1.x()) - atan2(dir2.y(), dir2.x()));
-			if (angle < min_angle) {
-				min_angle = angle;
-				min_id1 = i;
-				min_id2 = j;
-			}
-		}
+		paired1->at(i) = true;
+		paired2->push_back(true);
+
+		// 子ノードリストが更新されたので、木構造も更新する
+		tree2->insert(parent2, children2);
+		tree2->insert(v_desc, std::vector<RoadVertexDesc>());
+
+		child1 = children1[i];
+		child2 = v_desc;
+
+		return true;
 	}
 
-	// ベストペアが見つかったか、チェック
-	if (min_angle < std::numeric_limits<float>::max()) {
-		if (paired1->at(min_id1)) {
-			// 子ノードをコピー
-			RoadVertex* v = new RoadVertex(roads1->graph[children1->at(min_id1)]->getPt());
-			child1 = boost::add_vertex(roads1->graph);
-			roads1->graph[child1] = v;
+	for (int i = 0; i < children2.size(); i++) {
+		if (paired2->at(i)) continue;
 
-			children1->push_back(child1);
-			paired1->push_back(true);
-		} else {
-			child1 = children1->at(min_id1);
-			paired1->at(min_id1) = true;
-		}
+		// 相手の親ノードをコピーしてマッチさせる
+		RoadVertex* v = new RoadVertex(roads1->graph[parent1]->getPt());
+		RoadVertexDesc v_desc = boost::add_vertex(roads1->graph);
+		roads1->graph[v_desc] = v;
 
-		if (paired2->at(min_id2)) {
-			// 子ノードをコピー
-			RoadVertex* v = new RoadVertex(roads2->graph[children2->at(min_id2)]->getPt());
-			child2 = boost::add_vertex(roads2->graph);
-			roads2->graph[child2] = v;
+		children1.push_back(v_desc);
 
-			children2->push_back(child2);
-			paired2->push_back(true);
-		} else {
-			child2 = children2->at(min_id2);
-			paired2->at(min_id2) = true;
-		}
+		paired2->at(i) = true;
+		paired1->push_back(true);
 
-		child1 = children1->at(min_id1);
-		child2 = children2->at(min_id2);
+		// 子ノードリストが更新されたので、木構造も更新する
+		tree1->insert(parent1, children1);
+		tree1->insert(v_desc, std::vector<RoadVertexDesc>());
+
+		child1 = v_desc;
+		child2 = children2[i];
 
 		return true;
 	}

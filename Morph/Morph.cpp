@@ -43,7 +43,7 @@ void Morph::paintEvent(QPaintEvent *) {
 	}
 
 	if (mode == 3 && mmt != NULL) {
-		mmt->draw(&painter, width / 2 + 150, 800.0f / width);
+		mmt->draw(&painter, t, width / 2 + 150, 800.0f / width);
 	}
 }
 
