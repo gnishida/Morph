@@ -28,14 +28,18 @@ BFS::BFS(Morph* morph, const char* filename1, const char* filename2) {
 void BFS::draw(QPainter* painter, float t, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	//drawGraph(painter, roads2, QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
+	drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
+	/*
 	RoadGraph* interpolated = interpolate(t);
 	drawGraph(painter, interpolated, QColor(0, 0, 255), offset, scale);
 	if (t > 0.0f && t < 1.0f) {
 		//interpolated->clear();
 		//delete interpolated;
 	}
+	*/
 }
 
 void BFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -66,6 +70,31 @@ void BFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset,
 		int x = (v->getPt().x() + offset) * scale;
 		int y = (-v->getPt().y() + offset) * scale;
 		painter->fillRect(x - 1, y - 1, 3, 3, col);
+	}
+}
+
+void BFS::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc>* correspondence, RoadGraph *roads2, int offset, float scale) {
+	if (roads1 == NULL || roads2 == NULL) return;
+
+	painter->setPen(QPen(Qt::black, 1, Qt::DotLine, Qt::RoundCap));
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		RoadVertex* v1 = roads1->graph[*vi];
+		if (!v1->valid) continue;
+
+		if (rand() * 10 < 8) continue;
+
+		RoadVertexDesc v2_desc = correspondence->value(*vi);
+
+		RoadVertex* v2 = roads2->graph[v2_desc];
+		if (!v2->valid) continue;
+
+		int x1 = (v1->getPt().x() + offset) * scale;
+		int y1 = (-v1->getPt().y() + offset) * scale;
+		int x2 = (v2->getPt().x() + offset) * scale;
+		int y2 = (-v2->getPt().y() + offset) * scale;
+		painter->drawLine(x1, y1, x2, y2);
 	}
 }
 
@@ -336,91 +365,4 @@ bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVerte
 
 	// ペアなし、つまり、全ての子ノードがペアになっている
 	return false;
-}
-
-/**
- * 頂点を、順番にcollapseしていく。
- * ただし、当該頂点から出るエッジの長さが短いものから、優先的にcollapseしていく。
- */
-void BFS::collapse(RoadGraph* roads) {
-	qDebug() << "collapse start.";
-
-	RoadOutEdgeIter oei, oeend;
-	for (boost::tie(oei, oeend) = boost::out_edges(33, roads->graph); oei != oeend; ++oei) {
-		RoadVertexDesc tgt = boost::target(*oei, roads->graph);
-	}
-
-	int count = 0;
-
-	while (true) {
-		float min_len = std::numeric_limits<float>::max();
-		RoadEdgeDesc min_e_desc;
-
-		RoadEdgeIter ei, eend;
-		for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
-			if (!roads->graph[*ei]->valid) continue;
-
-			float len = roads->graph[*ei]->getLength();
-			
-			if (len < min_len) {
-				min_len = len;
-				min_e_desc = *ei;
-			}
-		}
-
-		if (min_len == std::numeric_limits<float>::max()) break;
-
-		GraphUtil::collapseEdge(roads, min_e_desc);
-
-		// 再描画
-		morph->update();
-
-		qDebug() << "remove edge." << (++count);
-
-		// 300ミリ秒待機
-		QTest::qWait(300);
-	}
-
-	qDebug() << "collapse done.";
-}
-
-/**
- * Collapseした道路網を、親子関係の木構造を使って、元に戻す。
- */
-void BFS::expand(RoadGraph* roads) {
-	qDebug() << "expand start.";
-
-	for (int i = roads->collapseHistory.size() - 1; i >= 0; i--) {
-		RoadVertexDesc v1 = roads->collapseHistory[i].parentNode;
-		RoadVertexDesc v2 = roads->collapseHistory[i].childNode;
-
-		// 子ノードv2を有効にする
-		roads->graph[v2]->valid = true;
-
-		// v1とv2の間のエッジを有効にする
-		RoadEdgeDesc e = GraphUtil::getEdge(roads, v1, v2, false);
-		roads->graph[e]->valid = true;
-
-		// 子ノードv2からのエッジを有効にする
-		for (int j = 0; j < roads->collapseHistory[i].removedEdges.size(); j++) {
-			RoadEdgeDesc e2 = roads->collapseHistory[i].removedEdges[j];
-
-			roads->graph[e2]->valid = true;
-		}
-
-		// 親ノードvからのエッジを無効にする
-		for (int j = 0; j < roads->collapseHistory[i].addedEdges.size(); j++) {
-			RoadEdgeDesc e2 = roads->collapseHistory[i].addedEdges[j];
-
-			roads->graph[e2]->valid = false;
-		}
-
-		// 再描画
-		morph->update();
-
-		// 300ミリ秒待機
-		QTest::qWait(300);
-	}
-
-	qDebug() << "expand done.";
 }
