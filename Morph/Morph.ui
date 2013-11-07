@@ -27,7 +27,9 @@
     <property name="title">
      <string>Morphing</string>
     </property>
-    <addaction name="actionStart"/>
+    <addaction name="actionNearestNeighbor"/>
+    <addaction name="actionNearestNeighborConnectivity"/>
+    <addaction name="actionMMT"/>
    </widget>
    <addaction name="menuMorphing"/>
   </widget>
@@ -40,9 +42,19 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionStart">
+  <action name="actionNearestNeighbor">
    <property name="text">
-    <string>Start</string>
+    <string>Nearest Neighbor</string>
+   </property>
+  </action>
+  <action name="actionNearestNeighborConnectivity">
+   <property name="text">
+    <string>Nearest Neighbor with Connectivity</string>
+   </property>
+  </action>
+  <action name="actionMMT">
+   <property name="text">
+    <string>MMT</string>
    </property>
   </action>
  </widget>

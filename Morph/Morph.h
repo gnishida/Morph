@@ -26,8 +26,7 @@ public:
 	Morphing2* morphing2;
 	MMT* mmt;
 
-	// roads
-	//RoadGraph* roads;
+	int mode;
 
 public:
 	Morph(QWidget *parent = 0, Qt::WFlags flags = 0);
@@ -40,7 +39,9 @@ private:
 	Ui::MorphClass ui;
 
 private slots:
-	void start();
+	void startNearestNeighbor();
+	void startNearestNeighborConnectivity();
+	void startMMT();
 	void tick();
 
 public:

@@ -12,7 +12,9 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 
 	timer = new QTimer(this);
 
-	connect(ui.actionStart, SIGNAL(triggered()), this, SLOT(start()));
+	connect(ui.actionNearestNeighbor, SIGNAL(triggered()), this, SLOT(startNearestNeighbor()));
+	connect(ui.actionNearestNeighborConnectivity, SIGNAL(triggered()), this, SLOT(startNearestNeighborConnectivity()));
+	connect(ui.actionMMT, SIGNAL(triggered()), this, SLOT(startMMT()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(tick()) );
 
 	width = height = 2000;
@@ -22,6 +24,8 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	morphing = NULL;
 	morphing2 = NULL;
 	mmt = NULL;
+
+	mode = 0;
 }
 
 Morph::~Morph() {
@@ -30,39 +34,58 @@ Morph::~Morph() {
 void Morph::paintEvent(QPaintEvent *) {
     QPainter painter(this);
 
-	if (morphing != NULL) {
+	if (mode == 1 && morphing != NULL) {
 		morphing->draw(&painter, t, width / 2 + 150, 800.0f / width);
 	}
 	
-	if (morphing2 != NULL) {
+	if (mode == 2 && morphing2 != NULL) {
 		morphing2->draw(&painter, t, width / 2 + 150, 800.0f / width);
 	}
 
-	if (mmt != NULL) {
+	if (mode == 3 && mmt != NULL) {
 		mmt->draw(&painter, width / 2 + 150, 800.0f / width);
 	}
 }
 
-void Morph::start() {
+void Morph::startNearestNeighbor() {
 	timer->stop();
 
 	if (morphing == NULL) {
-		//morphing = new Morphing(this);
-		//morphing->initRoads("roads1.gsm", "roads2.gsm");
+		morphing = new Morphing(this);
+		morphing->initRoads("roads1.gsm", "roads2.gsm");
 	}
+
+	mode = 1;
+
+	t = 1.0f;
+	timer->start(100);
+}
+
+void Morph::startNearestNeighborConnectivity() {
+	timer->stop();
 
 	if (morphing2 == NULL) {
 		morphing2 = new Morphing2(this);
 		morphing2->initRoads("roads1.gsm", "roads2.gsm");
 	}
 
-	if (mmt == NULL) {
-		//mmt = new MMT(this, "roads1.gsm");
-		//mmt->buildTree();
-	}
+	mode = 2;
 
 	t = 1.0f;
+	timer->start(100);
+}
 
+void Morph::startMMT() {
+	timer->stop();
+
+	if (mmt == NULL) {
+		mmt = new MMT(this, "roads1.gsm", "roads2.gsm");
+		mmt->buildTree2();
+	}
+
+	mode = 3;
+
+	t = 1.0f;
 	timer->start(100);
 }
 

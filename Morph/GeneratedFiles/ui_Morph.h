@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'Morph.ui'
 **
-** Created: Thu Nov 7 01:05:17 2013
+** Created: Thu Nov 7 07:27:04 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -27,7 +27,9 @@ QT_BEGIN_NAMESPACE
 class Ui_MorphClass
 {
 public:
-    QAction *actionStart;
+    QAction *actionNearestNeighbor;
+    QAction *actionNearestNeighborConnectivity;
+    QAction *actionMMT;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuMorphing;
@@ -39,8 +41,12 @@ public:
         if (MorphClass->objectName().isEmpty())
             MorphClass->setObjectName(QString::fromUtf8("MorphClass"));
         MorphClass->resize(600, 400);
-        actionStart = new QAction(MorphClass);
-        actionStart->setObjectName(QString::fromUtf8("actionStart"));
+        actionNearestNeighbor = new QAction(MorphClass);
+        actionNearestNeighbor->setObjectName(QString::fromUtf8("actionNearestNeighbor"));
+        actionNearestNeighborConnectivity = new QAction(MorphClass);
+        actionNearestNeighborConnectivity->setObjectName(QString::fromUtf8("actionNearestNeighborConnectivity"));
+        actionMMT = new QAction(MorphClass);
+        actionMMT->setObjectName(QString::fromUtf8("actionMMT"));
         centralWidget = new QWidget(MorphClass);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         MorphClass->setCentralWidget(centralWidget);
@@ -58,7 +64,9 @@ public:
         MorphClass->setStatusBar(statusBar);
 
         menuBar->addAction(menuMorphing->menuAction());
-        menuMorphing->addAction(actionStart);
+        menuMorphing->addAction(actionNearestNeighbor);
+        menuMorphing->addAction(actionNearestNeighborConnectivity);
+        menuMorphing->addAction(actionMMT);
 
         retranslateUi(MorphClass);
 
@@ -68,7 +76,9 @@ public:
     void retranslateUi(QMainWindow *MorphClass)
     {
         MorphClass->setWindowTitle(QApplication::translate("MorphClass", "Morph", 0, QApplication::UnicodeUTF8));
-        actionStart->setText(QApplication::translate("MorphClass", "Start", 0, QApplication::UnicodeUTF8));
+        actionNearestNeighbor->setText(QApplication::translate("MorphClass", "Nearest Neighbor", 0, QApplication::UnicodeUTF8));
+        actionNearestNeighborConnectivity->setText(QApplication::translate("MorphClass", "Nearest Neighbor with Connectivity", 0, QApplication::UnicodeUTF8));
+        actionMMT->setText(QApplication::translate("MorphClass", "MMT", 0, QApplication::UnicodeUTF8));
         menuMorphing->setTitle(QApplication::translate("MorphClass", "Morphing", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
