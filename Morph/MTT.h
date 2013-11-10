@@ -24,7 +24,7 @@ struct dataComparison {
 };
 
 class MTT {
-private:
+public:
 	Morph* morph;
 	RoadGraph* roads1;
 	RoadGraph* roads2;
@@ -40,6 +40,8 @@ private:
 	std::vector<RoadGraph*> sequence1;
 	std::vector<RoadGraph*> sequence2;
 
+	int selected;
+
 public:
 	MTT(Morph* morph, const char* filename1, const char* filename2);
 
@@ -53,5 +55,7 @@ public:
 
 	void findBoundaryVertices(RoadGraph* roads, RoadVertexDesc &v1_desc, RoadVertexDesc &v2_desc);
 	void createVertexMatrix(RoadGraph* roads, cv::Mat& vmat);
+
+	void selectSequence(int selected);
 };
 

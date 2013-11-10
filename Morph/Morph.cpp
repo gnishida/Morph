@@ -100,13 +100,16 @@ void Morph::startMTT() {
 
 	mode = 4;
 
+
 	if (mtt == NULL) {
 		mtt = new MTT(this, "roads1.gsm", "roads2.gsm");
 		mtt->buildTree();
 	}
 
-	t = 1.0f;
-	timer->start(100);
+	// DocWidgetの表示
+	widgetMTT = new MTTControlWidget(this, mtt);
+	addDockWidget(Qt::LeftDockWidgetArea, widgetMTT);
+
 }
 
 void Morph::tick() {

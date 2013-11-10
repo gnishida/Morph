@@ -34,6 +34,8 @@ MTT::MTT(Morph* morph, const char* filename1, const char* filename2) {
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30, 0.0f);
 	fclose(fp);
+
+	selected = 0;
 }
 
 void MTT::draw(QPainter* painter, float t, int offset, float scale) {
@@ -41,10 +43,7 @@ void MTT::draw(QPainter* painter, float t, int offset, float scale) {
 
 	//drawGraph(painter, roads2, QColor(0, 0, 255), offset, scale);
 
-	int index = sequence2.size() * (1.0f - t);
-	if (index >= sequence2.size()) index = sequence2.size() - 1;
-	RoadGraph* interpolated = sequence2[index];
-	drawGraph(painter, interpolated, QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, sequence1[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void MTT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -80,7 +79,7 @@ void MTT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset,
 
 void MTT::buildTree() {
 	// 頂点の中で、degreeが1のものをcollapseしていく
-	collapse(roads2, &sequence2);
+	collapse(roads1, &sequence1);
 
 	return;
 
@@ -254,4 +253,8 @@ void MTT::createVertexMatrix(RoadGraph* roads, cv::Mat& vmat) {
 
 		count++;
 	}
+}
+
+void MTT::selectSequence(int selected) {
+	this->selected = selected;
 }

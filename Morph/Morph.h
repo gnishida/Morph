@@ -9,6 +9,7 @@
 #include "BFS.h"
 #include "MTT.h"
 #include "ui_Morph.h"
+#include "MTTControlWidget.h"
 #include <qmap.h>
 #include <qtimer.h>
 
@@ -27,6 +28,8 @@ public:
 	Morphing2* morphing2;
 	BFS* bfs;
 	MTT* mtt;
+
+	MTTControlWidget* widgetMTT;
 
 	int mode;
 
