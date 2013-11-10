@@ -56,12 +56,12 @@ void Morph::paintEvent(QPaintEvent *) {
 void Morph::startNearestNeighbor() {
 	timer->stop();
 
+	mode = 1;
+
 	if (morphing == NULL) {
 		morphing = new Morphing(this);
 		morphing->initRoads("roads1.gsm", "roads2.gsm");
 	}
-
-	mode = 1;
 
 	t = 1.0f;
 	timer->start(100);
@@ -70,12 +70,12 @@ void Morph::startNearestNeighbor() {
 void Morph::startNearestNeighborConnectivity() {
 	timer->stop();
 
+	mode = 2;
+
 	if (morphing2 == NULL) {
 		morphing2 = new Morphing2(this);
 		morphing2->initRoads("roads1.gsm", "roads2.gsm");
 	}
-
-	mode = 2;
 
 	t = 1.0f;
 	timer->start(100);
@@ -84,12 +84,12 @@ void Morph::startNearestNeighborConnectivity() {
 void Morph::startBFS() {
 	timer->stop();
 
+	mode = 3;
+
 	if (bfs == NULL) {
 		bfs = new BFS(this, "roads1.gsm", "roads2.gsm");
 		bfs->buildTree();
 	}
-
-	mode = 3;
 
 	t = 1.0f;
 	timer->start(100);
@@ -98,12 +98,12 @@ void Morph::startBFS() {
 void Morph::startMTT() {
 	timer->stop();
 
+	mode = 4;
+
 	if (mtt == NULL) {
 		mtt = new MTT(this, "roads1.gsm", "roads2.gsm");
-		mtt->buildTree2();
+		mtt->buildTree();
 	}
-
-	mode = 4;
 
 	t = 1.0f;
 	timer->start(100);

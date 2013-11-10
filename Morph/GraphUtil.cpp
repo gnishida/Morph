@@ -17,9 +17,32 @@ float GraphUtil::getTotalEdgeLength(RoadGraph* roads, RoadVertexDesc v) {
 }
 
 /**
+ * 頂点の数を返却する。
+ * onlyValidVertexフラグがtrueの場合は、全ての頂点のvalidフラグをチェックしてカウントする。
+ *
+ */
+int GraphUtil::getNumVertices(RoadGraph* roads, bool onlyValidVertex) {
+	if (!onlyValidVertex) {
+		return boost::num_vertices(roads->graph);
+	}
+
+	int count = 0;
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
+		count++;
+	}
+
+	return count;
+}
+
+/**
  * グラフのノードv1をv2にcollapseする。
  */
 void GraphUtil::collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2) {
+	if (v1 == v2) return;
+
 	roads->graph[v1]->valid = false;
 
 	RoadOutEdgeIter ei, eend;
@@ -529,4 +552,44 @@ void GraphUtil::planarify(RoadGraph* roads) {
 			}
 		}
 	}
+}
+
+/**
+ * 道路網をコピー(deep copy)する。
+ */
+RoadGraph* GraphUtil::copyRoads(RoadGraph* roads) {
+	RoadGraph* new_roads = new RoadGraph();
+	
+	QMap<RoadVertexDesc, RoadVertexDesc> conv;
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
+		// 道路の追加
+		RoadVertex* new_v = new RoadVertex(roads->graph[*vi]->getPt());
+		RoadVertexDesc new_v_desc = boost::add_vertex(new_roads->graph);
+		new_roads->graph[new_v_desc] = new_v;
+
+		conv[*vi] = new_v_desc;
+	}
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads->graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+		RoadVertexDesc new_src = conv[src];
+		RoadVertexDesc new_tgt = conv[tgt];
+
+		// エッジの追加
+		RoadEdge* new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type);
+		new_e->addPoint(new_roads->graph[new_src]->getPt());
+		new_e->addPoint(new_roads->graph[new_tgt]->getPt());
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(new_src, new_tgt, new_roads->graph);
+		new_roads->graph[edge_pair.first] = new_e;
+	}
+
+	return new_roads;
 }

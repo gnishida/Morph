@@ -80,6 +80,9 @@
     <ClCompile Include="MTT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PCA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Morph.h">
@@ -124,6 +127,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MTT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PCA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
