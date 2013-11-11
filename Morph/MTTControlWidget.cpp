@@ -85,4 +85,3 @@ void MTTControlWidget::nextSequence() {
 	mtt->selectSequence(value);
 	parent->update();
 }
-

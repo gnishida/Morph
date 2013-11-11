@@ -5,9 +5,7 @@
 #include <QtTest/qtest.h>
 #include <qdebug.h>
 
-BFS::BFS(Morph* morph, const char* filename1, const char* filename2) {
-	this->morph = morph;
-
+BFS::BFS(const char* filename1, const char* filename2) {
 	FILE* fp = fopen(filename1, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
@@ -23,21 +21,36 @@ BFS::BFS(Morph* morph, const char* filename1, const char* filename2) {
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30, 0.0f);
 	fclose(fp);
+
+	selected = 0;
+	tree1 = NULL;
+	tree2 = NULL;
 }
 
-void BFS::draw(QPainter* painter, float t, int offset, float scale) {
+BFS::~BFS() {
+	delete roads1;
+	delete roads2;
+	delete tree1;
+	delete tree2;
+	clearSequence();
+}
+
+void BFS::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
+	/*
 	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
 	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
 	drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
-
+	*/
+	
+	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 	/*
 	RoadGraph* interpolated = interpolate(t);
 	drawGraph(painter, interpolated, QColor(0, 0, 255), offset, scale);
 	if (t > 0.0f && t < 1.0f) {
-		//interpolated->clear();
-		//delete interpolated;
+		interpolated->clear();
+		delete interpolated;
 	}
 	*/
 }
@@ -99,22 +112,22 @@ void BFS::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc
 }
 
 RoadGraph* BFS::interpolate(float t) {
-	if (t == 1.0f) return roads1;
-	if (t == 0.0f) return roads2;
+	if (t == 1.0f) return GraphUtil::copyRoads(roads1);
+	if (t == 0.0f) return GraphUtil::copyRoads(roads2);
 
 	RoadGraph* roads = new RoadGraph();
 
 	QMap<RoadVertexDesc, QMap<RoadVertexDesc, RoadVertexDesc> > conv;
 
 	// ルートの頂点を作成
-	RoadVertex* v_root = new RoadVertex(roads1->graph[root1]->getPt() * t + roads2->graph[root2]->getPt() * (1 - t));
+	RoadVertex* v_root = new RoadVertex(roads1->graph[tree1->getRoot()]->getPt() * t + roads2->graph[tree2->getRoot()]->getPt() * (1 - t));
 	RoadVertexDesc v_root_desc = boost::add_vertex(roads->graph);
 	roads->graph[v_root_desc] = v_root;
 
 	// ルート頂点をシードに入れる
 	std::list<RoadVertexDesc> seeds;
 	std::list<RoadVertexDesc> seeds_new;
-	seeds.push_back(root1);
+	seeds.push_back(tree1->getRoot());
 	seeds_new.push_back(v_root_desc);
 
 	// 木構造を使って、頂点を登録していく
@@ -126,9 +139,9 @@ RoadGraph* BFS::interpolate(float t) {
 		seeds_new.pop_front();
 
 		// 子ノードリストを取得
-		for (int i = 0; i < tree1[parent].size(); i++) {
+		for (int i = 0; i < tree1->getChildren(parent).size(); i++) {
 			// 子ノードを取得
-			RoadVertexDesc child1 = tree1[parent][i];
+			RoadVertexDesc child1 = tree1->getChildren(parent)[i];
 
 			// 対応ノードを取得
 			RoadVertexDesc child2 = correspondence[child1];
@@ -177,64 +190,34 @@ void BFS::buildTree() {
 	// 頂点が１つもない場合は、終了
 	if (count == 0) return;
 
-	root1 = min_v1_desc;
-	root2 = min_v2_desc;
+	if (tree1 != NULL) delete tree1;
+	if (tree2 != NULL) delete tree2;
+	tree1 = new BFSTree(roads1, min_v1_desc);
+	tree2 = new BFSTree(roads2, min_v2_desc);
 
-	// 木構造を構築する
-	bfs(roads1, root1, &tree1);
-	bfs(roads2, root2, &tree2);
+	correspondence = findCorrespondence(roads1, tree1, roads2, tree2);
 
-	correspondence = findCorrespondence(roads1, root1, &tree1, roads2, root2, &tree2);
-}
+	// シーケンスを生成
+	clearSequence();
+	for (int i = 0; i <= 20; i++) {
+		float t = 1.0f - (float)i * 0.05f;
 
-/**
- * BFSアプローチで、ルートからノードをたどり、木構造を作成する
- */
-void BFS::bfs(RoadGraph* roads, RoadVertexDesc root, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree) {
-	std::list<RoadVertexDesc> seeds;
-	seeds.push_back(root);
-	QMap<RoadVertexDesc, bool> visited;
-	visited[root] = true;
-
-	while (!seeds.empty()) {
-		RoadVertexDesc parent = seeds.front();
-		seeds.pop_front();
-
-		std::vector<RoadVertexDesc> children;
-
-		RoadOutEdgeIter ei, eend;
-		for (boost::tie(ei, eend) = boost::out_edges(parent, roads->graph); ei != eend; ++ei) {
-			RoadVertexDesc child = boost::target(*ei, roads->graph);
-			if (visited.contains(child)) {
-				// 対象ノードが訪問済みの場合、対象ノードをコピーして子ノードにする
-				RoadVertex* v = new RoadVertex(roads->graph[child]->getPt());
-				RoadVertexDesc child2 = boost::add_vertex(roads->graph);
-				roads->graph[child2] = v;
-
-				children.push_back(child2);
-			} else {
-				visited[child] = true;
-
-				children.push_back(child);
-
-				seeds.push_back(child);
-			}
-		}
-
-		tree->insert(parent, children);
+		sequence.push_back(interpolate(t));
 	}
 }
 
 /**
  * ２つの道路網を、木構造を使ってマッチングさせる。
  */
-QMap<RoadVertexDesc, RoadVertexDesc> BFS::findCorrespondence(RoadGraph* roads1, RoadVertexDesc root1, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree1, RoadGraph* roads2, RoadVertexDesc root2, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree2) {
+QMap<RoadVertexDesc, RoadVertexDesc> BFS::findCorrespondence(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2) {
 	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
 
+	correspondence[tree1->getRoot()] = tree2->getRoot();
+
 	std::list<RoadVertexDesc> seeds1;
-	seeds1.push_back(root1);
+	seeds1.push_back(tree1->getRoot());
 	std::list<RoadVertexDesc> seeds2;
-	seeds2.push_back(root2);
+	seeds2.push_back(tree2->getRoot());
 
 	while (!seeds1.empty()) {
 		RoadVertexDesc parent1 = seeds1.front();
@@ -243,33 +226,93 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFS::findCorrespondence(RoadGraph* roads1, 
 		seeds2.pop_front();
 
 		// 子ノードのリストを取得
-		std::vector<RoadVertexDesc> children1 = tree1->value(parent1);
-		std::vector<RoadVertexDesc> children2 = tree2->value(parent2);
+		std::vector<RoadVertexDesc> children1 = tree1->getChildren(parent1);
+		std::vector<RoadVertexDesc> children2 = tree2->getChildren(parent2);
 
 		// どちらのノードにも、子ノードがない場合は、スキップ
 		if (children1.size() == 0 && children2.size() == 0) continue;
 
-		// ペアになったかのフラグ
-		std::vector<bool> paired1;
-		std::vector<bool> paired2;
-		for (int i = 0; i < children1.size(); i++) {
-			paired1.push_back(false);
+		// 子ノード同士でペアを探す
+		QMap<RoadVertexDesc, RoadVertexDesc> corr;
+		if (children1.size() < children2.size()) {
+			corr = findPairs(roads1, tree1, parent1, children1, roads2, tree2, parent2, children2);
+		} else {
+			corr = findPairs(roads2, tree2, parent2, children2, roads1, tree1, parent1, children1);
 		}
-		for (int i = 0; i < children2.size(); i++) {
-			paired2.push_back(false);
-		}
-		
-		while (true) {
-			RoadVertexDesc child1, child2;
-			if (!findBestPair(roads1, parent1, tree1, &paired1, roads2, parent2, tree2, &paired2, child1, child2)) break;
+
+		for (QMap<RoadVertexDesc, RoadVertexDesc>::iterator it = corr.begin(); it != corr.end(); ++it) {
+			RoadVertexDesc child1 = it.key();
+			RoadVertexDesc child2 = it.value();
 
 			correspondence[child1] = child2;
-
 			seeds1.push_back(child1);
 			seeds2.push_back(child2);
-		}
+		}		
 	}
 
+	return correspondence;
+}
+
+/**
+ * 子ノードリスト同士で、マッチングさせる
+ * children1の方が、子供の数が少ないという前提
+ */
+QMap<RoadVertexDesc, RoadVertexDesc> BFS::findPairs(RoadGraph* roads, BFSTree* tree1, RoadVertexDesc parent1, std::vector<RoadVertexDesc> children1, RoadGraph* roads2, BFSTree* tree2, RoadVertexDesc parent2, std::vector<RoadVertexDesc> children2) {
+	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
+
+	// ペアになったかのフラグ
+	std::vector<bool> paired1;
+	std::vector<bool> paired2;
+	for (int i = 0; i < children1.size(); i++) {
+		paired1.push_back(false);
+	}
+	for (int i = 0; i < children2.size(); i++) {
+		paired2.push_back(false);
+	}
+
+	// 子ノードリスト１に対して、それぞれペアを探す
+	for (int i = 0; i < children1.size(); i++) {
+		int height1 = tree1->getHeight(children1[i]);
+		int min_diff = std::numeric_limits<int>::max();
+		int min_id;
+		RoadVertexDesc child2;
+
+		for (int j = 0; j < children2.size(); j++) {
+			if (paired2[j]) continue;
+
+			int diff = abs(tree2->getHeight(children2[j]) - height1);
+			if (diff < min_diff) {
+				min_diff = diff;
+				min_id = j;
+			}
+		}
+
+		paired2[min_id] = true;
+		correspondence[children1[i]] = children2[min_id];
+	}
+
+	// 子ノードリスト２に対して、ペアになっていないノードがあれば、ペアを探す
+	for (int i = 0; i < children2.size(); i++) {
+		if (paired2[i]) continue;
+
+		int height2 = tree2->getHeight(children2[i]);
+		int min_diff = std::numeric_limits<int>::max();
+		int min_id;
+		RoadVertexDesc child1;
+
+		for (int j = 0; j < children1.size(); j++) {
+			int diff = abs(tree1->getHeight(children1[j]) - height2);
+			if (diff < min_diff) {
+				min_diff = diff;
+				min_id = j;
+			}
+		}
+				
+		// children1[index]のノードをコピーして、マッチさせる
+		RoadVertexDesc v1_desc = tree1->copySubTree(children1[min_id], parent1);
+		correspondence[v1_desc] = children2[i];
+	}
+	
 	return correspondence;
 }
 
@@ -365,4 +408,16 @@ bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVerte
 
 	// ペアなし、つまり、全ての子ノードがペアになっている
 	return false;
+}
+
+void BFS::selectSequence(int selected) {
+	this->selected = selected;
+}
+
+void BFS::clearSequence() {
+	for (int i = 0; i < sequence.size(); i++) {
+		sequence[i]->clear();
+		delete sequence[i];
+	}
+	sequence.clear();
 }

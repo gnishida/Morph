@@ -19,7 +19,7 @@ MTT::MTT(const char* filename) {
 }
 
 MTT::~MTT() {
-	roads->clear();
+	delete roads;
 	clearSequence();
 }
 
