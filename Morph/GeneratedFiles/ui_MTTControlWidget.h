@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'MTTControlWidget.ui'
 **
-** Created: Sun Nov 10 18:48:13 2013
+** Created: Sun Nov 10 19:08:50 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -35,10 +35,11 @@ public:
     {
         if (MTTControlWidget->objectName().isEmpty())
             MTTControlWidget->setObjectName(QString::fromUtf8("MTTControlWidget"));
-        MTTControlWidget->resize(141, 254);
+        MTTControlWidget->resize(145, 199);
         MTTControlWidget->setStyleSheet(QString::fromUtf8("background-color: rgb(133, 133, 133);"));
         dockWidgetContents = new QWidget();
         dockWidgetContents->setObjectName(QString::fromUtf8("dockWidgetContents"));
+        dockWidgetContents->setMinimumSize(QSize(145, 177));
         horizontalSlider = new QSlider(dockWidgetContents);
         horizontalSlider->setObjectName(QString::fromUtf8("horizontalSlider"));
         horizontalSlider->setGeometry(QRect(10, 20, 111, 19));
