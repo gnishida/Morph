@@ -27,7 +27,6 @@ public:
 	Morphing* morphing;
 	Morphing2* morphing2;
 	BFS* bfs;
-	MTT* mtt;
 
 	MTTControlWidget* widgetMTT;
 

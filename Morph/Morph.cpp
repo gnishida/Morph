@@ -25,7 +25,6 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	morphing = NULL;
 	morphing2 = NULL;
 	bfs = NULL;
-	mtt = NULL;
 
 	mode = 0;
 }
@@ -48,8 +47,8 @@ void Morph::paintEvent(QPaintEvent *) {
 		bfs->draw(&painter, t, width / 2 + 150, 800.0f / width);
 	}
 
-	if (mode == 4 && mtt != NULL) {
-		mtt->draw(&painter, t, width / 2 + 150, 800.0f / width);
+	if (mode == 4) {
+		widgetMTT->draw(&painter, width / 2 + 150, 800.0f / width);
 	}
 }
 
@@ -100,16 +99,9 @@ void Morph::startMTT() {
 
 	mode = 4;
 
-
-	if (mtt == NULL) {
-		mtt = new MTT(this, "roads1.gsm", "roads2.gsm");
-		mtt->buildTree();
-	}
-
 	// DocWidgetの表示
-	widgetMTT = new MTTControlWidget(this, mtt);
+	widgetMTT = new MTTControlWidget(this);
 	addDockWidget(Qt::LeftDockWidgetArea, widgetMTT);
-
 }
 
 void Morph::tick() {

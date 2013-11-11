@@ -26,26 +26,25 @@ struct dataComparison {
 class MTT {
 public:
 	Morph* morph;
-	RoadGraph* roads1;
-	RoadGraph* roads2;
+	RoadGraph* roads;
 
-	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > tree1;
-	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > tree2;
+	//QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > tree1;
+	//QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > tree2;
 
-	RoadVertexDesc root1;
-	RoadVertexDesc root2;
+	//RoadVertexDesc root1;
+	//RoadVertexDesc root2;
 
-	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
+	//QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
 
-	std::vector<RoadGraph*> sequence1;
-	std::vector<RoadGraph*> sequence2;
+	std::vector<RoadGraph*> sequence;
 
 	int selected;
 
 public:
-	MTT(Morph* morph, const char* filename1, const char* filename2);
+	MTT(const char* filename);
+	~MTT();
 
-	void draw(QPainter* painter, float t, int offset, float scale);
+	void draw(QPainter* painter, int offset, float scale);
 	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
 
 	void buildTree();

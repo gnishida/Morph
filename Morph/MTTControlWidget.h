@@ -15,11 +15,14 @@ private:
 	MTT* mtt;
 
 public:
-	MTTControlWidget(Morph* parent, MTT* mtt);
+	MTTControlWidget(Morph* parent);
+
+	void draw(QPainter* painter, int offset, float scale);
 
 public slots:
 	void updateRoads(int value);
 	void prevRoads();
 	void nextRoads();
+	void loadGSM();
 };
 

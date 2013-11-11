@@ -16,34 +16,33 @@ VertexPriority::VertexPriority(RoadVertexDesc desc, float priority) {
 	this->priority = priority;
 }
 
-MTT::MTT(Morph* morph, const char* filename1, const char* filename2) {
-	this->morph = morph;
-
-	FILE* fp = fopen(filename1, "rb");
-	roads1 = new RoadGraph();
-	roads1->load(fp, 2);
-	GraphUtil::planarify(roads1);
-	GraphUtil::singlify(roads1);
-	GraphUtil::simplify(roads1, 30, 0.0f);
-	fclose(fp);
-
-	fp = fopen(filename2, "rb");
-	roads2 = new RoadGraph();
-	roads2->load(fp, 2);
-	GraphUtil::planarify(roads2);
-	GraphUtil::singlify(roads2);
-	GraphUtil::simplify(roads2, 30, 0.0f);
+MTT::MTT(const char* filename) {
+	FILE* fp = fopen(filename, "rb");
+	roads = new RoadGraph();
+	roads->load(fp, 2);
+	GraphUtil::planarify(roads);
+	GraphUtil::singlify(roads);
+	GraphUtil::simplify(roads, 30, 0.0f);
 	fclose(fp);
 
 	selected = 0;
 }
 
-void MTT::draw(QPainter* painter, float t, int offset, float scale) {
-	if (roads1 == NULL) return;
+MTT::~MTT() {
+	roads->clear();
+	for (int i = 0; i < sequence.size(); i++) {
+		sequence[i]->clear();
+		delete sequence[i];
+	}
+	sequence.clear();
+}
+
+void MTT::draw(QPainter* painter, int offset, float scale) {
+	if (roads == NULL) return;
 
 	//drawGraph(painter, roads2, QColor(0, 0, 255), offset, scale);
 
-	drawGraph(painter, sequence1[selected], QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void MTT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -79,20 +78,20 @@ void MTT::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset,
 
 void MTT::buildTree() {
 	// 頂点の中で、degreeが1のものをcollapseしていく
-	collapse(roads1, &sequence1);
+	collapse(roads, &sequence);
 
 	return;
 
 	// 生き残っている頂点を探す。
 	std::list<RoadVertexDesc> v_list;
 	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
-		if (!roads1->graph[*vi]->valid) continue;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
 
 		v_list.push_back(*vi);
 	}
 
-	expand(roads1);
+	expand(roads);
 }
 
 /**
@@ -105,9 +104,10 @@ void MTT::collapse(RoadGraph* roads, std::vector<RoadGraph*>* sequence) {
 	RoadVertexDesc bdry1_desc, bdry2_desc;
 	findBoundaryVertices(roads, bdry1_desc, bdry2_desc);
 
-	int count = 0;
 
 	while (true) {
+		int count = 0;
+
 		sequence->push_back(GraphUtil::copyRoads(roads));
 
 		float min_len = std::numeric_limits<float>::max();
@@ -117,6 +117,7 @@ void MTT::collapse(RoadGraph* roads, std::vector<RoadGraph*>* sequence) {
 		for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
 			if (!roads->graph[*ei]->valid) continue;
 
+			count++;
 			float len = roads->graph[*ei]->getLength();
 			
 			if (len < min_len) {
@@ -125,7 +126,7 @@ void MTT::collapse(RoadGraph* roads, std::vector<RoadGraph*>* sequence) {
 			}
 		}
 
-		if (min_len == std::numeric_limits<float>::max()) break;
+		if (count <= 1) break;
 
 		// エッジの両端の頂点を取得する
 		RoadVertexDesc v1_desc = boost::source(min_e_desc, roads->graph);
@@ -141,16 +142,6 @@ void MTT::collapse(RoadGraph* roads, std::vector<RoadGraph*>* sequence) {
 		} else {
 			GraphUtil::collapseVertex(roads, v1_desc, v2_desc);
 		}
-
-		/*
-		// 再描画
-		morph->update();
-
-		qDebug() << "remove edge." << (++count);
-
-		// 300ミリ秒待機
-		QTest::qWait(300);
-		*/
 	}
 
 	qDebug() << "collapse done.";
@@ -186,12 +177,6 @@ void MTT::expand(RoadGraph* roads) {
 
 			roads->graph[e2]->valid = false;
 		}
-
-		// 再描画
-		morph->update();
-
-		// 300ミリ秒待機
-		QTest::qWait(300);
 	}
 
 	qDebug() << "expand done.";

@@ -6,20 +6,29 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>228</width>
-    <height>144</height>
+    <width>145</width>
+    <height>199</height>
    </rect>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(133, 133, 133);</string>
   </property>
   <property name="windowTitle">
    <string>MTT Control Widget</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
+   <property name="minimumSize">
+    <size>
+     <width>145</width>
+     <height>177</height>
+    </size>
+   </property>
    <widget class="QSlider" name="horizontalSlider">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>20</y>
-      <width>201</width>
+      <width>111</width>
       <height>19</height>
      </rect>
     </property>
@@ -32,7 +41,7 @@
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>71</width>
+      <width>41</width>
       <height>31</height>
      </rect>
     </property>
@@ -43,14 +52,27 @@
    <widget class="QPushButton" name="pushButtonNext">
     <property name="geometry">
      <rect>
-      <x>140</x>
+      <x>80</x>
       <y>60</y>
-      <width>71</width>
+      <width>41</width>
       <height>31</height>
      </rect>
     </property>
     <property name="text">
      <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonLoadGSM">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>110</y>
+      <width>111</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load GSM</string>
     </property>
    </widget>
   </widget>
