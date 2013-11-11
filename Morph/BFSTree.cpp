@@ -1,5 +1,5 @@
 ﻿#include "BFSTree.h"
-
+#include "GraphUtil.h"
 
 BFSTree::BFSTree(RoadGraph* roads, RoadVertexDesc root) {
 	this->roads = roads;
@@ -46,12 +46,24 @@ RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1, RoadVertexDesc node2) 
 	RoadVertexDesc v_desc = boost::add_vertex(roads->graph);
 	roads->graph[v_desc] = v;
 
+	// node2の子供を作成する
 	std::vector<RoadVertexDesc> c = children[node2];
 	c.push_back(v_desc);
 	children[node2] = c;
 
 	for (int i = 0; i < children[node1].size(); i++) {
-		copySubTree(children[node1][i], v_desc);
+		RoadVertexDesc c_desc = copySubTree(children[node1][i], v_desc);
+
+		// エッジを取得
+		RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, node1, children[node1][i]);
+
+		// エッジを作成する
+		RoadEdge* new_e = new RoadEdge(roads->graph[e_desc]->lanes, roads->graph[e_desc]->type);
+		new_e->addPoint(roads->graph[node1]->getPt());
+		new_e->addPoint(roads->graph[children[node1][i]]->getPt());
+
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(node2, c_desc, roads->graph);
+		roads->graph[edge_pair.first] = new_e;
 	}
 
 	return v_desc;

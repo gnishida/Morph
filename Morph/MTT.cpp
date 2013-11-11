@@ -155,6 +155,8 @@ float MTT::getMetric(RoadGraph* roads, RoadVertexDesc v1_desc, RoadVertexDesc v2
 	RoadOutEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::out_edges(v1_desc, roads->graph); ei != eend; ++ei) {
 		RoadVertexDesc tgt_desc = boost::target(*ei, roads->graph);
+		if (!roads->graph[tgt_desc]->valid) continue;
+
 		//dist_old += roads->graph[*ei]->getLength();
 		dist_old += (roads->graph[v2_desc]->getPt() - roads->graph[v1_desc]->getPt()).length();
 
@@ -166,9 +168,11 @@ float MTT::getMetric(RoadGraph* roads, RoadVertexDesc v1_desc, RoadVertexDesc v2
 
 	// 角度の変化量（最も角度変化の大きいものを、変化量として採用する）
 	float angle = 0.0f;
-	QVector2D base_dir = roads->graph[v2_desc]->getPt() - roads->graph[v1_desc]->getPt();
+	QVector2D base_dir = roads->graph[v1_desc]->getPt() - roads->graph[v2_desc]->getPt();
 	for (boost::tie(ei, eend) = boost::out_edges(v1_desc, roads->graph); ei != eend; ++ei) {
 		RoadVertexDesc tgt_desc = boost::target(*ei, roads->graph);
+		if (!roads->graph[tgt_desc]->valid) continue;
+
 		if (tgt_desc == v2_desc) continue;
 		if (tgt_desc == v1_desc) continue;
 
@@ -178,7 +182,39 @@ float MTT::getMetric(RoadGraph* roads, RoadVertexDesc v1_desc, RoadVertexDesc v2
 		if (a > angle) {
 			angle = a;
 		}
+		
+		// v2_descの隣接エッジと、v1_desc - v2_desc間のエッジとのなす角度の変化も、チェック
+		QVector2D base_dir2 = roads->graph[tgt_desc]->getPt() - roads->graph[v2_desc]->getPt();
+		RoadOutEdgeIter ei2, eend2;
+		for (boost::tie(ei2, eend2) = boost::out_edges(v2_desc, roads->graph); ei2 != eend2; ++ei2) {
+			RoadVertexDesc tgt2_desc = boost::target(*ei2, roads->graph);
+			if (tgt2_desc == v1_desc) continue;
+
+			QVector2D dir2 = roads->graph[v2_desc]->getPt() - roads->graph[tgt2_desc]->getPt();
+			float a = GraphUtil::diffAngle(base_dir2, dir2);
+			if (a > angle) {
+				angle = a;
+			}
+		}
 	}
+
+	// degree=0の場合は、v1 - v2 エッジと、v2のその他の隣接エッジとのなす角度を、変化量とする。
+	if (GraphUtil::getDegree(roads, v1_desc) == 1) {
+		for (boost::tie(ei, eend) = boost::out_edges(v2_desc, roads->graph); ei != eend; ++ei) {
+			RoadVertexDesc tgt_desc = boost::target(*ei, roads->graph);
+			if (!roads->graph[tgt_desc]->valid) continue;
+
+			if (tgt_desc == v1_desc) continue;
+
+			QVector2D base_dir = roads->graph[v2_desc]->getPt() - roads->graph[tgt_desc]->getPt();
+			QVector2D dir = roads->graph[v1_desc]->getPt() - roads->graph[v2_desc]->getPt();
+			float a = GraphUtil::diffAngle(base_dir, dir);
+			if (a > angle) {
+				angle = a;
+			}
+		}
+	}
+
 
 	// 縮み度
 	int v1_id = GraphUtil::getVertexIndex(roads, v1_desc, false);
