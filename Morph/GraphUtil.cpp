@@ -1,6 +1,10 @@
 ﻿#include "GraphUtil.h"
 #include "Util.h"
 
+#ifndef M_PI
+#define M_PI	3.141592653
+#endif
+
 /**
  * 指定した頂点から出ているエッジの長さの合計を返却する
  */
@@ -35,6 +39,41 @@ int GraphUtil::getNumVertices(RoadGraph* roads, bool onlyValidVertex) {
 	}
 
 	return count;
+}
+
+/**
+ * index番目の頂点を返却する。
+ * onlyValidVertexフラグがtrueの場合は、有効な頂点のみをカウントする。
+ */
+RoadVertexDesc GraphUtil::getVertex(RoadGraph* roads, int index, bool onlyValidVertex) {
+	int count = 0;
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (onlyValidVertex && !roads->graph[*vi]->valid) continue;
+
+		if (count == index) return *vi;
+
+		count++;
+	}
+
+	throw "Index exceeds the number of vertices.";
+}
+
+/**
+ * 当該頂点が、何番目の頂点かを返却する。
+ */
+int GraphUtil::getVertexIndex(RoadGraph* roads, RoadVertexDesc desc, bool onlyValidVertex) {
+	int count = 0;
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (onlyValidVertex && !roads->graph[*vi]->valid) continue;
+
+		if (*vi == desc) return count;
+
+		count++;
+	}
+
+	throw "The specified vertex does not exist.";
 }
 
 /**
@@ -592,4 +631,14 @@ RoadGraph* GraphUtil::copyRoads(RoadGraph* roads) {
 	}
 
 	return new_roads;
+}
+
+float GraphUtil::diffAngle(QVector2D& dir1, QVector2D& dir2) {
+	float ang1 = atan2f(dir1.y(), dir1.x());
+	if (ang1 < 0) ang1 += M_PI * 2.0f;
+
+	float ang2 = atan2f(dir2.y(), dir2.x());
+	if (ang2 < 0) ang2 += M_PI * 2.0f;
+
+	return fabs(ang1 - ang2);
 }

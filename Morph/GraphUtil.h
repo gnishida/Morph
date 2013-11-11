@@ -10,6 +10,8 @@ protected:
 public:
 	static float getTotalEdgeLength(RoadGraph* roads, RoadVertexDesc v);
 	static int getNumVertices(RoadGraph* roads, bool onlyValidVertex = true);
+	static RoadVertexDesc getVertex(RoadGraph* roads, int index, bool onlyValidVertex = true);
+	static int getVertexIndex(RoadGraph* roads, RoadVertexDesc desc, bool onlyValidVertex = true);
 	static void collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	static void collapseEdge(RoadGraph* roads, RoadEdgeDesc e);
 	static std::vector<RoadVertexDesc> getNeighbors(RoadGraph* roads, RoadVertexDesc v);
@@ -29,5 +31,6 @@ public:
 	static void singlify(RoadGraph* roads);
 	static void planarify(RoadGraph* roads);
 	static RoadGraph* copyRoads(RoadGraph* roads);
+	static float diffAngle(QVector2D& dir1, QVector2D& dir2);
 };
 

@@ -20,9 +20,10 @@ public:
 	void draw(QPainter* painter, int offset, float scale);
 
 public slots:
-	void updateRoads(int value);
-	void prevRoads();
-	void nextRoads();
 	void loadGSM();
+	void collapse();
+	void moveSequence(int value);
+	void prevSequence();
+	void nextSequence();
 };
 

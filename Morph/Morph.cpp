@@ -101,7 +101,7 @@ void Morph::startMTT() {
 
 	// DocWidgetの表示
 	widgetMTT = new MTTControlWidget(this);
-	addDockWidget(Qt::LeftDockWidgetArea, widgetMTT);
+	addDockWidget(Qt::RightDockWidgetArea, widgetMTT);
 }
 
 void Morph::tick() {
