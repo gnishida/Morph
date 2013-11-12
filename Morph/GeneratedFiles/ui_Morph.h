@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'Morph.ui'
 **
-** Created: Tue Nov 12 16:55:21 2013
+** Created: Tue Nov 12 17:45:35 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -32,6 +32,7 @@ public:
     QAction *actionBFS;
     QAction *actionMTT;
     QAction *actionBFS2;
+    QAction *actionBFSProp;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuMorphing;
@@ -53,6 +54,8 @@ public:
         actionMTT->setObjectName(QString::fromUtf8("actionMTT"));
         actionBFS2 = new QAction(MorphClass);
         actionBFS2->setObjectName(QString::fromUtf8("actionBFS2"));
+        actionBFSProp = new QAction(MorphClass);
+        actionBFSProp->setObjectName(QString::fromUtf8("actionBFSProp"));
         centralWidget = new QWidget(MorphClass);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         MorphClass->setCentralWidget(centralWidget);
@@ -74,6 +77,7 @@ public:
         menuMorphing->addAction(actionNearestNeighborConnectivity);
         menuMorphing->addAction(actionBFS);
         menuMorphing->addAction(actionBFS2);
+        menuMorphing->addAction(actionBFSProp);
         menuMorphing->addAction(actionMTT);
 
         retranslateUi(MorphClass);
@@ -86,9 +90,10 @@ public:
         MorphClass->setWindowTitle(QApplication::translate("MorphClass", "Morph", 0, QApplication::UnicodeUTF8));
         actionNearestNeighbor->setText(QApplication::translate("MorphClass", "Nearest Neighbor", 0, QApplication::UnicodeUTF8));
         actionNearestNeighborConnectivity->setText(QApplication::translate("MorphClass", "Nearest Neighbor with Connectivity", 0, QApplication::UnicodeUTF8));
-        actionBFS->setText(QApplication::translate("MorphClass", "BFS", 0, QApplication::UnicodeUTF8));
+        actionBFS->setText(QApplication::translate("MorphClass", "BFS 1-1", 0, QApplication::UnicodeUTF8));
         actionMTT->setText(QApplication::translate("MorphClass", "MTT", 0, QApplication::UnicodeUTF8));
-        actionBFS2->setText(QApplication::translate("MorphClass", "BFS2", 0, QApplication::UnicodeUTF8));
+        actionBFS2->setText(QApplication::translate("MorphClass", "BFS N-N", 0, QApplication::UnicodeUTF8));
+        actionBFSProp->setText(QApplication::translate("MorphClass", "BFS Proportional", 0, QApplication::UnicodeUTF8));
         menuMorphing->setTitle(QApplication::translate("MorphClass", "Morphing", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 

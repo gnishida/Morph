@@ -11,6 +11,7 @@
 #include "ui_Morph.h"
 #include "BFSControlWidget.h"
 #include "BFS2ControlWidget.h"
+#include "BFSPropControlWidget.h"
 #include "MTTControlWidget.h"
 #include <qmap.h>
 #include <qtimer.h>
@@ -32,6 +33,7 @@ public:
 
 	BFSControlWidget* widgetBFS;
 	BFS2ControlWidget* widgetBFS2;
+	BFSPropControlWidget* widgetBFSProp;
 	MTTControlWidget* widgetMTT;
 
 	int mode;
@@ -51,14 +53,12 @@ private slots:
 	void startNearestNeighborConnectivity();
 	void startBFS();
 	void startBFS2();
+	void startBFSProp();
 	void startMTT();
 	void tick();
 
 public:
-	
-	//void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale);
-	//void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc> neighbor1, RoadGraph *roads2, QMap<RoadVertexDesc, RoadVertexDesc> neighbor2);
-	
+		
 };
 
 

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui version="4.0">
+  <class>BFSPropControlWidget</class>
+  <widget class="QDockWidget" name="BFSPropControlWidget">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>145</width>
+        <height>261</height>
+      </rect>
+    </property>
+    <property name="minimumSize">
+      <size>
+        <width>145</width>
+        <height>261</height>
+      </size>
+    </property>
+    <property name="styleSheet">
+      <string notr="true">background-color: rgb(181, 181, 181);</string>
+    </property>
+    <widget class="QWidget" name="dockWidgetContents">
+      <widget class="QSlider" name="horizontalSlider">
+        <property name="geometry">
+          <rect>
+            <x>10</x>
+            <y>20</y>
+            <width>121</width>
+            <height>19</height>
+          </rect>
+        </property>
+        <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+        </property>
+      </widget>
+      <widget class="QPushButton" name="pushButtonPrev">
+        <property name="geometry">
+          <rect>
+            <x>10</x>
+            <y>50</y>
+            <width>41</width>
+            <height>31</height>
+          </rect>
+        </property>
+        <property name="text">
+          <string>&lt;</string>
+        </property>
+      </widget>
+      <widget class="QPushButton" name="pushButtonNext">
+        <property name="geometry">
+          <rect>
+            <x>90</x>
+            <y>50</y>
+            <width>41</width>
+            <height>31</height>
+          </rect>
+        </property>
+        <property name="text">
+          <string>&gt;</string>
+        </property>
+      </widget>
+    </widget>
+  </widget>
+  <resources/>
+  <connections/>
+</ui>
