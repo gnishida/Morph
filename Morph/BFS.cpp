@@ -38,21 +38,11 @@ BFS::~BFS() {
 void BFS::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	/*
-	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
 	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
-	drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
-	*/
-	
-	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
-	/*
-	RoadGraph* interpolated = interpolate(t);
-	drawGraph(painter, interpolated, QColor(0, 0, 255), offset, scale);
-	if (t > 0.0f && t < 1.0f) {
-		interpolated->clear();
-		delete interpolated;
-	}
-	*/
+	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
+
+	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void BFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -96,7 +86,7 @@ void BFS::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc
 		RoadVertex* v1 = roads1->graph[*vi];
 		if (!v1->valid) continue;
 
-		if (rand() * 10 < 8) continue;
+		//if (rand() * 10 < 8) continue;
 
 		RoadVertexDesc v2_desc = correspondence->value(*vi);
 
@@ -142,6 +132,7 @@ RoadGraph* BFS::interpolate(float t) {
 		for (int i = 0; i < tree1->getChildren(parent).size(); i++) {
 			// 子ノードを取得
 			RoadVertexDesc child1 = tree1->getChildren(parent)[i];
+			if (!roads1->graph[child1]->valid) continue;
 
 			// 対応ノードを取得
 			RoadVertexDesc child2 = correspondence[child1];
@@ -225,94 +216,24 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFS::findCorrespondence(RoadGraph* roads1, 
 		RoadVertexDesc parent2 = seeds2.front();
 		seeds2.pop_front();
 
-		// 子ノードのリストを取得
-		std::vector<RoadVertexDesc> children1 = tree1->getChildren(parent1);
-		std::vector<RoadVertexDesc> children2 = tree2->getChildren(parent2);
-
 		// どちらのノードにも、子ノードがない場合は、スキップ
-		if (children1.size() == 0 && children2.size() == 0) continue;
+		if (tree1->getChildren(parent1).size() == 0 && tree2->getChildren(parent2).size() == 0) continue;
 
-		// 子ノード同士でペアを探す
-		QMap<RoadVertexDesc, RoadVertexDesc> corr;
-		if (children1.size() < children2.size()) {
-			corr = findPairs(roads1, tree1, parent1, children1, roads2, tree2, parent2, children2);
-		} else {
-			corr = findPairs(roads2, tree2, parent2, children2, roads1, tree1, parent1, children1);
-		}
+		QMap<RoadVertexDesc, bool> paired1;
+		QMap<RoadVertexDesc, bool> paired2;
 
-		for (QMap<RoadVertexDesc, RoadVertexDesc>::iterator it = corr.begin(); it != corr.end(); ++it) {
-			RoadVertexDesc child1 = it.key();
-			RoadVertexDesc child2 = it.value();
+		while (true) {
+			RoadVertexDesc child1, child2;
+			if (!findBestPair(roads1, parent1, tree1, paired1, roads2, parent2, tree2, paired2, child1, child2)) break;
 
 			correspondence[child1] = child2;
+			paired1[child1] = true;
+			paired2[child2] = true;
 			seeds1.push_back(child1);
 			seeds2.push_back(child2);
-		}		
-	}
-
-	return correspondence;
-}
-
-/**
- * 子ノードリスト同士で、マッチングさせる
- * children1の方が、子供の数が少ないという前提
- */
-QMap<RoadVertexDesc, RoadVertexDesc> BFS::findPairs(RoadGraph* roads, BFSTree* tree1, RoadVertexDesc parent1, std::vector<RoadVertexDesc> children1, RoadGraph* roads2, BFSTree* tree2, RoadVertexDesc parent2, std::vector<RoadVertexDesc> children2) {
-	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
-
-	// ペアになったかのフラグ
-	std::vector<bool> paired1;
-	std::vector<bool> paired2;
-	for (int i = 0; i < children1.size(); i++) {
-		paired1.push_back(false);
-	}
-	for (int i = 0; i < children2.size(); i++) {
-		paired2.push_back(false);
-	}
-
-	// 子ノードリスト１に対して、それぞれペアを探す
-	for (int i = 0; i < children1.size(); i++) {
-		int height1 = tree1->getHeight(children1[i]);
-		int min_diff = std::numeric_limits<int>::max();
-		int min_id;
-		RoadVertexDesc child2;
-
-		for (int j = 0; j < children2.size(); j++) {
-			if (paired2[j]) continue;
-
-			int diff = abs(tree2->getHeight(children2[j]) - height1);
-			if (diff < min_diff) {
-				min_diff = diff;
-				min_id = j;
-			}
 		}
-
-		paired2[min_id] = true;
-		correspondence[children1[i]] = children2[min_id];
 	}
 
-	// 子ノードリスト２に対して、ペアになっていないノードがあれば、ペアを探す
-	for (int i = 0; i < children2.size(); i++) {
-		if (paired2[i]) continue;
-
-		int height2 = tree2->getHeight(children2[i]);
-		int min_diff = std::numeric_limits<int>::max();
-		int min_id;
-		RoadVertexDesc child1;
-
-		for (int j = 0; j < children1.size(); j++) {
-			int diff = abs(tree1->getHeight(children1[j]) - height2);
-			if (diff < min_diff) {
-				min_diff = diff;
-				min_id = j;
-			}
-		}
-				
-		// children1[index]のノードをコピーして、マッチさせる
-		RoadVertexDesc v1_desc = tree1->copySubTree(children1[min_id], parent1);
-		correspondence[v1_desc] = children2[i];
-	}
-	
 	return correspondence;
 }
 
@@ -321,25 +242,28 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFS::findPairs(RoadGraph* roads, BFSTree* t
  * まずは、ペアになっていないノードから候補を探す。
  * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
  */
-bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree1, std::vector<bool>* paired1, RoadGraph* roads2, RoadVertexDesc parent2, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree2, std::vector<bool>* paired2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2, QMap<RoadVertexDesc, bool> paired2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
 	float min_angle = std::numeric_limits<float>::max();
 	int min_id1;
 	int min_id2;
 
 	// 子リストを取得
-	std::vector<RoadVertexDesc> children1 = tree1->value(parent1);
-	std::vector<RoadVertexDesc> children2 = tree2->value(parent2);
+	std::vector<RoadVertexDesc> children1 = tree1->getChildren(parent1);
+	std::vector<RoadVertexDesc> children2 = tree2->getChildren(parent2);
 
+	// エッジの角度が最もちかいペアをマッチさせる
 	for (int i = 0; i < children1.size(); i++) {
-		if (paired1->at(i)) continue;
+		if (paired1.contains(children1[i])) continue;
+		if (!roads1->graph[children1[i]]->valid) continue;
 
 		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
 		for (int j = 0; j < children2.size(); j++) {
-			if (paired2->at(j)) continue;
+			if (paired2.contains(children2[j])) continue;
+			if (!roads2->graph[children2[j]]->valid) continue;
 
 			QVector2D dir2 = roads2->graph[children2[j]]->getPt() - roads2->graph[parent2]->getPt();
 
-			float angle = fabs(atan2(dir1.y(), dir1.x()) - atan2(dir2.y(), dir2.x()));
+			float angle = GraphUtil::diffAngle(dir1, dir2);
 			if (angle < min_angle) {
 				min_angle = angle;
 				min_id1 = i;
@@ -350,9 +274,6 @@ bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVerte
 	
 	// ベストペアが見つかったか、チェック
 	if (min_angle < std::numeric_limits<float>::max()) {
-		paired1->at(min_id1) = true;
-		paired2->at(min_id2) = true;
-
 		child1 = children1[min_id1];
 		child2 = children2[min_id2];
 
@@ -361,21 +282,15 @@ bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVerte
 
 	// ベストペアが見つからない、つまり、一方のリストが、全てペアになっている場合
 	for (int i = 0; i < children1.size(); i++) {
-		if (paired1->at(i)) continue;
+		if (paired1.contains(children1[i])) continue;
+		if (!roads1->graph[children1[i]]->valid) continue;
 
 		// 相手の親ノードをコピーしてマッチさせる
 		RoadVertex* v = new RoadVertex(roads2->graph[parent2]->getPt());
 		RoadVertexDesc v_desc = boost::add_vertex(roads2->graph);
 		roads2->graph[v_desc] = v;
 
-		children2.push_back(v_desc);
-
-		paired1->at(i) = true;
-		paired2->push_back(true);
-
-		// 子ノードリストが更新されたので、木構造も更新する
-		tree2->insert(parent2, children2);
-		tree2->insert(v_desc, std::vector<RoadVertexDesc>());
+		tree2->addChild(parent2, v_desc);
 
 		child1 = children1[i];
 		child2 = v_desc;
@@ -384,21 +299,15 @@ bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVerte
 	}
 
 	for (int i = 0; i < children2.size(); i++) {
-		if (paired2->at(i)) continue;
+		if (paired2.contains(children2[i])) continue;
+		if (!roads2->graph[children2[i]]->valid) continue;
 
 		// 相手の親ノードをコピーしてマッチさせる
 		RoadVertex* v = new RoadVertex(roads1->graph[parent1]->getPt());
 		RoadVertexDesc v_desc = boost::add_vertex(roads1->graph);
 		roads1->graph[v_desc] = v;
 
-		children1.push_back(v_desc);
-
-		paired2->at(i) = true;
-		paired1->push_back(true);
-
-		// 子ノードリストが更新されたので、木構造も更新する
-		tree1->insert(parent1, children1);
-		tree1->insert(v_desc, std::vector<RoadVertexDesc>());
+		tree1->addChild(parent1, v_desc);
 
 		child1 = v_desc;
 		child2 = children2[i];

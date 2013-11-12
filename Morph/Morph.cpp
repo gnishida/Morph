@@ -25,10 +25,8 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	morphing = NULL;
 	morphing2 = NULL;
 
-	/*
 	widgetBFS = new BFSControlWidget(this);
 	widgetBFS->hide();
-	*/
 
 	widgetMTT = new MTTControlWidget(this);
 	widgetMTT->hide();
@@ -95,7 +93,6 @@ void Morph::startBFS() {
 	// DocWidgetの表示
 	widgetBFS->show();
 	addDockWidget(Qt::RightDockWidgetArea, widgetBFS);
-
 	widgetMTT->hide();
 }
 
@@ -107,7 +104,7 @@ void Morph::startMTT() {
 	// DocWidgetの表示
 	widgetMTT->show();
 	addDockWidget(Qt::RightDockWidgetArea, widgetMTT);
-	//widgetBFS->hide();
+	widgetBFS->hide();
 }
 
 void Morph::tick() {

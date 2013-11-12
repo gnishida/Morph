@@ -12,7 +12,9 @@ public:
 	BFSTree(RoadGraph* roads, RoadVertexDesc root);
 	~BFSTree();
 
-	std::vector<RoadVertexDesc> getChildren(RoadVertexDesc node);
+	std::vector<RoadVertexDesc>& getChildren(RoadVertexDesc node);
+	void addChild(RoadVertexDesc parent, RoadVertexDesc child);
+	RoadVertexDesc getParent(RoadVertexDesc node);
 	RoadVertexDesc getRoot();
 	int getHeight(RoadVertexDesc node);
 	RoadVertexDesc copySubTree(RoadVertexDesc node1, RoadVertexDesc node2);

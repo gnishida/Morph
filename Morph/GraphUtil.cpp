@@ -640,5 +640,8 @@ float GraphUtil::diffAngle(QVector2D& dir1, QVector2D& dir2) {
 	float ang2 = atan2f(dir2.y(), dir2.x());
 	if (ang2 < 0) ang2 += M_PI * 2.0f;
 
-	return fabs(ang1 - ang2);
+	float diff = fabs(ang1 - ang2);
+	if (diff > M_PI) diff = M_PI * 2.0f - diff;
+
+	return diff;
 }

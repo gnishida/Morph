@@ -14,8 +14,30 @@ BFSTree::~BFSTree() {
 /**
  * 子ノードのリストを返却する。
  */
-std::vector<RoadVertexDesc> BFSTree::getChildren(RoadVertexDesc node) {
+std::vector<RoadVertexDesc>& BFSTree::getChildren(RoadVertexDesc node) {
+	if (!children.contains(node)) {
+		std::vector<RoadVertexDesc> c;
+		children[node] = c;
+	}
+
 	return children[node];
+}
+
+void BFSTree::addChild(RoadVertexDesc parent, RoadVertexDesc child) {
+	std::vector<RoadVertexDesc> list = getChildren(parent);
+	list.push_back(child);
+	children[parent] = list;
+}
+
+RoadVertexDesc BFSTree::getParent(RoadVertexDesc node) {
+	for (QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >::iterator it = children.begin(); it != children.end(); ++it) {
+		RoadVertexDesc parent = it.key();
+		for (int i = 0; i < children[parent].size(); i++) {
+			if (children[parent][i] == node) return parent;
+		}
+	}
+
+	throw "No specified node found.";
 }
 
 /**
@@ -87,6 +109,12 @@ void BFSTree::buildTree() {
 		RoadOutEdgeIter ei, eend;
 		for (boost::tie(ei, eend) = boost::out_edges(parent, roads->graph); ei != eend; ++ei) {
 			RoadVertexDesc child = boost::target(*ei, roads->graph);
+			if (!roads->graph[child]->valid) continue;
+			try {
+				if (child == getParent(parent)) continue;
+			} catch (const char* ex) {
+			}
+
 			if (visited.contains(child)) {
 				// 対象ノードが訪問済みの場合、対象ノードをコピーして子ノードにする
 				RoadVertex* v = new RoadVertex(roads->graph[child]->getPt());

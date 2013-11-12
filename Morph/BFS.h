@@ -11,14 +11,6 @@ public:
 	RoadGraph* roads1;
 	RoadGraph* roads2;
 
-	/*
-	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > tree1;
-	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > tree2;
-
-	RoadVertexDesc root1;
-	RoadVertexDesc root2;
-	*/
-
 	BFSTree* tree1;
 	BFSTree* tree2;
 
@@ -38,8 +30,7 @@ public:
 
 	void buildTree();
 	QMap<RoadVertexDesc, RoadVertexDesc> findCorrespondence(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2);
-	QMap<RoadVertexDesc, RoadVertexDesc> findPairs(RoadGraph* roads, BFSTree* tree1, RoadVertexDesc parent1, std::vector<RoadVertexDesc> children1, RoadGraph* roads2, BFSTree* tree2, RoadVertexDesc parent2, std::vector<RoadVertexDesc> children2);
-	bool findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree1, std::vector<bool>* paired1, RoadGraph* roads2, RoadVertexDesc parent2, QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >* tree2, std::vector<bool>* paired2, RoadVertexDesc& child1, RoadVertexDesc& child2);
+	bool findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2, QMap<RoadVertexDesc, bool> paired2, RoadVertexDesc& child1, RoadVertexDesc& child2);
 
 	void selectSequence(int selected);
 	void clearSequence();
