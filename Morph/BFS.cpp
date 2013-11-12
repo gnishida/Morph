@@ -38,11 +38,12 @@ BFS::~BFS() {
 void BFS::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	/*drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
 	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
 	drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
+	*/
 
-	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void BFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -198,6 +199,10 @@ void BFS::buildTree() {
 		sequence.push_back(interpolate(t));
 	}
 	*/
+
+	for (int i = 0; i < 20; i++) {
+		sequence.push_back(copyRoads(roads2, tree2, i));
+	}
 }
 
 /**
@@ -293,6 +298,15 @@ bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1
 		RoadVertexDesc v_desc = boost::add_vertex(roads2->graph);
 		roads2->graph[v_desc] = v;
 
+		RoadEdgeDesc e1_desc = GraphUtil::getEdge(roads1, parent1, children1[i]);
+
+		// 相手の親ノードと子ノードの間にエッジを作成する
+		RoadEdge* e2 = new RoadEdge(roads1->graph[e1_desc]->lanes, roads1->graph[e1_desc]->type);
+		e2->addPoint(roads2->graph[parent2]->getPt());
+		e2->addPoint(roads2->graph[v_desc]->getPt());
+		std::pair<RoadEdgeDesc, bool> e2_pair = boost::add_edge(parent2, v_desc, roads2->graph);
+		roads2->graph[e2_pair.first] = e2;
+
 		tree2->addChild(parent2, v_desc);
 
 		child1 = children1[i];
@@ -309,6 +323,15 @@ bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1
 		RoadVertex* v = new RoadVertex(roads1->graph[parent1]->getPt());
 		RoadVertexDesc v_desc = boost::add_vertex(roads1->graph);
 		roads1->graph[v_desc] = v;
+
+		RoadEdgeDesc e2_desc = GraphUtil::getEdge(roads2, parent2, children2[i]);
+
+		// 相手の親ノードと子ノードの間にエッジを作成する
+		RoadEdge* e1 = new RoadEdge(roads2->graph[e2_desc]->lanes, roads2->graph[e2_desc]->type);
+		e1->addPoint(roads1->graph[parent1]->getPt());
+		e1->addPoint(roads1->graph[v_desc]->getPt());
+		std::pair<RoadEdgeDesc, bool> e1_pair = boost::add_edge(parent1, v_desc, roads1->graph);
+		roads2->graph[e1_pair.first] = e1;
 
 		tree1->addChild(parent1, v_desc);
 
@@ -332,4 +355,51 @@ void BFS::clearSequence() {
 		delete sequence[i];
 	}
 	sequence.clear();
+}
+
+RoadGraph* BFS::copyRoads(RoadGraph* roads, BFSTree* tree, int num) {
+	RoadGraph* new_roads = new RoadGraph();
+
+	std::list<RoadVertexDesc> seeds1;
+	seeds1.push_back(tree->getRoot());
+
+	std::list<RoadVertexDesc> seeds2;
+	RoadVertex* v_root = new RoadVertex(roads->graph[tree->getRoot()]->getPt());
+	RoadVertexDesc v_root_desc = boost::add_vertex(new_roads->graph);
+	new_roads->graph[v_root_desc] = v_root;
+	seeds2.push_back(v_root_desc);
+
+
+	int count = 0;
+	while (!seeds1.empty()) {
+		RoadVertexDesc parent1 = seeds1.front();
+		seeds1.pop_front();
+
+		RoadVertexDesc parent2 = seeds2.front();
+		seeds2.pop_front();
+
+		count++;
+		if (count > num) break;
+
+		for (int i = 0; i < tree->getChildren(parent1).size(); i++) {
+			RoadVertexDesc child1_desc = tree->getChildren(parent1)[i];
+
+			RoadVertex* child2 = new RoadVertex(roads->graph[child1_desc]->getPt());
+			RoadVertexDesc child2_desc = boost::add_vertex(new_roads->graph);
+			new_roads->graph[child2_desc] = child2;
+
+			RoadEdgeDesc e1_desc = GraphUtil::getEdge(roads, parent1, child1_desc);
+			RoadEdge* e2 = new RoadEdge(roads->graph[e1_desc]->lanes, roads->graph[e1_desc]->type);
+			e2->addPoint(new_roads->graph[parent2]->getPt());
+			e2->addPoint(new_roads->graph[child2_desc]->getPt());
+
+			std::pair<RoadEdgeDesc, bool> e_pair = boost::add_edge(parent2, child2_desc, new_roads->graph);
+			new_roads->graph[e_pair.first] = e2;
+
+			seeds1.push_back(child1_desc);
+			seeds2.push_back(child2_desc);
+		}
+	}
+
+	return new_roads;
 }

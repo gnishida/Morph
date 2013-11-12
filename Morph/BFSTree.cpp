@@ -108,20 +108,35 @@ void BFSTree::buildTree() {
 
 		RoadOutEdgeIter ei, eend;
 		for (boost::tie(ei, eend) = boost::out_edges(parent, roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
 			RoadVertexDesc child = boost::target(*ei, roads->graph);
 			if (!roads->graph[child]->valid) continue;
+
 			try {
 				if (child == getParent(parent)) continue;
 			} catch (const char* ex) {
 			}
 
 			if (visited.contains(child)) {
+				/*
 				// 対象ノードが訪問済みの場合、対象ノードをコピーして子ノードにする
 				RoadVertex* v = new RoadVertex(roads->graph[child]->getPt());
 				RoadVertexDesc child2 = boost::add_vertex(roads->graph);
 				roads->graph[child2] = v;
 
+				//RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, parent, child);
+
+				// エッジ作成
+				//RoadEdge* new_e = new RoadEdge(roads->graph[e_desc]->lanes, roads->graph[e_desc]->type);
+				RoadEdge* new_e = new RoadEdge(1, 1);
+				new_e->addPoint(roads->graph[parent]->getPt());
+				new_e->addPoint(roads->graph[child2]->getPt());
+				std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(parent, child2, roads->graph);
+				roads->graph[new_e_pair.first] = new_e;
+				
 				children.push_back(child2);
+				*/
 			} else {
 				visited[child] = true;
 
