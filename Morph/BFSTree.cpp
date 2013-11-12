@@ -106,10 +106,11 @@ void BFSTree::buildTree() {
 
 		std::vector<RoadVertexDesc> children;
 
+		// 隣接ノードリストを先に洗い出す
+		std::vector<RoadVertexDesc> nodes;
 		RoadOutEdgeIter ei, eend;
 		for (boost::tie(ei, eend) = boost::out_edges(parent, roads->graph); ei != eend; ++ei) {
 			if (!roads->graph[*ei]->valid) continue;
-
 			RoadVertexDesc child = boost::target(*ei, roads->graph);
 			if (!roads->graph[child]->valid) continue;
 
@@ -118,25 +119,32 @@ void BFSTree::buildTree() {
 			} catch (const char* ex) {
 			}
 
+			nodes.push_back(child);
+		}
+
+		// 洗い出した隣接ノードに対して、訪問する
+		for (int i = 0; i < nodes.size(); i++) {
+			RoadVertexDesc child = nodes[i];
+
 			if (visited.contains(child)) {
-				/*
+				RoadEdgeDesc orig_e_desc = GraphUtil::getEdge(roads, parent, child);
+
+				// もともとのエッジを無効にする
+				roads->graph[orig_e_desc]->valid = false;
+
 				// 対象ノードが訪問済みの場合、対象ノードをコピーして子ノードにする
 				RoadVertex* v = new RoadVertex(roads->graph[child]->getPt());
 				RoadVertexDesc child2 = boost::add_vertex(roads->graph);
 				roads->graph[child2] = v;
 
-				//RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, parent, child);
-
 				// エッジ作成
-				//RoadEdge* new_e = new RoadEdge(roads->graph[e_desc]->lanes, roads->graph[e_desc]->type);
-				RoadEdge* new_e = new RoadEdge(1, 1);
+				RoadEdge* new_e = new RoadEdge(roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type);
 				new_e->addPoint(roads->graph[parent]->getPt());
 				new_e->addPoint(roads->graph[child2]->getPt());
 				std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(parent, child2, roads->graph);
 				roads->graph[new_e_pair.first] = new_e;
-				
+
 				children.push_back(child2);
-				*/
 			} else {
 				visited[child] = true;
 
