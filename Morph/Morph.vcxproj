@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="BBox.cpp" />
     <ClCompile Include="BFS.cpp" />
+    <ClCompile Include="BFS2.cpp" />
     <ClCompile Include="BFSControlWidget.cpp" />
     <ClCompile Include="BFSTree.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_BFSControlWidget.cpp">
@@ -240,6 +241,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe" -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DQT_LARGEFILE_SUPPORT -DQT_DLL -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB  "-I$(BOOST_ROOT)\." "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui"</Command>
     </CustomBuild>
+    <ClInclude Include="BFS2.h" />
     <ClInclude Include="BFSTree.h" />
     <ClInclude Include="GeneratedFiles\ui_BFSControlWidget.h" />
     <ClInclude Include="GeneratedFiles\ui_Morph.h" />

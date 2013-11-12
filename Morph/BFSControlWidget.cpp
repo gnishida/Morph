@@ -16,7 +16,8 @@ BFSControlWidget::BFSControlWidget(Morph* parent) : QDockWidget("MTT Control Wid
 	connect(ui.pushButtonNext, SIGNAL(clicked()), this, SLOT(nextSequence()));
 
 	// initialize BFS
-	bfs = new BFS("roads1.gsm", "roads2.gsm");
+	//bfs = new BFS("roads1.gsm", "roads2.gsm");
+	bfs = new BFS2("roads1.gsm", "roads2.gsm");
 	bfs->buildTree();
 	ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 	ui.horizontalSlider->setValue(0);

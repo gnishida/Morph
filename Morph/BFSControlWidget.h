@@ -3,6 +3,7 @@
 #include <qdockwidget.h>
 #include "ui_BFSControlWidget.h"
 #include "BFS.h"
+#include "BFS2.h"
 
 class Morph;
 
@@ -12,7 +13,8 @@ Q_OBJECT
 private:
 	Morph* parent;
 	Ui::BFSControlWidget ui;
-	BFS* bfs;
+	//BFS* bfs;
+	BFS2* bfs;
 
 public:
 	BFSControlWidget(Morph* parent);

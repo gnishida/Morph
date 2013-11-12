@@ -104,6 +104,9 @@
     <ClCompile Include="BFSTree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BFS2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Morph.h">
@@ -172,6 +175,9 @@
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="BFSTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BFS2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
