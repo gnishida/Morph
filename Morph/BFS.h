@@ -35,5 +35,10 @@ public:
 	void selectSequence(int selected);
 	void clearSequence();
 	RoadGraph* copyRoads(RoadGraph* roads, BFSTree* tree, int num);
+
+
+
+	void createRoads1();
+	void createRoads2();
 };
 

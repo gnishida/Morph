@@ -6,6 +6,7 @@
 #include <qdebug.h>
 
 BFS::BFS(const char* filename1, const char* filename2) {
+	/*
 	FILE* fp = fopen(filename1, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
@@ -21,6 +22,10 @@ BFS::BFS(const char* filename1, const char* filename2) {
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30, 0.0f);
 	fclose(fp);
+	*/
+
+	createRoads1();
+	createRoads2();
 
 	selected = 0;
 	tree1 = NULL;
@@ -38,12 +43,11 @@ BFS::~BFS() {
 void BFS::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	/*drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
-	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
-	drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
-	*/
+	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
+	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
-	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void BFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -402,4 +406,261 @@ RoadGraph* BFS::copyRoads(RoadGraph* roads, BFSTree* tree, int num) {
 	}
 
 	return new_roads;
+}
+
+void BFS::createRoads1() {
+	roads1 = new RoadGraph();
+	RoadVertex* v1 = new RoadVertex(QVector2D(-950, 950));
+	RoadVertexDesc v1_desc = boost::add_vertex(roads1->graph);
+	roads1->graph[v1_desc] = v1;
+
+	RoadVertex* v2 = new RoadVertex(QVector2D(-900, 800));
+	RoadVertexDesc v2_desc = boost::add_vertex(roads1->graph);
+	roads1->graph[v2_desc] = v2;
+
+	RoadVertex* v3 = new RoadVertex(QVector2D(-300, 200));
+	RoadVertexDesc v3_desc = boost::add_vertex(roads1->graph);
+	roads1->graph[v3_desc] = v3;
+
+	RoadVertex* v4 = new RoadVertex(QVector2D(0, 400));
+	RoadVertexDesc v4_desc = boost::add_vertex(roads1->graph);
+	roads1->graph[v4_desc] = v4;
+
+	RoadVertex* v5 = new RoadVertex(QVector2D(200, -200));
+	RoadVertexDesc v5_desc = boost::add_vertex(roads1->graph);
+	roads1->graph[v5_desc] = v5;
+
+	RoadVertex* v6 = new RoadVertex(QVector2D(900, 200));
+	RoadVertexDesc v6_desc = boost::add_vertex(roads1->graph);
+	roads1->graph[v6_desc] = v6;
+
+	RoadVertex* v7 = new RoadVertex(QVector2D(400, -400));
+	RoadVertexDesc v7_desc = boost::add_vertex(roads1->graph);
+	roads1->graph[v7_desc] = v7;
+
+	RoadVertex* v8 = new RoadVertex(QVector2D(0, -900));
+	RoadVertexDesc v8_desc = boost::add_vertex(roads1->graph);
+	roads1->graph[v8_desc] = v8;
+
+	RoadEdge* e1 = new RoadEdge(1, 1);
+	e1->addPoint(roads1->graph[v1_desc]->getPt());
+	e1->addPoint(roads1->graph[v2_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e1_pair = boost::add_edge(v1_desc, v2_desc, roads1->graph);
+	roads1->graph[e1_pair.first] = e1;
+
+	RoadEdge* e2 = new RoadEdge(1, 1);
+	e2->addPoint(roads1->graph[v2_desc]->getPt());
+	e2->addPoint(roads1->graph[v3_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e2_pair = boost::add_edge(v2_desc, v3_desc, roads1->graph);
+	roads1->graph[e2_pair.first] = e2;
+
+	RoadEdge* e3 = new RoadEdge(1, 1);
+	e3->addPoint(roads1->graph[v1_desc]->getPt());
+	e3->addPoint(roads1->graph[v4_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e3_pair = boost::add_edge(v1_desc, v4_desc, roads1->graph);
+	roads1->graph[e3_pair.first] = e3;
+
+	RoadEdge* e4 = new RoadEdge(1, 1);
+	e4->addPoint(roads1->graph[v3_desc]->getPt());
+	e4->addPoint(roads1->graph[v4_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e4_pair = boost::add_edge(v3_desc, v4_desc, roads1->graph);
+	roads1->graph[e4_pair.first] = e4;
+
+	RoadEdge* e5 = new RoadEdge(1, 1);
+	e5->addPoint(roads1->graph[v3_desc]->getPt());
+	e5->addPoint(roads1->graph[v5_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e5_pair = boost::add_edge(v3_desc, v5_desc, roads1->graph);
+	roads1->graph[e5_pair.first] = e5;
+
+	RoadEdge* e6 = new RoadEdge(1, 1);
+	e6->addPoint(roads1->graph[v5_desc]->getPt());
+	e6->addPoint(roads1->graph[v6_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e6_pair = boost::add_edge(v5_desc, v6_desc, roads1->graph);
+	roads1->graph[e6_pair.first] = e6;
+
+	RoadEdge* e7 = new RoadEdge(1, 1);
+	e7->addPoint(roads1->graph[v5_desc]->getPt());
+	e7->addPoint(roads1->graph[v7_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e7_pair = boost::add_edge(v5_desc, v7_desc, roads1->graph);
+	roads1->graph[e7_pair.first] = e7;
+
+	RoadEdge* e8 = new RoadEdge(1, 1);
+	e8->addPoint(roads1->graph[v7_desc]->getPt());
+	e8->addPoint(roads1->graph[v8_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e8_pair = boost::add_edge(v7_desc, v8_desc, roads1->graph);
+	roads1->graph[e8_pair.first] = e8;
+
+}
+
+void BFS::createRoads2() {
+	roads2 = new RoadGraph();
+
+	RoadVertex* v1 = new RoadVertex(QVector2D(-700, 900));
+	RoadVertexDesc v1_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v1_desc] = v1;
+
+	RoadVertex* v2 = new RoadVertex(QVector2D(-700, 600));
+	RoadVertexDesc v2_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v2_desc] = v2;
+
+	RoadVertex* v3 = new RoadVertex(QVector2D(-900, 100));
+	RoadVertexDesc v3_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v3_desc] = v3;
+
+	RoadVertex* v4 = new RoadVertex(QVector2D(-700, 100));
+	RoadVertexDesc v4_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v4_desc] = v4;
+
+	RoadVertex* v5 = new RoadVertex(QVector2D(-800, -200));
+	RoadVertexDesc v5_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v5_desc] = v5;
+
+	RoadVertex* v6 = new RoadVertex(QVector2D(-700, -200));
+	RoadVertexDesc v6_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v6_desc] = v6;
+
+	RoadVertex* v7 = new RoadVertex(QVector2D(-800, -700));
+	RoadVertexDesc v7_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v7_desc] = v7;
+
+	RoadVertex* v8 = new RoadVertex(QVector2D(-600, -800));
+	RoadVertexDesc v8_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v8_desc] = v8;
+
+	RoadVertex* v9 = new RoadVertex(QVector2D(0, 500));
+	RoadVertexDesc v9_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v9_desc] = v9;
+
+	RoadVertex* v10 = new RoadVertex(QVector2D(100, 600));
+	RoadVertexDesc v10_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v10_desc] = v10;
+
+	RoadVertex* v11 = new RoadVertex(QVector2D(600, 0));
+	RoadVertexDesc v11_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v11_desc] = v11;
+
+	RoadVertex* v12 = new RoadVertex(QVector2D(900, 300));
+	RoadVertexDesc v12_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v12_desc] = v12;
+
+	RoadVertex* v13 = new RoadVertex(QVector2D(800, -100));
+	RoadVertexDesc v13_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v13_desc] = v13;
+
+	RoadVertex* v14 = new RoadVertex(QVector2D(300, -600));
+	RoadVertexDesc v14_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v14_desc] = v14;
+
+	RoadVertex* v15 = new RoadVertex(QVector2D(400, -900));
+	RoadVertexDesc v15_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v15_desc] = v15;
+
+	RoadVertex* v16 = new RoadVertex(QVector2D(800, -400));
+	RoadVertexDesc v16_desc = boost::add_vertex(roads2->graph);
+	roads2->graph[v16_desc] = v16;
+
+	RoadEdge* e1 = new RoadEdge(1, 1);
+	e1->addPoint(roads2->graph[v1_desc]->getPt());
+	e1->addPoint(roads2->graph[v2_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e1_pair = boost::add_edge(v1_desc, v2_desc, roads2->graph);
+	roads2->graph[e1_pair.first] = e1;
+
+	RoadEdge* e2 = new RoadEdge(1, 1);
+	e2->addPoint(roads2->graph[v2_desc]->getPt());
+	e2->addPoint(roads2->graph[v4_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e2_pair = boost::add_edge(v2_desc, v4_desc, roads2->graph);
+	roads2->graph[e2_pair.first] = e2;
+
+	RoadEdge* e3 = new RoadEdge(1, 1);
+	e3->addPoint(roads2->graph[v3_desc]->getPt());
+	e3->addPoint(roads2->graph[v4_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e3_pair = boost::add_edge(v3_desc, v4_desc, roads2->graph);
+	roads2->graph[e3_pair.first] = e3;
+
+	RoadEdge* e4 = new RoadEdge(1, 1);
+	e4->addPoint(roads2->graph[v4_desc]->getPt());
+	e4->addPoint(roads2->graph[v5_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e4_pair = boost::add_edge(v4_desc, v5_desc, roads2->graph);
+	roads2->graph[e4_pair.first] = e4;
+
+	RoadEdge* e5 = new RoadEdge(1, 1);
+	e5->addPoint(roads2->graph[v4_desc]->getPt());
+	e5->addPoint(roads2->graph[v6_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e5_pair = boost::add_edge(v4_desc, v6_desc, roads2->graph);
+	roads2->graph[e5_pair.first] = e5;
+
+	RoadEdge* e6 = new RoadEdge(1, 1);
+	e6->addPoint(roads2->graph[v5_desc]->getPt());
+	e6->addPoint(roads2->graph[v7_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e6_pair = boost::add_edge(v5_desc, v7_desc, roads2->graph);
+	roads2->graph[e6_pair.first] = e6;
+
+	RoadEdge* e7 = new RoadEdge(1, 1);
+	e7->addPoint(roads2->graph[v6_desc]->getPt());
+	e7->addPoint(roads2->graph[v7_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e7_pair = boost::add_edge(v6_desc, v7_desc, roads2->graph);
+	roads2->graph[e7_pair.first] = e7;
+
+	RoadEdge* e8 = new RoadEdge(1, 1);
+	e8->addPoint(roads2->graph[v6_desc]->getPt());
+	e8->addPoint(roads2->graph[v8_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e8_pair = boost::add_edge(v6_desc, v8_desc, roads2->graph);
+	roads2->graph[e8_pair.first] = e8;
+
+	RoadEdge* e9 = new RoadEdge(1, 1);
+	e9->addPoint(roads2->graph[v2_desc]->getPt());
+	e9->addPoint(roads2->graph[v9_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e9_pair = boost::add_edge(v2_desc, v9_desc, roads2->graph);
+	roads2->graph[e9_pair.first] = e9;
+
+	RoadEdge* e10 = new RoadEdge(1, 1);
+	e10->addPoint(roads2->graph[v9_desc]->getPt());
+	e10->addPoint(roads2->graph[v10_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e10_pair = boost::add_edge(v9_desc, v10_desc, roads2->graph);
+	roads2->graph[e10_pair.first] = e10;
+
+	RoadEdge* e11 = new RoadEdge(1, 1);
+	e11->addPoint(roads2->graph[v9_desc]->getPt());
+	e11->addPoint(roads2->graph[v11_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e11_pair = boost::add_edge(v9_desc, v11_desc, roads2->graph);
+	roads2->graph[e11_pair.first] = e11;
+
+	RoadEdge* e12 = new RoadEdge(1, 1);
+	e12->addPoint(roads2->graph[v11_desc]->getPt());
+	e12->addPoint(roads2->graph[v12_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e12_pair = boost::add_edge(v11_desc, v12_desc, roads2->graph);
+	roads2->graph[e12_pair.first] = e12;
+
+	RoadEdge* e13 = new RoadEdge(1, 1);
+	e13->addPoint(roads2->graph[v11_desc]->getPt());
+	e13->addPoint(roads2->graph[v13_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e13_pair = boost::add_edge(v11_desc, v13_desc, roads2->graph);
+	roads2->graph[e13_pair.first] = e13;
+
+	RoadEdge* e14 = new RoadEdge(1, 1);
+	e14->addPoint(roads2->graph[v11_desc]->getPt());
+	e14->addPoint(roads2->graph[v14_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e14_pair = boost::add_edge(v11_desc, v14_desc, roads2->graph);
+	roads2->graph[e14_pair.first] = e14;
+
+	RoadEdge* e15 = new RoadEdge(1, 1);
+	e15->addPoint(roads2->graph[v14_desc]->getPt());
+	e15->addPoint(roads2->graph[v15_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e15_pair = boost::add_edge(v14_desc, v15_desc, roads2->graph);
+	roads2->graph[e15_pair.first] = e15;
+
+	RoadEdge* e16 = new RoadEdge(1, 1);
+	e16->addPoint(roads2->graph[v13_desc]->getPt());
+	e16->addPoint(roads2->graph[v16_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e16_pair = boost::add_edge(v13_desc, v16_desc, roads2->graph);
+	roads2->graph[e16_pair.first] = e16;
+
+	RoadEdge* e17 = new RoadEdge(1, 1);
+	e17->addPoint(roads2->graph[v15_desc]->getPt());
+	e17->addPoint(roads2->graph[v16_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> e17_pair = boost::add_edge(v15_desc, v16_desc, roads2->graph);
+	roads2->graph[e17_pair.first] = e17;
+
+
+
 }
