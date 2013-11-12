@@ -1,7 +1,7 @@
-#include "BFSControlWidget.h"
+#include "BFS2ControlWidget.h"
 #include "Morph.h"
 
-BFSControlWidget::BFSControlWidget(Morph* parent) : QDockWidget("BFS Control Widget", (QWidget*)parent) {
+BFS2ControlWidget::BFS2ControlWidget(Morph* parent) : QDockWidget("BFS2 Control Widget", (QWidget*)parent) {
 	ui.setupUi(this);
 	this->parent = parent;
 	this->bfs = NULL;
@@ -16,26 +16,26 @@ BFSControlWidget::BFSControlWidget(Morph* parent) : QDockWidget("BFS Control Wid
 	connect(ui.pushButtonNext, SIGNAL(clicked()), this, SLOT(nextSequence()));
 
 	// initialize BFS
-	bfs = new BFS("roads1.gsm", "roads2.gsm");
+	bfs = new BFS2("roads1.gsm", "roads2.gsm");
 	bfs->buildTree();
 	ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 	ui.horizontalSlider->setValue(0);
 	parent->update();
 }
 
-void BFSControlWidget::draw(QPainter* painter, int offset, float scale) {
+void BFS2ControlWidget::draw(QPainter* painter, int offset, float scale) {
 	if (bfs == NULL) return;
 
     bfs->draw(painter, offset, scale);
 }
 
-void BFSControlWidget::moveSequence(int value) {
+void BFS2ControlWidget::moveSequence(int value) {
 	if (bfs == NULL) return;
 	bfs->selectSequence(value);
 	parent->update();
 }
 
-void BFSControlWidget::prevSequence() {
+void BFS2ControlWidget::prevSequence() {
 	if (bfs == NULL) return;
 
 	int value = ui.horizontalSlider->value();
@@ -46,7 +46,7 @@ void BFSControlWidget::prevSequence() {
 	parent->update();
 }
 
-void BFSControlWidget::nextSequence() {
+void BFS2ControlWidget::nextSequence() {
 	if (bfs == NULL) return;
 
 	int value = ui.horizontalSlider->value();

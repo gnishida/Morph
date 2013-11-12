@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'Morph.ui'
 **
-** Created: Mon Nov 11 13:12:39 2013
+** Created: Tue Nov 12 16:55:21 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -31,6 +31,7 @@ public:
     QAction *actionNearestNeighborConnectivity;
     QAction *actionBFS;
     QAction *actionMTT;
+    QAction *actionBFS2;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuMorphing;
@@ -50,6 +51,8 @@ public:
         actionBFS->setObjectName(QString::fromUtf8("actionBFS"));
         actionMTT = new QAction(MorphClass);
         actionMTT->setObjectName(QString::fromUtf8("actionMTT"));
+        actionBFS2 = new QAction(MorphClass);
+        actionBFS2->setObjectName(QString::fromUtf8("actionBFS2"));
         centralWidget = new QWidget(MorphClass);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         MorphClass->setCentralWidget(centralWidget);
@@ -70,6 +73,7 @@ public:
         menuMorphing->addAction(actionNearestNeighbor);
         menuMorphing->addAction(actionNearestNeighborConnectivity);
         menuMorphing->addAction(actionBFS);
+        menuMorphing->addAction(actionBFS2);
         menuMorphing->addAction(actionMTT);
 
         retranslateUi(MorphClass);
@@ -84,6 +88,7 @@ public:
         actionNearestNeighborConnectivity->setText(QApplication::translate("MorphClass", "Nearest Neighbor with Connectivity", 0, QApplication::UnicodeUTF8));
         actionBFS->setText(QApplication::translate("MorphClass", "BFS", 0, QApplication::UnicodeUTF8));
         actionMTT->setText(QApplication::translate("MorphClass", "MTT", 0, QApplication::UnicodeUTF8));
+        actionBFS2->setText(QApplication::translate("MorphClass", "BFS2", 0, QApplication::UnicodeUTF8));
         menuMorphing->setTitle(QApplication::translate("MorphClass", "Morphing", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 

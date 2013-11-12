@@ -312,21 +312,8 @@ bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BF
 		}
 
 		if (min_angle < std::numeric_limits<float>::max()) {
-			// 子ノードをコピーする
-			RoadVertex* v = new RoadVertex(roads2->graph[children2[min_id2]]->getPt());
-			RoadVertexDesc v_desc = boost::add_vertex(roads2->graph);
-			roads2->graph[v_desc] = v;
-
-			RoadEdgeDesc e2_desc = GraphUtil::getEdge(roads2, parent2, children2[min_id2]);
-
-			// 相手の親ノードと子ノードの間にエッジを作成する
-			RoadEdge* e2 = new RoadEdge(roads2->graph[e2_desc]->lanes, roads2->graph[e2_desc]->type);
-			e2->addPoint(roads2->graph[parent2]->getPt());
-			e2->addPoint(roads2->graph[child2]->getPt());
-			std::pair<RoadEdgeDesc, bool> e2_pair = boost::add_edge(parent2, v_desc, roads2->graph);
-			roads2->graph[e2_pair.first] = e2;
-
-			tree2->addChild(parent2, v_desc);
+			// 子ノード（子孫も含めて）をコピーする
+			RoadVertexDesc v_desc = tree2->copySubTree(parent2, children2[min_id2], parent2);
 
 			child1 = children1[min_id1];
 			child2 = v_desc;
@@ -379,21 +366,8 @@ bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BF
 		}
 
 		if (min_angle < std::numeric_limits<float>::max()) {
-			// 子ノードをコピーする
-			RoadVertex* v = new RoadVertex(roads1->graph[children1[min_id1]]->getPt());
-			RoadVertexDesc v_desc = boost::add_vertex(roads1->graph);
-			roads1->graph[v_desc] = v;
-
-			RoadEdgeDesc e1_desc = GraphUtil::getEdge(roads1, parent1, children1[min_id1]);
-
-			// 相手の親ノードと子ノードの間にエッジを作成する
-			RoadEdge* e1 = new RoadEdge(roads1->graph[e1_desc]->lanes, roads1->graph[e1_desc]->type);
-			e1->addPoint(roads1->graph[parent1]->getPt());
-			e1->addPoint(roads1->graph[child1]->getPt());
-			std::pair<RoadEdgeDesc, bool> e1_pair = boost::add_edge(parent1, v_desc, roads1->graph);
-			roads1->graph[e1_pair.first] = e1;
-
-			tree1->addChild(parent1, v_desc);
+			// 子ノード（子孫も含めて）をコピーする
+			RoadVertexDesc v_desc = tree1->copySubTree(parent1, children1[min_id1], parent1);
 
 			child1 = v_desc;
 			child2 = children2[min_id2];

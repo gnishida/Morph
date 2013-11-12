@@ -30,6 +30,7 @@
     <addaction name="actionNearestNeighbor"/>
     <addaction name="actionNearestNeighborConnectivity"/>
     <addaction name="actionBFS"/>
+    <addaction name="actionBFS2"/>
     <addaction name="actionMTT"/>
    </widget>
    <addaction name="menuMorphing"/>
@@ -61,6 +62,11 @@
   <action name="actionMTT">
    <property name="text">
     <string>MTT</string>
+   </property>
+  </action>
+  <action name="actionBFS2">
+   <property name="text">
+    <string>BFS2</string>
    </property>
   </action>
  </widget>

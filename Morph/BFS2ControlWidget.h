@@ -2,20 +2,20 @@
 
 #include <qdockwidget.h>
 #include "ui_BFSControlWidget.h"
-#include "BFS.h"
+#include "BFS2.h"
 
 class Morph;
 
-class BFSControlWidget : public QDockWidget {
+class BFS2ControlWidget : public QDockWidget {
 Q_OBJECT
 
 private:
 	Morph* parent;
 	Ui::BFSControlWidget ui;
-	BFS* bfs;
+	BFS2* bfs;
 
 public:
-	BFSControlWidget(Morph* parent);
+	BFS2ControlWidget(Morph* parent);
 
 	void draw(QPainter* painter, int offset, float scale);
 

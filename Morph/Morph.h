@@ -9,8 +9,9 @@
 #include "BFS.h"
 #include "MTT.h"
 #include "ui_Morph.h"
-#include "MTTControlWidget.h"
 #include "BFSControlWidget.h"
+#include "BFS2ControlWidget.h"
+#include "MTTControlWidget.h"
 #include <qmap.h>
 #include <qtimer.h>
 
@@ -30,6 +31,7 @@ public:
 	//BFS* bfs;
 
 	BFSControlWidget* widgetBFS;
+	BFS2ControlWidget* widgetBFS2;
 	MTTControlWidget* widgetMTT;
 
 	int mode;
@@ -48,6 +50,7 @@ private slots:
 	void startNearestNeighbor();
 	void startNearestNeighborConnectivity();
 	void startBFS();
+	void startBFS2();
 	void startMTT();
 	void tick();
 

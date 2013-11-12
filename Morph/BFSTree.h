@@ -17,7 +17,7 @@ public:
 	RoadVertexDesc getParent(RoadVertexDesc node);
 	RoadVertexDesc getRoot();
 	int getHeight(RoadVertexDesc node);
-	RoadVertexDesc copySubTree(RoadVertexDesc node1, RoadVertexDesc node2);
+	RoadVertexDesc copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc node1, RoadVertexDesc node2);
 
 private:
 	void buildTree();

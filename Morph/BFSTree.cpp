@@ -61,31 +61,60 @@ int BFSTree::getHeight(RoadVertexDesc node) {
 }
 
 /**
- * node1を、node2の子供の一人としてコピーする。
+ * node1_parentの子node1を、node2の子供の一人としてコピーする。
  */
-RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1, RoadVertexDesc node2) {
+RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc node1, RoadVertexDesc node2) {
+	// トップノードをコピーする
 	RoadVertex* v = new RoadVertex(roads->graph[node1]->getPt());
 	RoadVertexDesc v_desc = boost::add_vertex(roads->graph);
 	roads->graph[v_desc] = v;
 
-	// node2の子供を作成する
-	std::vector<RoadVertexDesc> c = children[node2];
-	c.push_back(v_desc);
-	children[node2] = c;
+	RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, node1_parent, node1);
 
-	for (int i = 0; i < children[node1].size(); i++) {
-		RoadVertexDesc c_desc = copySubTree(children[node1][i], v_desc);
+	// トップノードのために、エッジを作成する
+	RoadEdge* new_e = new RoadEdge(roads->graph[e_desc]->lanes, roads->graph[e_desc]->type);
+	new_e->addPoint(roads->graph[node2]->getPt());
+	new_e->addPoint(roads->graph[v_desc]->getPt());
+	std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(node2, v_desc, roads->graph);
+	roads->graph[edge_pair.first] = new_e;
 
-		// エッジを取得
-		RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, node1, children[node1][i]);
+	// 親子関係を登録する
+	addChild(node2, v_desc);
 
-		// エッジを作成する
-		RoadEdge* new_e = new RoadEdge(roads->graph[e_desc]->lanes, roads->graph[e_desc]->type);
-		new_e->addPoint(roads->graph[node1]->getPt());
-		new_e->addPoint(roads->graph[children[node1][i]]->getPt());
+	// キューを初期化
+	std::list<RoadVertexDesc> seeds1;
+	std::list<RoadVertexDesc> seeds2;
+	seeds1.push_back(node1);
+	seeds2.push_back(v_desc);
 
-		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(node2, c_desc, roads->graph);
-		roads->graph[edge_pair.first] = new_e;
+	while (!seeds1.empty()) {
+		RoadVertexDesc parent1 = seeds1.front();
+		seeds1.pop_front();
+		RoadVertexDesc parent2 = seeds2.front();
+		seeds2.pop_front();
+
+		for (int i = 0; i < children[parent1].size(); i++) {
+			// コピー先にノードを作成する
+			RoadVertex* v = new RoadVertex(roads->graph[children[parent1][i]]->getPt());
+			RoadVertexDesc v_desc = boost::add_vertex(roads->graph);
+			roads->graph[v_desc] = v;
+
+			// エッジを取得
+			RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, parent1, children[parent1][i]);
+
+			// コピー先にエッジを作成する
+			RoadEdge* new_e = new RoadEdge(roads->graph[e_desc]->lanes, roads->graph[e_desc]->type);
+			new_e->addPoint(roads->graph[parent2]->getPt());
+			new_e->addPoint(roads->graph[v_desc]->getPt());
+			std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(parent2, v_desc, roads->graph);
+			roads->graph[edge_pair.first] = new_e;
+
+			seeds1.push_back(children[parent1][i]);
+			seeds2.push_back(v_desc);
+
+			// 親子関係を登録する
+			addChild(parent2, v_desc);
+		}
 	}
 
 	return v_desc;
