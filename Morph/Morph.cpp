@@ -135,7 +135,7 @@ void Morph::startBFSProp() {
 	mode = 5;
 
 	// DocWidgetの表示
-	widgetBFS->show();
+	widgetBFSProp->show();
 	addDockWidget(Qt::RightDockWidgetArea, widgetBFSProp);
 
 	widgetBFS->hide();
