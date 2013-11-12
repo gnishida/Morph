@@ -38,9 +38,9 @@ BFS::~BFS() {
 void BFS::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
 	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
-	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
+	drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
 	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
@@ -69,8 +69,9 @@ void BFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset,
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 		RoadVertex* v = roads->graph[*vi];
+		if (!v->valid) continue;
 
-		int x = (v->getPt().x() + offset) * scale;
+		int x = (v->getPt().x() + offset) * scale ;
 		int y = (-v->getPt().y() + offset) * scale;
 		painter->fillRect(x - 1, y - 1, 3, 3, col);
 	}
@@ -189,12 +190,14 @@ void BFS::buildTree() {
 	correspondence = findCorrespondence(roads1, tree1, roads2, tree2);
 
 	// シーケンスを生成
+	/*
 	clearSequence();
 	for (int i = 0; i <= 20; i++) {
 		float t = 1.0f - (float)i * 0.05f;
 
 		sequence.push_back(interpolate(t));
 	}
+	*/
 }
 
 /**
