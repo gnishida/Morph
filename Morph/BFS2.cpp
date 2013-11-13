@@ -19,7 +19,10 @@ BFS2::BFS2(const char* filename1, const char* filename2) {
 	roads2->load(fp, 2);
 	GraphUtil::planarify(roads2);
 	GraphUtil::singlify(roads2);
-	GraphUtil::simplify(roads2, 30, 0.0f);
+	GraphUtil::simplify(roads2, 100, 0.0f);
+	GraphUtil::planarify(roads2);
+	GraphUtil::simplify(roads2, 100, 0.0f);
+
 	fclose(fp);
 
 	//createRoads1();
@@ -41,11 +44,11 @@ BFS2::~BFS2() {
 void BFS2::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
 	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
 	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
-	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void BFS2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -72,7 +75,7 @@ void BFS2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 		RoadVertex* v = roads->graph[*vi];
-		//if (!v->valid) continue;
+		if (!v->valid) continue;
 
 		int x = (v->getPt().x() + offset) * scale ;
 		int y = (-v->getPt().y() + offset) * scale;
@@ -207,8 +210,9 @@ void BFS2::buildTree() {
 QMap<RoadVertexDesc, RoadVertexDesc> BFS2::findCorrespondence(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2) {
 
 	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
-		if ((roads1->graph[*vi]->getPt() - QVector2D(-268, 756)).length() < 60.0f) {
+	for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
+		if (!roads2->graph[*vi]->valid) continue;
+		if (GraphUtil::getDegree(roads2, *vi) == 1) {
 			int a = *vi;
 			int k = 0;
 		}

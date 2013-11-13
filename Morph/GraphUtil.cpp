@@ -173,6 +173,9 @@ void GraphUtil::collapseEdge(RoadGraph* roads, RoadEdgeDesc e) {
 	roads->collapseHistory.push_back(ca);
 }
 
+/**
+ * 頂点vの隣接ノードのリストを返却する
+ */
 std::vector<RoadVertexDesc> GraphUtil::getNeighbors(RoadGraph* roads, RoadVertexDesc v) {
 	std::vector<RoadVertexDesc> neighbors;
 
@@ -401,12 +404,14 @@ void GraphUtil::simplify(RoadGraph* roads, float dist_threshold, float angle_thr
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 		if (!roads->graph[*vi]->valid) continue;
 
-		// ノード間の距離が近すぎる場合は、collapse
-		RoadVertexDesc v2 = findNearestNeighbor(roads, roads->graph[*vi]->getPt(), *vi);
-		if ((roads->graph[v2]->getPt() - roads->graph[*vi]->getPt()).length() <= dist_threshold) {
-			collapseVertex(roads, *vi, v2);
+		while (true) {
+			RoadVertexDesc v2 = findNearestNeighbor(roads, roads->graph[*vi]->getPt(), *vi);
+			if ((roads->graph[v2]->getPt() - roads->graph[*vi]->getPt()).length() > dist_threshold) break;
+
+			collapseVertex(roads, v2, *vi);
 		}
 
+		/*
 		// エッジ間のなす角が小さすぎる場合は、短いエッジを削除
 		RoadOutEdgeIter ei, eend;
 		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
@@ -433,6 +438,7 @@ void GraphUtil::simplify(RoadGraph* roads, float dist_threshold, float angle_thr
 				}
 			}
 		}
+		*/
 	}
 }
 
