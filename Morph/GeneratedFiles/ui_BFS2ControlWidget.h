@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'BFS2ControlWidget.ui'
 **
-** Created: Tue Nov 12 16:52:13 2013
+** Created: Wed Nov 13 09:02:06 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!

@@ -41,11 +41,11 @@ BFS2::~BFS2() {
 void BFS2::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
 	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
 	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
-	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void BFS2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -72,7 +72,7 @@ void BFS2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 		RoadVertex* v = roads->graph[*vi];
-		if (!v->valid) continue;
+		//if (!v->valid) continue;
 
 		int x = (v->getPt().x() + offset) * scale ;
 		int y = (-v->getPt().y() + offset) * scale;
@@ -182,9 +182,6 @@ void BFS2::buildTree() {
 		}
 	}
 
-	min_v1_desc = 2;
-	min_v2_desc = 8;
-
 	// 頂点が１つもない場合は、終了
 	if (count == 0) return;
 
@@ -208,6 +205,16 @@ void BFS2::buildTree() {
  * ２つの道路網を、木構造を使ってマッチングさせる。
  */
 QMap<RoadVertexDesc, RoadVertexDesc> BFS2::findCorrespondence(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2) {
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		if ((roads1->graph[*vi]->getPt() - QVector2D(-268, 756)).length() < 60.0f) {
+			int a = *vi;
+			int k = 0;
+		}
+	}
+
+
 	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
 
 	correspondence[tree1->getRoot()] = tree2->getRoot();
