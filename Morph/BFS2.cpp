@@ -475,15 +475,15 @@ void BFS2::createRoads1() {
 	RoadVertexDesc v2_desc = boost::add_vertex(roads1->graph);
 	roads1->graph[v2_desc] = v2;
 
-	RoadVertex* v3 = new RoadVertex(QVector2D(-300, 200));
+	RoadVertex* v3 = new RoadVertex(QVector2D(-100, 400));
 	RoadVertexDesc v3_desc = boost::add_vertex(roads1->graph);
 	roads1->graph[v3_desc] = v3;
 
-	RoadVertex* v4 = new RoadVertex(QVector2D(0, 400));
+	RoadVertex* v4 = new RoadVertex(QVector2D(250, 650));
 	RoadVertexDesc v4_desc = boost::add_vertex(roads1->graph);
 	roads1->graph[v4_desc] = v4;
 
-	RoadVertex* v5 = new RoadVertex(QVector2D(200, -200));
+	RoadVertex* v5 = new RoadVertex(QVector2D(400, -200));
 	RoadVertexDesc v5_desc = boost::add_vertex(roads1->graph);
 	roads1->graph[v5_desc] = v5;
 
@@ -491,11 +491,11 @@ void BFS2::createRoads1() {
 	RoadVertexDesc v6_desc = boost::add_vertex(roads1->graph);
 	roads1->graph[v6_desc] = v6;
 
-	RoadVertex* v7 = new RoadVertex(QVector2D(400, -400));
+	RoadVertex* v7 = new RoadVertex(QVector2D(600, -400));
 	RoadVertexDesc v7_desc = boost::add_vertex(roads1->graph);
 	roads1->graph[v7_desc] = v7;
 
-	RoadVertex* v8 = new RoadVertex(QVector2D(0, -900));
+	RoadVertex* v8 = new RoadVertex(QVector2D(200, -900));
 	RoadVertexDesc v8_desc = boost::add_vertex(roads1->graph);
 	roads1->graph[v8_desc] = v8;
 
@@ -584,7 +584,7 @@ void BFS2::createRoads2() {
 	RoadVertexDesc v8_desc = boost::add_vertex(roads2->graph);
 	roads2->graph[v8_desc] = v8;
 
-	RoadVertex* v9 = new RoadVertex(QVector2D(0, 500));
+	RoadVertex* v9 = new RoadVertex(QVector2D(-50, 350));
 	RoadVertexDesc v9_desc = boost::add_vertex(roads2->graph);
 	roads2->graph[v9_desc] = v9;
 
