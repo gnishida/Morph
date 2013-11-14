@@ -36,8 +36,8 @@ public:
 	void clearSequence();
 	RoadGraph* copyRoads(RoadGraph* roads, BFSTree* tree, int num);
 
-	void findBestRoots(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2, RoadVertexDesc& root1, RoadVertexDesc& root2);
-	int computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexDesc node1, RoadGraph* roads2,  BFSTree* tree2, RoadVertexDesc node2);
+	void findBestRoots(RoadGraph* roads1, RoadGraph* roads2, RoadVertexDesc& root1, RoadVertexDesc& root2);
+	int computeUnbalanceness(RoadGraph* roads1, RoadVertexDesc node1, RoadGraph* roads2,  RoadVertexDesc node2);
 
 	void createRoads1();
 	void createRoads2();

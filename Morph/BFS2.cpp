@@ -192,7 +192,7 @@ void BFS2::buildTree() {
 	min_v2_desc = 10;
 	*/
 
-	findBestRoots(roads1, tree1, roads2, tree2, min_v1_desc, min_v2_desc);
+	findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
 
 	if (tree1 != NULL) delete tree1;
 	if (tree2 != NULL) delete tree2;
@@ -468,7 +468,7 @@ RoadGraph* BFS2::copyRoads(RoadGraph* roads, BFSTree* tree, int num) {
 	return new_roads;
 }
 
-void BFS2::findBestRoots(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2, RoadVertexDesc& root1, RoadVertexDesc& root2) {
+void BFS2::findBestRoots(RoadGraph* roads1, RoadGraph* roads2, RoadVertexDesc& root1, RoadVertexDesc& root2) {
 	int min_score = std::numeric_limits<int>::max();
 
 	RoadVertexIter vi1, vend1;
@@ -479,7 +479,7 @@ void BFS2::findBestRoots(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, B
 		for (boost::tie(vi2, vend2) = boost::vertices(roads2->graph); vi2 != vend2; ++vi2) {
 			if (!roads2->graph[*vi2]->valid) continue;
 
-			int score = computeUnbalanceness(roads1, tree1,*vi1, roads2, tree2, *vi2);
+			int score = computeUnbalanceness(roads1, *vi1, roads2, *vi2);
 			if (score < min_score) {
 				min_score = score;
 				root1 = *vi1;
@@ -492,8 +492,12 @@ void BFS2::findBestRoots(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, B
 /**
  * 指定した頂点配下を比べて、アンバランス度を計算する。
  */
-int BFS2::computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexDesc node1, RoadGraph* roads2,  BFSTree* tree2, RoadVertexDesc node2) {
+int BFS2::computeUnbalanceness(RoadGraph* roads1,  RoadVertexDesc node1, RoadGraph* roads2,  RoadVertexDesc node2) {
 	int score = 0;
+
+	// 木構造を作成する
+	BFSTree tree1(roads1, node1);
+	BFSTree tree2(roads2, node2);
 
 	std::list<RoadVertexDesc> seeds1;
 	seeds1.push_back(node1);
@@ -507,8 +511,8 @@ int BFS2::computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexDes
 		seeds2.pop_front();
 
 		// 子リストを取得
-		std::vector<RoadVertexDesc> children1 = tree1->getChildren(parent1);
-		std::vector<RoadVertexDesc> children2 = tree2->getChildren(parent2);
+		std::vector<RoadVertexDesc> children1 = tree1.getChildren(parent1);
+		std::vector<RoadVertexDesc> children2 = tree2.getChildren(parent2);
 
 		// どちらのノードにも、子ノードがない場合は、スキップ
 		if (children1.size() == 0 && children2.size() == 0) continue;
@@ -518,8 +522,10 @@ int BFS2::computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexDes
 
 		while (true) {
 			RoadVertexDesc child1, child2;
-			if (!findBestPairByDirection(roads1, parent1, tree1, paired1, roads2, parent2, tree2, paired2, true, child1, child2)) break;
+			if (!findBestPairByDirection(roads1, parent1, &tree1, paired1, roads2, parent2, &tree2, paired2, true, child1, child2)) break;
 			
+			paired1[child1] = true;
+			paired2[child2] = true;
 			seeds1.push_back(child1);
 			seeds2.push_back(child2);
 		}
@@ -529,13 +535,13 @@ int BFS2::computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexDes
 			if (paired1.contains(children1[i])) continue;
 			if (!roads1->graph[children1[i]]->valid) continue;
 
-			score += tree1->getTreeSize(children1[i]);
+			score += tree1.getTreeSize(children1[i]);
 		}
 		for (int i = 0; i < children2.size(); i++) {
 			if (paired2.contains(children2[i])) continue;
 			if (!roads2->graph[children2[i]]->valid) continue;
 
-			score += tree2->getTreeSize(children2[i]);
+			score += tree2.getTreeSize(children2[i]);
 		}
 	}
 
