@@ -89,6 +89,35 @@ RoadVertexDesc GraphUtil::copyVertex(RoadGraph* roads, RoadVertexDesc v, bool vi
 }
 
 /**
+ * 指定された頂点を移動する
+ * とりあえず、無効なエッジも含めて、隣接エッジを併せて移動する。
+ */
+void GraphUtil::moveVertex(RoadGraph* roads, RoadVertexDesc v, QVector2D pt) {
+	// 隣接エッジを移動する
+	RoadOutEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::out_edges(v, roads->graph); ei != eend; ++ei) {
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+		std::vector<QVector2D> polyLine = roads->graph[*ei]->getPolyLine();
+		if ((polyLine[0] - roads->graph[v]->getPt()).lengthSquared() < (polyLine[0] - roads->graph[tgt]->getPt()).lengthSquared()) {
+			std::reverse(polyLine.begin(), polyLine.end());
+		}
+
+		int num = polyLine.size();
+		QVector2D dir = pt - roads->graph[v]->getPt();
+		for (int i = 0; i < num - 1; i++) {
+			polyLine[i] += dir * (float)i / (float)(num - 1);
+		}
+		polyLine[num - 1] = pt;
+
+		roads->graph[*ei]->polyLine = polyLine;
+	}
+
+	// 指定された頂点を移動する
+	roads->graph[v]->pt = pt;
+}
+
+/**
  * グラフのノードv1をv2にcollapseする。
  */
 void GraphUtil::collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2) {
@@ -493,7 +522,8 @@ void GraphUtil::simplify(RoadGraph* roads, float dist_threshold) {
 		float dist;
 		RoadEdgeDesc e = GraphUtil::findNearestEdge(roads, *vi, dist, closestPt);
 		if (dist < dist_threshold) {
-			roads->graph[*vi]->pt = closestPt;
+			// 当該頂点を、エッジ上の点に移動する
+			GraphUtil::moveVertex(roads, *vi, closestPt);
 
 			// 当該エッジの両端頂点を取得
 			RoadVertexDesc src = boost::source(e, roads->graph);
