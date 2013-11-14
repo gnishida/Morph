@@ -71,11 +71,7 @@ RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc 
 	RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, node1_parent, node1);
 
 	// トップノードのために、エッジを作成する
-	RoadEdge* new_e = new RoadEdge(roads->graph[e_desc]->lanes, roads->graph[e_desc]->type);
-	new_e->addPoint(roads->graph[node2]->getPt());
-	new_e->addPoint(roads->graph[v_desc]->getPt());
-	std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(node2, v_desc, roads->graph);
-	roads->graph[edge_pair.first] = new_e;
+	GraphUtil::addEdge(roads, node2, v_desc, roads->graph[e_desc]->lanes, roads->graph[e_desc]->type, roads->graph[e_desc]->oneWay);
 
 	// 親子関係を登録する
 	addChild(node2, v_desc);
@@ -100,11 +96,7 @@ RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc 
 			RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, parent1, children[parent1][i]);
 
 			// コピー先にエッジを作成する
-			RoadEdge* new_e = new RoadEdge(roads->graph[e_desc]->lanes, roads->graph[e_desc]->type);
-			new_e->addPoint(roads->graph[parent2]->getPt());
-			new_e->addPoint(roads->graph[v_desc]->getPt());
-			std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(parent2, v_desc, roads->graph);
-			roads->graph[edge_pair.first] = new_e;
+			GraphUtil::addEdge(roads, parent2, v_desc, roads->graph[e_desc]->lanes, roads->graph[e_desc]->type, roads->graph[e_desc]->oneWay);
 
 			seeds1.push_back(children[parent1][i]);
 			seeds2.push_back(v_desc);
@@ -193,11 +185,7 @@ void BFSTree::buildTree() {
 				RoadVertexDesc child2 = GraphUtil::copyVertex(roads, child, false);
 
 				// エッジ作成
-				RoadEdge* new_e = new RoadEdge(roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type);
-				new_e->addPoint(roads->graph[parent]->getPt());
-				new_e->addPoint(roads->graph[child2]->getPt());
-				std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(parent, child2, roads->graph);
-				roads->graph[new_e_pair.first] = new_e;
+				GraphUtil::addEdge(roads, parent, child2, roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type, roads->graph[orig_e_desc]->oneWay);
 
 				children.push_back(child2);
 			} else {

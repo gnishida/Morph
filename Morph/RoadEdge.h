@@ -8,14 +8,15 @@ class RoadVertex;
 class RoadEdge {
 public:
 	unsigned int lanes;
-	float length;
+	//float length;
 	unsigned int type;
+	bool oneWay;
 	std::vector<QVector2D> polyLine;
 	bool valid;
 	bool orig;
 
 public:
-	RoadEdge(int numLanes, int typeRoad);
+	RoadEdge(unsigned int numLanes, unsigned int typeRoad, bool oneWay);
 	~RoadEdge();
 	
 	int getNumLanes();

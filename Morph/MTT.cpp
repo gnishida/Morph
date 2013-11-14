@@ -12,7 +12,7 @@ MTT::MTT(const char* filename) {
 	roads->load(fp, 2);
 	GraphUtil::planarify(roads);
 	GraphUtil::singlify(roads);
-	GraphUtil::simplify(roads, 30, 0.0f);
+	GraphUtil::simplify(roads, 30);
 	fclose(fp);
 
 	selected = 0;

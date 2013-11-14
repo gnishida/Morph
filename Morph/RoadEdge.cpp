@@ -1,9 +1,9 @@
 #include "RoadEdge.h"
 
-RoadEdge::RoadEdge(int lanes, int type) {
+RoadEdge::RoadEdge(unsigned int lanes, unsigned int type, bool oneWay) {
 	this->lanes = lanes;
 	this->type = type;
-	this->length = 0.0f;
+	this->oneWay = oneWay;
 	this->valid = true;
 	this->orig = false;
 }

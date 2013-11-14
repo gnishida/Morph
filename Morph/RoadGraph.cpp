@@ -65,7 +65,7 @@ void RoadGraph::load(FILE* fp, int roadType) {
 
 	// Read each edge's information: the descs of two vertices, road type, the number of lanes, the number of points along the polyline, and the coordinate of each point along the polyline.
 	for (int i = 0; i < nEdges; i++) {
-		RoadEdge* edge = new RoadEdge(1, 1);
+		RoadEdge* edge = new RoadEdge(1, 1, false);
 
 		RoadVertexDesc id1, id2;
 		fread(&id1, sizeof(RoadVertexDesc), 1, fp);

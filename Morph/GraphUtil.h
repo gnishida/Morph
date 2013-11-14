@@ -15,6 +15,7 @@ public:
 	static RoadVertexDesc copyVertex(RoadGraph* roads, RoadVertexDesc v, bool virtFlag = true);
 	static void collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	static void collapseEdge(RoadGraph* roads, RoadEdgeDesc e);
+	static RoadEdgeDesc addEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, unsigned int lanes, unsigned int type, bool oneWay = false);
 	static std::vector<RoadVertexDesc> getNeighbors(RoadGraph* roads, RoadVertexDesc v);
 	static bool isNeighbor(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	static bool isReachable(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt);
@@ -23,11 +24,13 @@ public:
 	static RoadEdgeDesc getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, bool onlyValidEdge = true);
 	static std::vector<QVector2D> getOrderedPolyLine(RoadGraph* roads, RoadEdgeDesc e);
 	static int getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge = true);
-	static RoadVertexDesc findNearestNeighbor(RoadGraph* roads, const QVector2D &pt);
-	static RoadVertexDesc findNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc ignore);
+	static RoadVertexDesc findNearestVertex(RoadGraph* roads, const QVector2D &pt);
+	static RoadVertexDesc findNearestVertex(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc ignore);
 	static RoadVertexDesc findConnectedNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc v);
+	static RoadEdgeDesc findNearestEdge(RoadGraph* roads, const QVector2D &pt, float& dist, QVector2D& closestPt, bool onlyValidEdge = true);
+	static RoadEdgeDesc findNearestEdge(RoadGraph* roads, RoadVertexDesc v, float& dist, QVector2D& closestPt, bool onlyValidEdge = true);
 	static std::vector<RoadVertexDesc> getChildren(RoadGraph* roads, RoadVertexDesc v);
-	static void simplify(RoadGraph* roads, float dist_threshold, float angle_threshold);
+	static void simplify(RoadGraph* roads, float dist_threshold);
 	static void normalize(RoadGraph* roads);
 	static void singlify(RoadGraph* roads);
 	static void planarify(RoadGraph* roads);

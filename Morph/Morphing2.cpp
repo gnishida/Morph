@@ -122,7 +122,7 @@ void Morphing2::initRoads(const char* filename1, const char* filename2) {
 	roadsA->load(fp1, 2);
 	GraphUtil::planarify(roadsA);
 	GraphUtil::singlify(roadsA);
-	GraphUtil::simplify(roadsA, 30, 0.0f);
+	GraphUtil::simplify(roadsA, 30);
 	end = clock();
 	qDebug() << "Roads A is loaded[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
@@ -132,7 +132,7 @@ void Morphing2::initRoads(const char* filename1, const char* filename2) {
 	roadsB->load(fp2, 2);
 	GraphUtil::planarify(roadsB);
 	GraphUtil::singlify(roadsB);
-	GraphUtil::simplify(roadsB, 30, 0.0f);
+	GraphUtil::simplify(roadsB, 30);
 	end = clock();
 	qDebug() << "Roads B is loaded[ms]: " << 1000.0 * (double)(end - start) / (double)CLOCKS_PER_SEC;
 
@@ -205,7 +205,7 @@ RoadGraph* Morphing2::interpolate(float t) {
 					RoadVertexDesc new_v1_desc = conv[v1_desc][v2_desc];
 					RoadVertexDesc new_v2_desc = conv[v1_desc][v2b_desc];
 
-					RoadEdge* new_e = new RoadEdge(1, 1);
+					RoadEdge* new_e = new RoadEdge(1, 1, false);
 					new_e->addPoint(roads->graph[new_v1_desc]->getPt());
 					new_e->addPoint(roads->graph[new_v2_desc]->getPt());
 
@@ -233,7 +233,7 @@ RoadGraph* Morphing2::interpolate(float t) {
 						RoadVertexDesc new_v1_desc = conv[v1_desc][v2_desc];
 						RoadVertexDesc new_v2_desc = conv[v1b_desc][v2b_desc];
 
-						RoadEdge* new_e = new RoadEdge(1, 1);
+						RoadEdge* new_e = new RoadEdge(1, 1, false);
 						new_e->addPoint(roads->graph[new_v1_desc]->getPt());
 						new_e->addPoint(roads->graph[new_v2_desc]->getPt());
 
@@ -282,7 +282,7 @@ void Morphing2::findBestPairs(RoadGraph* roads1, QMap<RoadVertexDesc, QSet<RoadV
 			if (!correspond1->value(*vi)->empty()) continue;
 
 			count++;
-			RoadVertexDesc v2_desc = GraphUtil::findNearestNeighbor(roads2, roads1->graph[*vi]->getPt());
+			RoadVertexDesc v2_desc = GraphUtil::findNearestVertex(roads2, roads1->graph[*vi]->getPt());
 			float dist = (roads1->graph[*vi]->getPt() - roads2->graph[v2_desc]->getPt()).length();
 			if (dist < min_dist) {
 				min_dist = dist;
