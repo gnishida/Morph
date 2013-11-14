@@ -195,11 +195,7 @@ RoadGraph* Morphing::interpolate(float t) {
 		RoadVertexDesc new_src_desc = conv[src_desc];
 		RoadVertexDesc new_tgt_desc = conv[tgt_desc];
 
-		RoadEdge* new_e = new RoadEdge(1, 1, false);
-		new_e->addPoint(roads->graph[new_src_desc]->getPt());
-		new_e->addPoint(roads->graph[new_tgt_desc]->getPt());
-		std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(new_src_desc, new_tgt_desc, roads->graph);
-		roads->graph[edge_pair1.first] = new_e;
+		GraphUtil::addEdge(roads, new_src_desc, new_tgt_desc, 1, 1, false);
 	}
 
 	return roads;
@@ -239,21 +235,13 @@ void Morphing::addNodesOnEdges(RoadGraph* roads, int numNodes) {
 			roads->graph[v_desc] = v;
 
 			// エッジを追加
-			RoadEdge* new_e = new RoadEdge(1, 1, false);
-			new_e->addPoint(roads->graph[prev_v_desc]->getPt());
-			new_e->addPoint(roads->graph[v_desc]->getPt());
-			std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(prev_v_desc, v_desc, roads->graph);
-			roads->graph[new_e_pair.first] = new_e;
+			GraphUtil::addEdge(roads, prev_v_desc, v_desc, 1, 1, false);
 			
 			prev_v_desc = v_desc;
 		}
 
 		// 最後のノードと、tgtの間にもエッジを追加
-		RoadEdge* new_e = new RoadEdge(1, 1, false);
-		new_e->addPoint(roads->graph[prev_v_desc]->getPt());
-		new_e->addPoint(roads->graph[tgt_desc]->getPt());
-		std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(prev_v_desc, tgt_desc, roads->graph);
-		roads->graph[new_e_pair.first] = new_e;			
+		GraphUtil::addEdge(roads, prev_v_desc, tgt_desc, 1, 1, false);
 	}
 
 	// 「無効」のしるしのついたエッジ（つまり、もともとのエッジ）を全て削除する
@@ -489,11 +477,7 @@ void Morphing::augmentGraph(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDe
 
 				// 対応するroads1の、兄弟頂点AB間にエッジがあれば、roads2の兄弟頂点AB間にもエッジを作成する
 				if (GraphUtil::hasEdge(roads1, v1a, v1b)) {
-					RoadEdge* new_e = new RoadEdge(1, 1, false);
-					new_e->addPoint(roads2->graph[v2a]->getPt());
-					new_e->addPoint(roads2->graph[v2b]->getPt());
-					std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(v2a, v2b, roads2->graph);
-					roads2->graph[new_e_pair.first] = new_e;
+					GraphUtil::addEdge(roads2, v2a, v2b, 1, 1, false);
 				}
 			}
 		}
@@ -617,11 +601,7 @@ bool Morphing::updateEdgeWithSibling1(RoadGraph* roads1, QMap<RoadVertexDesc, Ro
 						roads1->graph[e1]->valid = false;
 
 						// Aの兄弟とBの間にエッジを作成
-						RoadEdge* new_e1 = new RoadEdge(1, 1, false);
-						new_e1->addPoint(roads1->graph[s]->getPt());
-						new_e1->addPoint(roads1->graph[tgt]->getPt());
-						std::pair<RoadEdgeDesc, bool> new_e1_pair = boost::add_edge(s, tgt, roads1->graph);
-						roads1->graph[new_e1_pair.first] = new_e1;
+						GraphUtil::addEdge(roads1, s, tgt, 1, 1, false);
 
 						if (t != t2) {
 							// A'とB'の兄弟との間のエッジを無効にする
@@ -629,11 +609,7 @@ bool Morphing::updateEdgeWithSibling1(RoadGraph* roads1, QMap<RoadVertexDesc, Ro
 							roads2->graph[e2]->valid = false;
 
 							// A'とB'の間にエッジを作成する
-							RoadEdge* new_e2 = new RoadEdge(1, 1, false);
-							new_e2->addPoint(roads2->graph[s2]->getPt());
-							new_e2->addPoint(roads2->graph[t]->getPt());
-							std::pair<RoadEdgeDesc, bool> new_e2_pair = boost::add_edge(s2, t, roads2->graph);
-							roads2->graph[new_e2_pair.first] = new_e2;
+							GraphUtil::addEdge(roads2, s2, t, 1, 1, false);
 						}
 
 						matched = true;
@@ -671,11 +647,7 @@ bool Morphing::updateEdgeWithSibling1(RoadGraph* roads1, QMap<RoadVertexDesc, Ro
 						roads1->graph[e1]->valid = false;
 
 						// AとBの兄弟の間にエッジを作成
-						RoadEdge* new_e1 = new RoadEdge(1, 1, false);
-						new_e1->addPoint(roads1->graph[src]->getPt());
-						new_e1->addPoint(roads1->graph[t]->getPt());
-						std::pair<RoadEdgeDesc, bool> new_e1_pair = boost::add_edge(src, t, roads1->graph);
-						roads1->graph[new_e1_pair.first] = new_e1;
+						GraphUtil::addEdge(roads1, src, t, 1, 1, false);
 
 						if (s != s2) {
 							// A'の兄弟とB'との間のエッジを無効にする
@@ -683,11 +655,7 @@ bool Morphing::updateEdgeWithSibling1(RoadGraph* roads1, QMap<RoadVertexDesc, Ro
 							roads2->graph[e2]->valid = false;
 
 							// A'とB'の間にエッジを作成する
-							RoadEdge* new_e2 = new RoadEdge(1, 1, false);
-							new_e2->addPoint(roads2->graph[s]->getPt());
-							new_e2->addPoint(roads2->graph[t2]->getPt());
-							std::pair<RoadEdgeDesc, bool> new_e2_pair = boost::add_edge(s, t2, roads2->graph);
-							roads2->graph[new_e2_pair.first] = new_e2;
+							GraphUtil::addEdge(roads2, s, t2, 1, 1, false);
 						}
 
 						matched = true;
@@ -740,11 +708,7 @@ bool Morphing::updateEdgeWithSibling2(RoadGraph* roads1, QMap<RoadVertexDesc, Ro
 				roads1->graph[e1]->valid = false;
 
 				// Aの兄弟とBの兄弟の間にエッジを作成
-				RoadEdge* new_e1 = new RoadEdge(1, 1, false);
-				new_e1->addPoint(roads1->graph[s]->getPt());
-				new_e1->addPoint(roads1->graph[t]->getPt());
-				std::pair<RoadEdgeDesc, bool> new_e1_pair = boost::add_edge(s, t, roads1->graph);
-				roads1->graph[new_e1_pair.first] = new_e1;
+				GraphUtil::addEdge(roads1, s, t, 1, 1, false);
 
 				matched = true;
 				break;
@@ -789,22 +753,14 @@ bool Morphing::updateEdgeWithSibling3(RoadGraph* roads1, QMap<RoadVertexDesc, Ro
 				roads2->graph[e2]->valid = false;
 
 				// A'とB'の間にエッジを作成
-				RoadEdge* new_e2 = new RoadEdge(1, 1, false);
-				new_e2->addPoint(roads2->graph[s]->getPt());
-				new_e2->addPoint(roads2->graph[t2]->getPt());
-				std::pair<RoadEdgeDesc, bool> new_e2_pair = boost::add_edge(s, t2, roads2->graph);
-				roads2->graph[new_e2_pair.first] = new_e2;
+				GraphUtil::addEdge(roads2, s, t2, 1, 1, false);
 
 				// エッジABを無効にする
 				RoadEdgeDesc e1 = getEdge(roads1, src, tgt);
 				roads1->graph[e1]->valid = false;
 
 				// AとBの兄弟の間にエッジを作成する
-				RoadEdge* new_e1 = new RoadEdge(1, 1, false);
-				new_e1->addPoint(roads1->graph[src]->getPt());
-				new_e1->addPoint(roads1->graph[t]->getPt());
-				std::pair<RoadEdgeDesc, bool> new_e1_pair = boost::add_edge(src, t, roads1->graph);
-				roads1->graph[new_e1_pair.first] = new_e1;
+				GraphUtil::addEdge(roads1, src, t, 1, 1, false);
 
 				matched = true;
 				break;
@@ -848,11 +804,7 @@ bool Morphing::updateEdgeWithSibling4(RoadGraph* roads1, QMap<RoadVertexDesc, Ro
 				roads2->graph[e1]->valid = false;
 
 				// A'とB'の間にエッジを作成
-				RoadEdge* new_e = new RoadEdge(1, 1, false);
-				new_e->addPoint(roads2->graph[s]->getPt());
-				new_e->addPoint(roads2->graph[t]->getPt());
-				std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(s, t, roads2->graph);
-				roads2->graph[new_e_pair.first] = new_e;
+				GraphUtil::addEdge(roads2, s, t, 1, 1, false);
 
 				matched = true;
 				break;
@@ -890,17 +842,8 @@ void Morphing::updateEdgeWithSplit(RoadGraph* roads1, QMap<RoadVertexDesc, RoadV
 	roads1->graph[new_v1b_desc] = new_v1b;
 
 	// roads1の追加頂点に対してエッジを追加
-	RoadEdge* new_e1a = new RoadEdge(1, 1, false);
-	new_e1a->addPoint(src->getPt());
-	new_e1a->addPoint(new_v1a->getPt());
-	std::pair<RoadEdgeDesc, bool> new_e1a_pair = boost::add_edge(src_desc, new_v1a_desc, roads1->graph);
-	roads1->graph[new_e1a_pair.first] = new_e1a;
-
-	RoadEdge* new_e1b = new RoadEdge(1, 1, false);
-	new_e1b->addPoint(new_v1b->getPt());
-	new_e1b->addPoint(tgt->getPt());
-	std::pair<RoadEdgeDesc, bool> new_e1b_pair = boost::add_edge(new_v1b_desc, tgt_desc, roads1->graph);
-	roads1->graph[new_e1b_pair.first] = new_e1b;
+	GraphUtil::addEdge(roads1, src_desc, new_v1a_desc, 1, 1, false);
+	GraphUtil::addEdge(roads1, new_v1b_desc, tgt_desc, 1, 1, false);
 
 	// roads1の当該エッジを無効にする
 	RoadEdgeDesc e = getEdge(roads1, src_desc, tgt_desc);
@@ -915,17 +858,8 @@ void Morphing::updateEdgeWithSplit(RoadGraph* roads1, QMap<RoadVertexDesc, RoadV
 	roads2->graph[new_v2b_desc] = new_v2b;
 
 	// roads2の追加頂点に対してエッジを追加
-	RoadEdge* new_e2a = new RoadEdge(1, 1, false);
-	new_e2a->addPoint(src2->getPt());
-	new_e2a->addPoint(new_v2a->getPt());
-	std::pair<RoadEdgeDesc, bool> new_e2a_pair = boost::add_edge(src2_desc, new_v2a_desc, roads2->graph);
-	roads2->graph[new_e2a_pair.first] = new_e2a;
-
-	RoadEdge* new_e2b = new RoadEdge(1, 1, false);
-	new_e2b->addPoint(new_v2b->getPt());
-	new_e2b->addPoint(tgt2->getPt());
-	std::pair<RoadEdgeDesc, bool> new_e2b_pair = boost::add_edge(new_v2b_desc, tgt2_desc, roads2->graph);
-	roads2->graph[new_e2b_pair.first] = new_e2b;
+	GraphUtil::addEdge(roads2, src2_desc, new_v2a_desc, 1, 1, false);
+	GraphUtil::addEdge(roads2, new_v2b_desc, tgt2_desc, 1, 1, false);
 
 	// 対応点を更新
 	neighbor1->insert(new_v1a_desc, new_v2a_desc);
@@ -1072,23 +1006,9 @@ RoadGraph* Morphing::buildGraph1() {
 	RoadVertexDesc v3_desc = boost::add_vertex(roads->graph);
 	roads->graph[v3_desc] = v3;
 
-	RoadEdge* e1 = new RoadEdge(1, 1, false);
-	e1->addPoint(v1->getPt());
-	e1->addPoint(v2->getPt());
-	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
-	roads->graph[edge_pair1.first] = e1;
-
-	RoadEdge* e2 = new RoadEdge(1, 1, false);
-	e2->addPoint(v2->getPt());
-	e2->addPoint(v3->getPt());
-	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v2_desc, v3_desc, roads->graph);
-	roads->graph[edge_pair2.first] = e2;
-
-	RoadEdge* e3 = new RoadEdge(1, 1, false);
-	e3->addPoint(v3->getPt());
-	e3->addPoint(v1->getPt());
-	std::pair<RoadEdgeDesc, bool> edge_pair3 = boost::add_edge(v3_desc, v1_desc, roads->graph);
-	roads->graph[edge_pair3.first] = e3;
+	GraphUtil::addEdge(roads, v1_desc, v2_desc, 1, 1, false);
+	GraphUtil::addEdge(roads, v2_desc, v3_desc, 1, 1, false);
+	GraphUtil::addEdge(roads, v3_desc, v1_desc, 1, 1, false);
 
 	return roads;
 }
@@ -1108,19 +1028,8 @@ RoadGraph* Morphing::buildGraph2() {
 	RoadVertexDesc v3_desc = boost::add_vertex(roads->graph);
 	roads->graph[v3_desc] = v3;
 
-	RoadEdge* e1 = new RoadEdge(1, 1, false);
-	e1->addPoint(v1->getPt());
-	e1->addPoint(v2->getPt());
-	e1->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
-	roads->graph[edge_pair1.first] = e1;
-	
-	RoadEdge* e2 = new RoadEdge(1, 1, false);
-	e2->addPoint(v2->getPt());
-	e2->addPoint(v3->getPt());
-	e2->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v2_desc, v3_desc, roads->graph);
-	roads->graph[edge_pair2.first] = e2;
+	GraphUtil::addEdge(roads, v1_desc, v2_desc, 1, 1, false);
+	GraphUtil::addEdge(roads, v2_desc, v3_desc, 1, 1, false);
 
 	return roads;
 }
@@ -1148,33 +1057,10 @@ RoadGraph* Morphing::buildGraph3() {
 	RoadVertexDesc v5_desc = boost::add_vertex(roads->graph);
 	roads->graph[v5_desc] = v5;
 
-	RoadEdge* e1 = new RoadEdge(1, 1, false);
-	e1->addPoint(v1->getPt());
-	e1->addPoint(v2->getPt());
-	e1->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
-	roads->graph[edge_pair1.first] = e1;
-
-	RoadEdge* e2 = new RoadEdge(1, 1, false);
-	e2->addPoint(v1->getPt());
-	e2->addPoint(v3->getPt());
-	e2->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v1_desc, v3_desc, roads->graph);
-	roads->graph[edge_pair2.first] = e2;
-
-	RoadEdge* e3 = new RoadEdge(1, 1, false);
-	e3->addPoint(v1->getPt());
-	e3->addPoint(v4->getPt());
-	e3->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair3 = boost::add_edge(v1_desc, v4_desc, roads->graph);
-	roads->graph[edge_pair3.first] = e3;
-
-	RoadEdge* e4 = new RoadEdge(1, 1, false);
-	e4->addPoint(v1->getPt());
-	e4->addPoint(v5->getPt());
-	e4->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair4 = boost::add_edge(v1_desc, v5_desc, roads->graph);
-	roads->graph[edge_pair4.first] = e4;
+	GraphUtil::addEdge(roads, v1_desc, v2_desc, 1, 1, false);
+	GraphUtil::addEdge(roads, v1_desc, v3_desc, 1, 1, false);
+	GraphUtil::addEdge(roads, v1_desc, v4_desc, 1, 1, false);
+	GraphUtil::addEdge(roads, v1_desc, v5_desc, 1, 1, false);
 
 	return roads;
 }
@@ -1194,19 +1080,8 @@ RoadGraph* Morphing::buildGraph4() {
 	RoadVertexDesc v3_desc = boost::add_vertex(roads->graph);
 	roads->graph[v3_desc] = v3;
 
-	RoadEdge* e1 = new RoadEdge(1, 1, false);
-	e1->addPoint(v1->getPt());
-	e1->addPoint(v2->getPt());
-	e1->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
-	roads->graph[edge_pair1.first] = e1;
-
-	RoadEdge* e2 = new RoadEdge(1, 1, false);
-	e2->addPoint(v1->getPt());
-	e2->addPoint(v3->getPt());
-	e2->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v1_desc, v3_desc, roads->graph);
-	roads->graph[edge_pair2.first] = e2;
+	GraphUtil::addEdge(roads, v1_desc, v2_desc, 1, 1, false);
+	GraphUtil::addEdge(roads, v1_desc, v3_desc, 1, 1, false);
 
 	return roads;
 }
@@ -1230,19 +1105,8 @@ RoadGraph* Morphing::buildGraph5() {
 	RoadVertexDesc v4_desc = boost::add_vertex(roads->graph);
 	roads->graph[v4_desc] = v4;
 
-	RoadEdge* e1 = new RoadEdge(1, 1, false);
-	e1->addPoint(v1->getPt());
-	e1->addPoint(v2->getPt());
-	e1->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair1 = boost::add_edge(v1_desc, v2_desc, roads->graph);
-	roads->graph[edge_pair1.first] = e1;
-
-	RoadEdge* e2 = new RoadEdge(1, 1, false);
-	e2->addPoint(v3->getPt());
-	e2->addPoint(v4->getPt());
-	e2->orig = true;
-	std::pair<RoadEdgeDesc, bool> edge_pair2 = boost::add_edge(v3_desc, v4_desc, roads->graph);
-	roads->graph[edge_pair2.first] = e2;
+	GraphUtil::addEdge(roads, v1_desc, v2_desc, 1, 1, false);
+	GraphUtil::addEdge(roads, v3_desc, v4_desc, 1, 1, false);
 
 	return roads;
 }

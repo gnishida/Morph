@@ -205,12 +205,7 @@ RoadGraph* Morphing2::interpolate(float t) {
 					RoadVertexDesc new_v1_desc = conv[v1_desc][v2_desc];
 					RoadVertexDesc new_v2_desc = conv[v1_desc][v2b_desc];
 
-					RoadEdge* new_e = new RoadEdge(1, 1, false);
-					new_e->addPoint(roads->graph[new_v1_desc]->getPt());
-					new_e->addPoint(roads->graph[new_v2_desc]->getPt());
-
-					std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(new_v1_desc, new_v2_desc, roads->graph);
-					roads->graph[new_e_pair.first] = new_e;
+					GraphUtil::addEdge(roads, new_v1_desc, new_v2_desc, 1, 1, false);
 				}
 			}
 
@@ -233,12 +228,7 @@ RoadGraph* Morphing2::interpolate(float t) {
 						RoadVertexDesc new_v1_desc = conv[v1_desc][v2_desc];
 						RoadVertexDesc new_v2_desc = conv[v1b_desc][v2b_desc];
 
-						RoadEdge* new_e = new RoadEdge(1, 1, false);
-						new_e->addPoint(roads->graph[new_v1_desc]->getPt());
-						new_e->addPoint(roads->graph[new_v2_desc]->getPt());
-
-						std::pair<RoadEdgeDesc, bool> new_e_pair = boost::add_edge(new_v1_desc, new_v2_desc, roads->graph);
-						roads->graph[new_e_pair.first] = new_e;
+						GraphUtil::addEdge(roads, new_v1_desc, new_v2_desc, 1, 1, false);
 					}
 				}
 			}
