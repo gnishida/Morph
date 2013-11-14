@@ -469,13 +469,17 @@ RoadGraph* BFS2::copyRoads(RoadGraph* roads, BFSTree* tree, int num) {
 }
 
 void BFS2::findBestRoots(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2, RoadVertexDesc& root1, RoadVertexDesc& root2) {
-	float min_score = std::numeric_limits<float>::max();
+	int min_score = std::numeric_limits<int>::max();
 
 	RoadVertexIter vi1, vend1;
 	for (boost::tie(vi1, vend1) = boost::vertices(roads1->graph); vi1 != vend1; ++vi1) {
+		if (!roads1->graph[*vi1]->valid) continue;
+
 		RoadVertexIter vi2, vend2;
 		for (boost::tie(vi2, vend2) = boost::vertices(roads2->graph); vi2 != vend2; ++vi2) {
-			float score = computeUnbalanceness(roads1, tree1,*vi1, roads2, tree2, *vi2);
+			if (!roads2->graph[*vi2]->valid) continue;
+
+			int score = computeUnbalanceness(roads1, tree1,*vi1, roads2, tree2, *vi2);
 			if (score < min_score) {
 				min_score = score;
 				root1 = *vi1;
@@ -488,8 +492,8 @@ void BFS2::findBestRoots(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, B
 /**
  * 指定した頂点配下を比べて、アンバランス度を計算する。
  */
-float BFS2::computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexDesc node1, RoadGraph* roads2,  BFSTree* tree2, RoadVertexDesc node2) {
-	float score = 0.0f;
+int BFS2::computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexDesc node1, RoadGraph* roads2,  BFSTree* tree2, RoadVertexDesc node2) {
+	int score = 0;
 
 	std::list<RoadVertexDesc> seeds1;
 	seeds1.push_back(node1);
