@@ -62,12 +62,11 @@ int BFSTree::getHeight(RoadVertexDesc node) {
 
 /**
  * node1_parentの子node1を、node2の子供の一人としてコピーする。
+ * コピーされたノードは、virtフラグをtrueにセットする。
  */
 RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc node1, RoadVertexDesc node2) {
 	// トップノードをコピーする
-	RoadVertex* v = new RoadVertex(roads->graph[node1]->getPt());
-	RoadVertexDesc v_desc = boost::add_vertex(roads->graph);
-	roads->graph[v_desc] = v;
+	RoadVertexDesc v_desc = GraphUtil::copyVertex(roads, node1, true);
 
 	RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, node1_parent, node1);
 
@@ -95,9 +94,7 @@ RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc 
 
 		for (int i = 0; i < children[parent1].size(); i++) {
 			// コピー先にノードを作成する
-			RoadVertex* v = new RoadVertex(roads->graph[children[parent1][i]]->getPt());
-			RoadVertexDesc v_desc = boost::add_vertex(roads->graph);
-			roads->graph[v_desc] = v;
+			RoadVertexDesc v_desc = GraphUtil::copyVertex(roads, children[parent1][i], true);
 
 			// エッジを取得
 			RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, parent1, children[parent1][i]);
@@ -118,6 +115,37 @@ RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc 
 	}
 
 	return v_desc;
+}
+
+/**
+ * 指定された頂点以下のサブツリーを削除する。
+ */
+void BFSTree::removeSubTree(RoadVertexDesc node1) {
+	// キューを初期化
+	std::list<RoadVertexDesc> seeds;
+	seeds.push_back(node1);
+
+	while (!seeds.empty()) {
+		RoadVertexDesc parent = seeds.front();
+		seeds.pop_front();
+
+		// 各子ノードを訪問しながら削除していく
+		for (int i = 0; i < children[parent].size(); i++) {
+			// エッジを無効にする
+			RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, parent, children[parent][i]);
+			roads->graph[e_desc]->valid = false;
+
+			// 子ノードを無効にする
+			roads->graph[children[parent][i]]->valid = false;
+
+			seeds.push_back(children[parent][i]);
+		}
+
+		// 最後に、親子関係を削除する
+		this->children.remove(parent);
+	}
+
+	roads->graph[node1]->valid = false;
 }
 
 /**
@@ -162,9 +190,7 @@ void BFSTree::buildTree() {
 				roads->graph[orig_e_desc]->valid = false;
 
 				// 対象ノードが訪問済みの場合、対象ノードをコピーして子ノードにする
-				RoadVertex* v = new RoadVertex(roads->graph[child]->getPt());
-				RoadVertexDesc child2 = boost::add_vertex(roads->graph);
-				roads->graph[child2] = v;
+				RoadVertexDesc child2 = GraphUtil::copyVertex(roads, child, false);
 
 				// エッジ作成
 				RoadEdge* new_e = new RoadEdge(roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type);

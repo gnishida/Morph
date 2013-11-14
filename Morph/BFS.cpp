@@ -19,7 +19,9 @@ BFS::BFS(const char* filename1, const char* filename2) {
 	roads2->load(fp, 2);
 	GraphUtil::planarify(roads2);
 	GraphUtil::singlify(roads2);
-	GraphUtil::simplify(roads2, 30, 0.0f);
+	GraphUtil::simplify(roads2, 100, 0.0f);
+	GraphUtil::planarify(roads2);
+	GraphUtil::simplify(roads2, 100, 0.0f);
 	fclose(fp);
 
 	//createRoads1();
@@ -184,6 +186,10 @@ void BFS::buildTree() {
 
 	// 頂点が１つもない場合は、終了
 	if (count == 0) return;
+
+	// テンポラリで、手動でルートを指定
+	min_v1_desc = 25;
+	min_v2_desc = 10;
 
 	if (tree1 != NULL) delete tree1;
 	if (tree2 != NULL) delete tree2;

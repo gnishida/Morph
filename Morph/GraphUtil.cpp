@@ -77,6 +77,18 @@ int GraphUtil::getVertexIndex(RoadGraph* roads, RoadVertexDesc desc, bool onlyVa
 }
 
 /**
+ * 指定された頂点をコピーする。
+ */
+RoadVertexDesc GraphUtil::copyVertex(RoadGraph* roads, RoadVertexDesc v, bool virtFlag) {
+	RoadVertex* new_v = new RoadVertex(roads->graph[v]->getPt());
+	new_v->virt = virtFlag;
+	RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
+	roads->graph[new_v_desc] = new_v;
+
+	return new_v_desc;
+}
+
+/**
  * グラフのノードv1をv2にcollapseする。
  */
 void GraphUtil::collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2) {

@@ -22,7 +22,6 @@ BFS2::BFS2(const char* filename1, const char* filename2) {
 	GraphUtil::simplify(roads2, 100, 0.0f);
 	GraphUtil::planarify(roads2);
 	GraphUtil::simplify(roads2, 100, 0.0f);
-
 	fclose(fp);
 
 	//createRoads1();
@@ -188,6 +187,7 @@ void BFS2::buildTree() {
 	// 頂点が１つもない場合は、終了
 	if (count == 0) return;
 
+	// テンポラリで、手動でルートを指定
 	min_v1_desc = 25;
 	min_v2_desc = 10;
 
@@ -211,17 +211,6 @@ void BFS2::buildTree() {
  * ２つの道路網を、木構造を使ってマッチングさせる。
  */
 QMap<RoadVertexDesc, RoadVertexDesc> BFS2::findCorrespondence(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2) {
-
-	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
-		if (!roads2->graph[*vi]->valid) continue;
-		if (GraphUtil::getDegree(roads2, *vi) == 1) {
-			int a = *vi;
-			int k = 0;
-		}
-	}
-
-
 	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
 
 	correspondence[tree1->getRoot()] = tree2->getRoot();
@@ -306,6 +295,13 @@ bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BF
 		if (paired1.contains(children1[i])) continue;
 		if (!roads1->graph[children1[i]]->valid) continue;
 
+		// コピーされたノードで、ペアになっていないものは、この時点で捨てる。
+		if (roads1->graph[children1[i]]->virt) {
+			roads1->graph[GraphUtil::getEdge(roads1, parent1, children1[i])]->valid = false;
+			tree1->removeSubTree(children1[i]);
+			continue;
+		}
+
 		min_angle = std::numeric_limits<float>::max();
 		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
 
@@ -359,6 +355,13 @@ bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BF
 	for (int i = 0; i < children2.size(); i++) {
 		if (paired2.contains(children2[i])) continue;
 		if (!roads2->graph[children2[i]]->valid) continue;
+
+		// コピーされたノードで、ペアになっていないものは、この時点で捨てる。
+		if (roads2->graph[children2[i]]->virt) {
+			roads2->graph[GraphUtil::getEdge(roads2, parent2, children2[i])]->valid = false;
+			tree2->removeSubTree(children2[i]);
+			continue;
+		}
 
 		min_angle = std::numeric_limits<float>::max();
 		QVector2D dir2 = roads2->graph[children2[i]]->getPt() - roads2->graph[parent2]->getPt();
