@@ -27,8 +27,8 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	morphing = NULL;
 	morphing2 = NULL;
 
-	//widgetBFS = new BFSControlWidget(this);
-	//widgetBFS->hide();
+	widgetBFS = new BFSControlWidget(this);
+	widgetBFS->hide();
 
 	widgetBFS2 = new BFS2ControlWidget(this);
 	widgetBFS2->hide();
@@ -124,7 +124,7 @@ void Morph::startBFS2() {
 	widgetBFS2->show();
 	addDockWidget(Qt::RightDockWidgetArea, widgetBFS2);
 
-	//widgetBFS->hide();
+	widgetBFS->hide();
 	widgetBFSProp->hide();
 	widgetMTT->hide();
 }
