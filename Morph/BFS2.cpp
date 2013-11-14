@@ -534,6 +534,8 @@ float BFS2::computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexD
 			score += tree2->getTreeSize(children2[i]);
 		}
 	}
+
+	return score;
 }
 
 void BFS2::createRoads1() {
