@@ -141,6 +141,33 @@ void BFSTree::removeSubTree(RoadVertexDesc node1) {
 }
 
 /**
+ * 指定したノード配下のノード数を返却する。指定したノードも含める。
+ */
+int BFSTree::getTreeSize(RoadVertexDesc node) {
+	int num = 0;
+
+	// キューを初期化
+	std::list<RoadVertexDesc> seeds;
+	seeds.push_back(node);
+
+	while (!seeds.empty()) {
+		RoadVertexDesc parent = seeds.front();
+		seeds.pop_front();
+
+		num++;
+
+		// 各子ノードを訪問しながらカウントしていく
+		for (int i = 0; i < children[parent].size(); i++) {
+			if (!roads->graph[children[parent][i]]->valid) continue;
+
+			seeds.push_back(children[parent][i]);
+		}
+	}
+
+	return num;
+}
+
+/**
  * 木構造を作成する。
  */
 void BFSTree::buildTree() {

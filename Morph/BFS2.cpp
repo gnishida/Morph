@@ -81,7 +81,7 @@ void BFS2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset
 		// 頂点番号をラベルとして表示する
 		QString str;
 		str.setNum(*vi);
-		painter->drawText(x+4, y+16, str);
+		//painter->drawText(x+4, y+16, str);
 	}
 }
 
@@ -168,6 +168,7 @@ void BFS2::buildTree() {
 	RoadVertexDesc min_v1_desc;
 	RoadVertexDesc min_v2_desc;
 
+	/*
 	RoadVertexIter vi, vend;
 	int count = 0;
 	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
@@ -189,6 +190,9 @@ void BFS2::buildTree() {
 	// テンポラリで、手動でルートを指定
 	min_v1_desc = 25;
 	min_v2_desc = 10;
+	*/
+
+	findBestRoots(roads1, tree1, roads2, tree2, min_v1_desc, min_v2_desc);
 
 	if (tree1 != NULL) delete tree1;
 	if (tree2 != NULL) delete tree2;
@@ -233,7 +237,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFS2::findCorrespondence(RoadGraph* roads1,
 
 		while (true) {
 			RoadVertexDesc child1, child2;
-			if (!findBestPairByDirection(roads1, parent1, tree1, paired1, roads2, parent2, tree2, paired2, child1, child2)) break;
+			if (!findBestPairByDirection(roads1, parent1, tree1, paired1, roads2, parent2, tree2, paired2, false, child1, child2)) break;
 
 			correspondence[child1] = child2;
 			paired1[child1] = true;
@@ -251,7 +255,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFS2::findCorrespondence(RoadGraph* roads1,
  * まずは、ペアになっていないノードから候補を探す。
  * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
  */
-bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2, QMap<RoadVertexDesc, bool> paired2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2, QMap<RoadVertexDesc, bool> paired2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
 	float min_angle = std::numeric_limits<float>::max();
 	int min_id1;
 	int min_id2;
@@ -288,6 +292,8 @@ bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BF
 
 		return true;
 	}
+
+	if (onlyUnpairedNode) return false;
 
 	// グラフ１の方で、ペアが見つかってないノードのために、無理やりペアを作る
 	for (int i = 0; i < children1.size(); i++) {
@@ -460,6 +466,74 @@ RoadGraph* BFS2::copyRoads(RoadGraph* roads, BFSTree* tree, int num) {
 	}
 
 	return new_roads;
+}
+
+void BFS2::findBestRoots(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2, RoadVertexDesc& root1, RoadVertexDesc& root2) {
+	float min_score = std::numeric_limits<float>::max();
+
+	RoadVertexIter vi1, vend1;
+	for (boost::tie(vi1, vend1) = boost::vertices(roads1->graph); vi1 != vend1; ++vi1) {
+		RoadVertexIter vi2, vend2;
+		for (boost::tie(vi2, vend2) = boost::vertices(roads2->graph); vi2 != vend2; ++vi2) {
+			float score = computeUnbalanceness(roads1, tree1,*vi1, roads2, tree2, *vi2);
+			if (score < min_score) {
+				min_score = score;
+				root1 = *vi1;
+				root2 = *vi2;
+			}
+		}
+	}
+}
+
+/**
+ * 指定した頂点配下を比べて、アンバランス度を計算する。
+ */
+float BFS2::computeUnbalanceness(RoadGraph* roads1,  BFSTree* tree1, RoadVertexDesc node1, RoadGraph* roads2,  BFSTree* tree2, RoadVertexDesc node2) {
+	float score = 0.0f;
+
+	std::list<RoadVertexDesc> seeds1;
+	seeds1.push_back(node1);
+	std::list<RoadVertexDesc> seeds2;
+	seeds2.push_back(node2);
+
+	while (!seeds1.empty()) {
+		RoadVertexDesc parent1 = seeds1.front();
+		seeds1.pop_front();
+		RoadVertexDesc parent2 = seeds2.front();
+		seeds2.pop_front();
+
+		// 子リストを取得
+		std::vector<RoadVertexDesc> children1 = tree1->getChildren(parent1);
+		std::vector<RoadVertexDesc> children2 = tree2->getChildren(parent2);
+
+		// どちらのノードにも、子ノードがない場合は、スキップ
+		if (children1.size() == 0 && children2.size() == 0) continue;
+
+		QMap<RoadVertexDesc, bool> paired1;
+		QMap<RoadVertexDesc, bool> paired2;
+
+		while (true) {
+			RoadVertexDesc child1, child2;
+			if (!findBestPairByDirection(roads1, parent1, tree1, paired1, roads2, parent2, tree2, paired2, true, child1, child2)) break;
+			
+			seeds1.push_back(child1);
+			seeds2.push_back(child2);
+		}
+
+		// ペアにならなかったノードについて、ペナルティをカウントする
+		for (int i = 0; i < children1.size(); i++) {
+			if (paired1.contains(children1[i])) continue;
+			if (!roads1->graph[children1[i]]->valid) continue;
+
+			score += tree1->getTreeSize(children1[i]);
+		}
+		for (int i = 0; i < children2.size(); i++) {
+			if (paired2.contains(children2[i])) continue;
+			if (!roads2->graph[children2[i]]->valid) continue;
+
+			score += tree2->getTreeSize(children2[i]);
+		}
+	}
 }
 
 void BFS2::createRoads1() {

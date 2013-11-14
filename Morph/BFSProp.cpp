@@ -79,6 +79,11 @@ void BFSProp::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int off
 		int x = (v->getPt().x() + offset) * scale ;
 		int y = (-v->getPt().y() + offset) * scale;
 		painter->fillRect(x - 1, y - 1, 3, 3, col);
+
+		// 頂点番号をラベルとして表示する
+		QString str;
+		str.setNum(*vi);
+		//painter->drawText(x+4, y+16, str);
 	}
 }
 

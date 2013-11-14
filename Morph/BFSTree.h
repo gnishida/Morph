@@ -19,6 +19,7 @@ public:
 	int getHeight(RoadVertexDesc node);
 	RoadVertexDesc copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc node1, RoadVertexDesc node2);
 	void removeSubTree(RoadVertexDesc node1);
+	int getTreeSize(RoadVertexDesc node);
 
 private:
 	void buildTree();
