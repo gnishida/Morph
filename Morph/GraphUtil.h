@@ -36,6 +36,9 @@ public:
 	static void singlify(RoadGraph* roads);
 	static void planarify(RoadGraph* roads);
 	static RoadGraph* copyRoads(RoadGraph* roads);
+	static float computeMinDiff(std::vector<float> *data1, std::vector<float> *data2);
+	static float normalizeAngle(float angle);
 	static float diffAngle(QVector2D& dir1, QVector2D& dir2);
+	static float diffAngle(float angle1, float angle2);
 };
 

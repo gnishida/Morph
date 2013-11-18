@@ -712,6 +712,78 @@ RoadGraph* GraphUtil::copyRoads(RoadGraph* roads) {
 	return new_roads;
 }
 
+/**
+ * ２つのデータリストの差の最小値を返却する。
+ * 各データは、１回のみ比較に使用できる。
+ */
+float GraphUtil::computeMinDiff(std::vector<float> *data1, std::vector<float> *data2) {
+	float ret = 0.0f;
+
+	if (data1->size() <= data2->size()) {
+		std::vector<bool> paired2;
+		for (int i = 0; i < data2->size(); i++) {
+			paired2.push_back(false);
+		}
+
+		for (int i = 0; i < data1->size(); i++) {
+			float min_diff = std::numeric_limits<float>::max();
+
+
+			int min_id = -1;
+			for (int j = 0; j < data2->size(); j++) {
+				if (paired2[j]) continue;
+
+				float diff = diffAngle(data1->at(i), data2->at(j));
+				if (diff < min_diff) {
+					min_diff = diff;
+					min_id = j;
+				}
+			}
+
+			paired2[min_id] = true;
+			ret += min_diff;
+		}
+	} else {
+		std::vector<bool> paired1;
+		for (int i = 0; i < data1->size(); i++) {
+			paired1.push_back(false);
+		}
+
+		for (int i = 0; i < data2->size(); i++) {
+			float min_diff = std::numeric_limits<float>::max();
+
+
+			int min_id = -1;
+			for (int j = 0; j < data1->size(); j++) {
+				if (paired1[j]) continue;
+
+				float diff = fabs(diffAngle(data2->at(i), data1->at(j)));
+				if (diff < min_diff) {
+					min_diff = diff;
+					min_id = j;
+				}
+			}
+
+			paired1[min_id] = true;
+			ret += min_diff;
+		}
+	}
+
+	return ret;
+}
+
+/**
+ * 角度を正規化し、[-PI , PI]の範囲にする。
+ */
+float GraphUtil::normalizeAngle(float angle) {
+	if (angle < 0.0f) {
+		angle += ((int)(fabs(angle) / M_PI / 2.0f) + 1) * M_PI * 2;
+	}
+
+	if (angle > M_PI) return angle - M_PI * 2.0f;
+	return angle;
+}
+
 float GraphUtil::diffAngle(QVector2D& dir1, QVector2D& dir2) {
 	float ang1 = atan2f(dir1.y(), dir1.x());
 	if (ang1 < 0) ang1 += M_PI * 2.0f;
@@ -719,8 +791,9 @@ float GraphUtil::diffAngle(QVector2D& dir1, QVector2D& dir2) {
 	float ang2 = atan2f(dir2.y(), dir2.x());
 	if (ang2 < 0) ang2 += M_PI * 2.0f;
 
-	float diff = fabs(ang1 - ang2);
-	if (diff > M_PI) diff = M_PI * 2.0f - diff;
+	return normalizeAngle(ang1 - ang2);
+}
 
-	return diff;
+float GraphUtil::diffAngle(float angle1, float angle2) {
+	return normalizeAngle(angle1 - angle2);
 }

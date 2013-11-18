@@ -2,6 +2,10 @@
 
 #include <qvector2d.h>
 
+#ifndef M_PI
+#define M_PI	3.14159265
+#endif
+
 class Util {
 public:
 	static const float MTC_FLOAT_TOL;

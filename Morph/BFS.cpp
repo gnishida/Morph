@@ -1,5 +1,6 @@
 ﻿#include "BFS.h"
 #include "GraphUtil.h"
+#include "Util.h"
 #include "Morph.h"
 #include <queue>
 #include <QtTest/qtest.h>
@@ -170,12 +171,10 @@ void BFS::buildTree() {
 	RoadVertexDesc min_v2_desc;
 
 	// テンポラリで、手動でルートを指定
-	/*
 	min_v1_desc = 25;
 	min_v2_desc = 10;
-	*/
 
-	findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
+	//findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
 
 	if (tree1 != NULL) delete tree1;
 	if (tree2 != NULL) delete tree2;
@@ -218,9 +217,11 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFS::findCorrespondence(RoadGraph* roads1, 
 		QMap<RoadVertexDesc, bool> paired1;
 		QMap<RoadVertexDesc, bool> paired2;
 
+		float theta = findBestAffineTransofrmation(roads1, parent1, tree1, roads2, parent2, tree2);
+
 		while (true) {
 			RoadVertexDesc child1, child2;
-			if (!findBestPairByDirection(roads1, parent1, tree1, paired1, roads2, parent2, tree2, paired2, false, child1, child2)) break;
+			if (!findBestPairByDirection(theta, roads1, parent1, tree1, paired1, roads2, parent2, tree2, paired2, false, child1, child2)) break;
 
 			correspondence[child1] = child2;
 			paired1[child1] = true;
@@ -330,7 +331,7 @@ bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1
  * まずは、ペアになっていないノードから候補を探す。
  * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
  */
-bool BFS::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2, QMap<RoadVertexDesc, bool> paired2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+bool BFS::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2, QMap<RoadVertexDesc, bool> paired2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
 	float min_angle = std::numeric_limits<float>::max();
 	int min_id1;
 	int min_id2;
@@ -345,13 +346,15 @@ bool BFS::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BFS
 		if (!roads1->graph[children1[i]]->valid) continue;
 
 		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
+		float theta1 = atan2f(dir1.y(), dir1.x()) + theta;
 		for (int j = 0; j < children2.size(); j++) {
 			if (paired2.contains(children2[j])) continue;
 			if (!roads2->graph[children2[j]]->valid) continue;
 
 			QVector2D dir2 = roads2->graph[children2[j]]->getPt() - roads2->graph[parent2]->getPt();
+			float theta2 = atan2f(dir2.y(), dir2.x());
 
-			float angle = GraphUtil::diffAngle(dir1, dir2);
+			float angle = GraphUtil::diffAngle(theta1, theta2);
 			if (angle < min_angle) {
 				min_angle = angle;
 				min_id1 = i;
@@ -529,9 +532,11 @@ int BFS::computeUnbalanceness(RoadGraph* roads1_org,  RoadVertexDesc node1, Road
 		QMap<RoadVertexDesc, bool> paired1;
 		QMap<RoadVertexDesc, bool> paired2;
 
+		float theta = findBestAffineTransofrmation(roads1, parent1, &tree1, roads2, parent2, &tree2);
+
 		while (true) {
 			RoadVertexDesc child1, child2;
-			if (!findBestPairByDirection(roads1, parent1, &tree1, paired1, roads2, parent2, &tree2, paired2, true, child1, child2)) break;
+			if (!findBestPairByDirection(theta, roads1, parent1, &tree1, paired1, roads2, parent2, &tree2, paired2, true, child1, child2)) break;
 			
 			paired1[child1] = true;
 			paired2[child2] = true;
@@ -558,6 +563,47 @@ int BFS::computeUnbalanceness(RoadGraph* roads1_org,  RoadVertexDesc node1, Road
 	delete roads2;
 
 	return score;
+}
+
+/**
+ * ２つの道路の指定したノードから出るエッジについて、ベストフィットする回転角度を計算する。
+ * 道路１をこの角度だけ回転すると、道路２の当該ノードにベストフィットするということ。
+ * メトリックの計算は、最も近いエッジ同士のなす角度を合計する。
+ */
+float BFS::findBestAffineTransofrmation(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2) {
+	// 子リストを取得
+	std::vector<RoadVertexDesc> children1 = tree1->getChildren(parent1);
+	std::vector<RoadVertexDesc> children2 = tree2->getChildren(parent2);
+
+	std::vector<float> theta1;
+	std::vector<float> theta2;
+
+	// エッジの方向を取得
+	for (int i = 0; i < children1.size(); i++) {
+		QVector2D dir = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
+		theta1.push_back(atan2f(dir.y(), dir.x()));
+	}
+	for (int i = 0; i < children2.size(); i++) {
+		QVector2D dir = roads2->graph[children2[i]]->getPt() - roads2->graph[parent2]->getPt();
+		theta2.push_back(atan2f(dir.y(), dir.x()));
+	}
+
+	float min_angle;
+	float min_score = std::numeric_limits<float>::max();
+	for (float angle = 0.0f; angle < M_PI * 2; angle += 0.1f) {
+		std::vector<float> transformedTheta1;
+		for (int i = 0; i < theta1.size(); i++) {
+			transformedTheta1.push_back(GraphUtil::normalizeAngle(theta1[i] + angle));
+		}
+
+		float score = GraphUtil::computeMinDiff(&transformedTheta1, &theta2);
+		if (score < min_score) {
+			min_score = score;
+			min_angle = angle;
+		}
+	}
+
+	return min_angle;
 }
 
 void BFS::createRoads1() {
