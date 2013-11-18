@@ -6,6 +6,7 @@
 #include <qdebug.h>
 
 BFS2::BFS2(const char* filename1, const char* filename2) {
+	/*
 	FILE* fp = fopen(filename1, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
@@ -21,9 +22,10 @@ BFS2::BFS2(const char* filename1, const char* filename2) {
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30);
 	fclose(fp);
+	*/
 
-	//createRoads1();
-	//createRoads2();
+	createRoads1();
+	createRoads2();
 
 	selected = 0;
 	tree1 = NULL;
@@ -163,31 +165,12 @@ RoadGraph* BFS2::interpolate(float t) {
 }
 
 void BFS2::buildTree() {
-	// 最も短い距離のペアを探し、そのペアをルートとしてBFSを実施
 	float min_dist = std::numeric_limits<float>::max();
 	RoadVertexDesc min_v1_desc;
 	RoadVertexDesc min_v2_desc;
 
-	/*
-	RoadVertexIter vi, vend;
-	int count = 0;
-	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
-		if (!roads1->graph[*vi]->valid) continue;
-
-		count++;
-		RoadVertexDesc v2_desc = GraphUtil::findNearestVertex(roads2, roads1->graph[*vi]->getPt());
-		float dist = (roads1->graph[*vi]->getPt() - roads2->graph[v2_desc]->getPt()).length();
-		if (dist < min_dist) {
-			min_dist = dist;
-			min_v1_desc = *vi;
-			min_v2_desc = v2_desc;
-		}
-	}
-
-	// 頂点が１つもない場合は、終了
-	if (count == 0) return;
-
 	// テンポラリで、手動でルートを指定
+	/*
 	min_v1_desc = 25;
 	min_v2_desc = 10;
 	*/

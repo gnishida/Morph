@@ -202,7 +202,7 @@ void BFSTree::buildTree() {
 		for (int i = 0; i < nodes.size(); i++) {
 			RoadVertexDesc child = nodes[i];
 
-			if (visited.contains(child)) {
+			if (visited.contains(child)) { // 訪問済みの場合
 				RoadEdgeDesc orig_e_desc = GraphUtil::getEdge(roads, parent, child);
 
 				// もともとのエッジを無効にする
@@ -215,7 +215,7 @@ void BFSTree::buildTree() {
 				GraphUtil::addEdge(roads, parent, child2, roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type, roads->graph[orig_e_desc]->oneWay);
 
 				children.push_back(child2);
-			} else {
+			} else { // 未訪問の場合
 				visited[child] = true;
 
 				children.push_back(child);
