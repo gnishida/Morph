@@ -76,6 +76,7 @@ void RoadGraph::load(FILE* fp, int roadType) {
 
 		fread(&edge->type, sizeof(unsigned int), 1, fp);
 		fread(&edge->lanes, sizeof(unsigned int), 1, fp);
+		fread(&edge->oneWay, sizeof(unsigned int), 1, fp);
 
 		unsigned int nPoints;
 		fread(&nPoints, sizeof(unsigned int), 1, fp);

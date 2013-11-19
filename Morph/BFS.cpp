@@ -10,7 +10,7 @@ BFS::BFS(const char* filename1, const char* filename2) {
 	FILE* fp = fopen(filename1, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
-	GraphUtil::planarify(roads1);
+	//GraphUtil::planarify(roads1);
 	GraphUtil::singlify(roads1);
 	GraphUtil::simplify(roads1, 30);
 	fclose(fp);
@@ -18,7 +18,7 @@ BFS::BFS(const char* filename1, const char* filename2) {
 	fp = fopen(filename2, "rb");
 	roads2 = new RoadGraph();
 	roads2->load(fp, 2);
-	GraphUtil::planarify(roads2);
+	//GraphUtil::planarify(roads2);
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30);
 	fclose(fp);
@@ -42,11 +42,11 @@ BFS::~BFS() {
 void BFS::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
 	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
 	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
-	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void BFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {

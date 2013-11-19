@@ -42,10 +42,10 @@ void BFS2::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
 	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
-	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
+	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
 	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
-	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void BFS2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
