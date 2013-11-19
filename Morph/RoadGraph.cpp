@@ -89,7 +89,8 @@ void RoadGraph::load(FILE* fp, int roadType) {
 			edge->addPoint(QVector2D(x, y));
 		}
 
-		if (edge->type & roadType) {
+		if (((int)powf(2, (edge->type - 1)) & roadType)) {
+		//if (edge->type & roadType) {
 			std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(src, tgt, graph);
 			graph[edge_pair.first] = edge;
 		} else {

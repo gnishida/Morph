@@ -16,7 +16,7 @@ BFS2ControlWidget::BFS2ControlWidget(Morph* parent) : QDockWidget("BFS2 Control 
 	connect(ui.pushButtonNext, SIGNAL(clicked()), this, SLOT(nextSequence()));
 
 	// initialize BFS
-	bfs = new BFS2("canberra_4000.gsm", "madrid_4000.gsm");
+	bfs = new BFS2("paris_4000.gsm", "london_4000.gsm");
 	bfs->buildTree();
 	ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 	ui.horizontalSlider->setValue(0);

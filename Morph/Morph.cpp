@@ -20,7 +20,7 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	connect(ui.actionMTT, SIGNAL(triggered()), this, SLOT(startMTT()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(tick()) );
 
-	width = height = 2000;
+	width = height = 4000;
 	//width = height = 10000;
 	//cellLength = 1000;
 

@@ -82,7 +82,7 @@ void BFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset,
 		// 頂点番号をラベルとして表示する
 		QString str;
 		str.setNum(*vi);
-		//painter->drawText(x+4, y+16, str);
+		//painter->drawText(x+2, y+13, str);
 	}
 }
 
@@ -169,8 +169,8 @@ void BFS::buildTree() {
 	RoadVertexDesc min_v2_desc;
 
 	// テンポラリで、手動でルートを指定
-	min_v1_desc = 25;
-	min_v2_desc = 10;
+	min_v1_desc = 33;
+	min_v2_desc = 74;
 
 	//findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
 
@@ -215,7 +215,8 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFS::findCorrespondence(RoadGraph* roads1, 
 		QMap<RoadVertexDesc, bool> paired1;
 		QMap<RoadVertexDesc, bool> paired2;
 
-		float theta = findBestAffineTransofrmation(roads1, parent1, tree1, roads2, parent2, tree2);
+		//float theta = findBestAffineTransofrmation(roads1, parent1, tree1, roads2, parent2, tree2);
+		float theta = 0.0f;
 
 		while (true) {
 			RoadVertexDesc child1, child2;
@@ -230,98 +231,6 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFS::findCorrespondence(RoadGraph* roads1, 
 	}
 
 	return correspondence;
-}
-
-/**
- * 子ノードリスト１と子ノードリスト２から、ベストペアを探し出す。
- * まずは、ペアになっていないノードから候補を探す。
- * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
- */
-bool BFS::findBestPair(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2, QMap<RoadVertexDesc, bool> paired2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
-	float min_angle = std::numeric_limits<float>::max();
-	int min_id1;
-	int min_id2;
-
-	// 子リストを取得
-	std::vector<RoadVertexDesc> children1 = tree1->getChildren(parent1);
-	std::vector<RoadVertexDesc> children2 = tree2->getChildren(parent2);
-
-	// エッジの角度が最もちかいペアをマッチさせる
-	for (int i = 0; i < children1.size(); i++) {
-		if (paired1.contains(children1[i])) continue;
-		if (!roads1->graph[children1[i]]->valid) continue;
-
-		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
-		for (int j = 0; j < children2.size(); j++) {
-			if (paired2.contains(children2[j])) continue;
-			if (!roads2->graph[children2[j]]->valid) continue;
-
-			QVector2D dir2 = roads2->graph[children2[j]]->getPt() - roads2->graph[parent2]->getPt();
-
-			float angle = GraphUtil::diffAngle(dir1, dir2);
-			if (angle < min_angle) {
-				min_angle = angle;
-				min_id1 = i;
-				min_id2 = j;
-			}
-		}
-	}
-	
-	// ベストペアが見つかったか、チェック
-	if (min_angle < std::numeric_limits<float>::max()) {
-		child1 = children1[min_id1];
-		child2 = children2[min_id2];
-
-		return true;
-	}
-
-	// ベストペアが見つからない、つまり、一方のリストが、全てペアになっている場合
-	for (int i = 0; i < children1.size(); i++) {
-		if (paired1.contains(children1[i])) continue;
-		if (!roads1->graph[children1[i]]->valid) continue;
-
-		// 相手の親ノードをコピーしてマッチさせる
-		RoadVertex* v = new RoadVertex(roads2->graph[parent2]->getPt());
-		RoadVertexDesc v_desc = boost::add_vertex(roads2->graph);
-		roads2->graph[v_desc] = v;
-
-		RoadEdgeDesc e1_desc = GraphUtil::getEdge(roads1, parent1, children1[i]);
-
-		// 相手の親ノードと子ノードの間にエッジを作成する
-		GraphUtil::addEdge(roads2, parent2, v_desc, roads1->graph[e1_desc]->lanes, roads1->graph[e1_desc]->type, roads1->graph[e1_desc]->oneWay);
-
-		tree2->addChild(parent2, v_desc);
-
-		child1 = children1[i];
-		child2 = v_desc;
-
-		return true;
-	}
-
-	for (int i = 0; i < children2.size(); i++) {
-		if (paired2.contains(children2[i])) continue;
-		if (!roads2->graph[children2[i]]->valid) continue;
-
-		// 相手の親ノードをコピーしてマッチさせる
-		RoadVertex* v = new RoadVertex(roads1->graph[parent1]->getPt());
-		RoadVertexDesc v_desc = boost::add_vertex(roads1->graph);
-		roads1->graph[v_desc] = v;
-
-		RoadEdgeDesc e2_desc = GraphUtil::getEdge(roads2, parent2, children2[i]);
-
-		// 相手の親ノードと子ノードの間にエッジを作成する
-		GraphUtil::addEdge(roads1, parent1, v_desc, roads2->graph[e2_desc]->lanes, roads2->graph[e2_desc]->type, roads2->graph[e2_desc]->oneWay);
-
-		tree1->addChild(parent1, v_desc);
-
-		child1 = v_desc;
-		child2 = children2[i];
-
-		return true;
-	}
-
-	// ペアなし、つまり、全ての子ノードがペアになっている
-	return false;
 }
 
 /**

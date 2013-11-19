@@ -776,24 +776,33 @@ float GraphUtil::computeMinDiff(std::vector<float> *data1, std::vector<float> *d
  * 角度を正規化し、[-PI , PI]の範囲にする。
  */
 float GraphUtil::normalizeAngle(float angle) {
+	// まずは、正の値に変換する
 	if (angle < 0.0f) {
 		angle += ((int)(fabs(angle) / M_PI / 2.0f) + 1) * M_PI * 2;
 	}
 
-	if (angle > M_PI) return angle - M_PI * 2.0f;
+	// 次に、[0, PI * 2]の範囲にする
+	angle -= (int)(angle / M_PI / 2.0f) * M_PI * 2;
+
+	// 最後に、[-PI, PI]の範囲にする
+	if (angle > M_PI) angle = M_PI * 2.0f - angle;
+
 	return angle;
 }
 
+/**
+ * 角度の差を、[0, PI]の範囲で返却する。
+ */
 float GraphUtil::diffAngle(QVector2D& dir1, QVector2D& dir2) {
 	float ang1 = atan2f(dir1.y(), dir1.x());
-	if (ang1 < 0) ang1 += M_PI * 2.0f;
-
 	float ang2 = atan2f(dir2.y(), dir2.x());
-	if (ang2 < 0) ang2 += M_PI * 2.0f;
 
-	return normalizeAngle(ang1 - ang2);
+	return fabs(normalizeAngle(ang1 - ang2));
 }
 
+/**
+ * 角度の差を、[0, PI]の範囲で返却する。
+ */
 float GraphUtil::diffAngle(float angle1, float angle2) {
-	return normalizeAngle(angle1 - angle2);
+	return fabs(normalizeAngle(angle1 - angle2));
 }

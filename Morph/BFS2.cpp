@@ -1,5 +1,6 @@
 ﻿#include "BFS.h"
 #include "GraphUtil.h"
+#include "Util.h"
 #include "Morph.h"
 #include <queue>
 #include <QtTest/qtest.h>
@@ -41,8 +42,8 @@ BFS2::~BFS2() {
 void BFS2::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
-	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
-	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
+	drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
+	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
 	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
 	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
@@ -81,7 +82,7 @@ void BFS2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset
 		// 頂点番号をラベルとして表示する
 		QString str;
 		str.setNum(*vi);
-		//painter->drawText(x+4, y+16, str);
+		//painter->drawText(x+2, y+13, str);
 	}
 }
 
@@ -168,8 +169,8 @@ void BFS2::buildTree() {
 	RoadVertexDesc min_v2_desc;
 
 	// テンポラリで、手動でルートを指定
-	min_v1_desc = 25;
-	min_v2_desc = 10;
+	min_v1_desc = 33;
+	min_v2_desc = 74;
 
 	//findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
 
@@ -303,7 +304,8 @@ bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BF
 			}
 		}
 
-		if (min_angle < std::numeric_limits<float>::max()) {
+		//if (min_angle < std::numeric_limits<float>::max()) {
+		if (min_angle < M_PI / 2.0f) {	// 角度の差が９０度を超えた場合は、無理やりマッチングさせない。
 			// 子ノード（子孫も含めて）をコピーする
 			RoadVertexDesc v_desc = tree2->copySubTree(parent2, children2[min_id2], parent2);
 
@@ -360,7 +362,8 @@ bool BFS2::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BF
 			}
 		}
 
-		if (min_angle < std::numeric_limits<float>::max()) {
+		//if (min_angle < std::numeric_limits<float>::max()) {
+		if (min_angle < M_PI / 2.0f) {	// 角度の差が９０度を超えた場合は、無理やりマッチングさせない。
 			// 子ノード（子孫も含めて）をコピーする
 			RoadVertexDesc v_desc = tree1->copySubTree(parent1, children1[min_id1], parent1);
 
