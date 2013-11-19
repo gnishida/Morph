@@ -9,7 +9,7 @@ BFS2::BFS2(const char* filename1, const char* filename2) {
 	FILE* fp = fopen(filename1, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
-	GraphUtil::planarify(roads1);
+	//GraphUtil::planarify(roads1);
 	GraphUtil::singlify(roads1);
 	GraphUtil::simplify(roads1, 30);
 	fclose(fp);
@@ -17,7 +17,7 @@ BFS2::BFS2(const char* filename1, const char* filename2) {
 	fp = fopen(filename2, "rb");
 	roads2 = new RoadGraph();
 	roads2->load(fp, 2);
-	GraphUtil::planarify(roads2);
+	//GraphUtil::planarify(roads2);
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30);
 	fclose(fp);
