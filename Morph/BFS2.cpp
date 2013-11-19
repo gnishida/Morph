@@ -6,7 +6,6 @@
 #include <qdebug.h>
 
 BFS2::BFS2(const char* filename1, const char* filename2) {
-	/*
 	FILE* fp = fopen(filename1, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
@@ -22,10 +21,9 @@ BFS2::BFS2(const char* filename1, const char* filename2) {
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30);
 	fclose(fp);
-	*/
 
-	createRoads1();
-	createRoads2();
+	//createRoads1();
+	//createRoads2();
 
 	selected = 0;
 	tree1 = NULL;
@@ -170,12 +168,10 @@ void BFS2::buildTree() {
 	RoadVertexDesc min_v2_desc;
 
 	// テンポラリで、手動でルートを指定
-	/*
 	min_v1_desc = 25;
 	min_v2_desc = 10;
-	*/
 
-	findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
+	//findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
 
 	if (tree1 != NULL) delete tree1;
 	if (tree2 != NULL) delete tree2;
