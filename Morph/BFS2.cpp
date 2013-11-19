@@ -43,10 +43,10 @@ void BFS2::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
 	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale);
-	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
+	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale);
 	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
-	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void BFS2::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale) {
@@ -169,8 +169,10 @@ void BFS2::buildTree() {
 	RoadVertexDesc min_v2_desc;
 
 	// テンポラリで、手動でルートを指定
-	min_v1_desc = 33;
-	min_v2_desc = 74;
+	//min_v1_desc = 33;
+	//min_v2_desc = 74;
+	min_v1_desc = 851;
+	min_v2_desc = 530;
 
 	//findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
 
