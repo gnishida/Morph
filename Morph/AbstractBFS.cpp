@@ -39,10 +39,10 @@ void AbstractBFS::draw(QPainter* painter, int offset, float scale) {
 	if (roads1 == NULL) return;
 
 	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale, true);
-	drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale, true);
+	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale, true);
 	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
 
-	//drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
 }
 
 void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale, bool label) {
@@ -75,10 +75,12 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int
 		int y = (-v->getPt().y() + offset) * scale;
 		painter->fillRect(x - 1, y - 1, 3, 3, col);
 
-		// 頂点番号をラベルとして表示する
-		QString str;
-		str.setNum(*vi);
-		painter->drawText(x+2, y+13, str);
+		if (label) {
+			// 頂点番号をラベルとして表示する
+			QString str;
+			str.setNum(*vi);
+			painter->drawText(x+2, y+13, str);
+		}
 	}
 }
 
