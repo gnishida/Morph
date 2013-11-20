@@ -11,6 +11,7 @@
 #include "ui_Morph.h"
 #include "BFSControlWidget.h"
 #include "BFS2ControlWidget.h"
+#include "BFSMultiControlWidget.h"
 #include "BFSPropControlWidget.h"
 #include "MTTControlWidget.h"
 #include <qmap.h>
@@ -33,6 +34,7 @@ public:
 
 	BFSControlWidget* widgetBFS;
 	BFS2ControlWidget* widgetBFS2;
+	BFSMultiControlWidget* widgetBFSMulti;
 	BFSPropControlWidget* widgetBFSProp;
 	MTTControlWidget* widgetMTT;
 
@@ -53,6 +55,7 @@ private slots:
 	void startNearestNeighborConnectivity();
 	void startBFS();
 	void startBFS2();
+	void startBFSMulti();
 	void startBFSProp();
 	void startMTT();
 	void tick();

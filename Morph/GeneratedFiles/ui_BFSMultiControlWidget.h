@@ -1,5 +1,5 @@
 /********************************************************************************
-** Form generated from reading UI file 'BFSControlWidget.ui'
+** Form generated from reading UI file 'BFSMultiControlWidget.ui'
 **
 ** Created: Wed Nov 20 09:20:12 2013
 **      by: Qt User Interface Compiler version 4.8.1
@@ -7,8 +7,8 @@
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef UI_BFSCONTROLWIDGET_H
-#define UI_BFSCONTROLWIDGET_H
+#ifndef UI_BFSMULTICONTROLWIDGET_H
+#define UI_BFSMULTICONTROLWIDGET_H
 
 #include <QtCore/QVariant>
 #include <QtGui/QAction>
@@ -22,7 +22,7 @@
 
 QT_BEGIN_NAMESPACE
 
-class Ui_BFSControlWidget
+class Ui_BFSMultiControlWidget
 {
 public:
     QWidget *dockWidgetContents;
@@ -30,13 +30,13 @@ public:
     QPushButton *pushButtonPrev;
     QPushButton *pushButtonNext;
 
-    void setupUi(QDockWidget *BFSControlWidget)
+    void setupUi(QDockWidget *BFSMultiControlWidget)
     {
-        if (BFSControlWidget->objectName().isEmpty())
-            BFSControlWidget->setObjectName(QString::fromUtf8("BFSControlWidget"));
-        BFSControlWidget->resize(145, 261);
-        BFSControlWidget->setMinimumSize(QSize(145, 261));
-        BFSControlWidget->setStyleSheet(QString::fromUtf8("background-color: rgb(181, 181, 181);"));
+        if (BFSMultiControlWidget->objectName().isEmpty())
+            BFSMultiControlWidget->setObjectName(QString::fromUtf8("BFSMultiControlWidget"));
+        BFSMultiControlWidget->resize(145, 261);
+        BFSMultiControlWidget->setMinimumSize(QSize(145, 261));
+        BFSMultiControlWidget->setStyleSheet(QString::fromUtf8("background-color: rgb(181, 181, 181);"));
         dockWidgetContents = new QWidget();
         dockWidgetContents->setObjectName(QString::fromUtf8("dockWidgetContents"));
         horizontalSlider = new QSlider(dockWidgetContents);
@@ -49,26 +49,26 @@ public:
         pushButtonNext = new QPushButton(dockWidgetContents);
         pushButtonNext->setObjectName(QString::fromUtf8("pushButtonNext"));
         pushButtonNext->setGeometry(QRect(90, 50, 41, 31));
-        BFSControlWidget->setWidget(dockWidgetContents);
+        BFSMultiControlWidget->setWidget(dockWidgetContents);
 
-        retranslateUi(BFSControlWidget);
+        retranslateUi(BFSMultiControlWidget);
 
-        QMetaObject::connectSlotsByName(BFSControlWidget);
+        QMetaObject::connectSlotsByName(BFSMultiControlWidget);
     } // setupUi
 
-    void retranslateUi(QDockWidget *BFSControlWidget)
+    void retranslateUi(QDockWidget *BFSMultiControlWidget)
     {
-        pushButtonPrev->setText(QApplication::translate("BFSControlWidget", "<", 0, QApplication::UnicodeUTF8));
-        pushButtonNext->setText(QApplication::translate("BFSControlWidget", ">", 0, QApplication::UnicodeUTF8));
-        Q_UNUSED(BFSControlWidget);
+        pushButtonPrev->setText(QApplication::translate("BFSMultiControlWidget", "<", 0, QApplication::UnicodeUTF8));
+        pushButtonNext->setText(QApplication::translate("BFSMultiControlWidget", ">", 0, QApplication::UnicodeUTF8));
+        Q_UNUSED(BFSMultiControlWidget);
     } // retranslateUi
 
 };
 
 namespace Ui {
-    class BFSControlWidget: public Ui_BFSControlWidget {};
+    class BFSMultiControlWidget: public Ui_BFSMultiControlWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE
 
-#endif // UI_BFSCONTROLWIDGET_H
+#endif // UI_BFSMULTICONTROLWIDGET_H

@@ -16,6 +16,7 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	connect(ui.actionNearestNeighborConnectivity, SIGNAL(triggered()), this, SLOT(startNearestNeighborConnectivity()));
 	connect(ui.actionBFS, SIGNAL(triggered()), this, SLOT(startBFS()));
 	connect(ui.actionBFS2, SIGNAL(triggered()), this, SLOT(startBFS2()));
+	connect(ui.actionBFSMulti, SIGNAL(triggered()), this, SLOT(startBFSMulti()));
 	connect(ui.actionBFSProp, SIGNAL(triggered()), this, SLOT(startBFSProp()));
 	connect(ui.actionMTT, SIGNAL(triggered()), this, SLOT(startMTT()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(tick()) );
@@ -32,6 +33,9 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 
 	widgetBFS2 = new BFS2ControlWidget(this);
 	widgetBFS2->hide();
+
+	widgetBFSMulti = new BFSMultiControlWidget(this);
+	widgetBFSMulti->hide();
 
 	widgetBFSProp = new BFSPropControlWidget(this);
 	widgetBFSProp->hide();
@@ -65,10 +69,14 @@ void Morph::paintEvent(QPaintEvent *) {
 	}
 
 	if (mode == 5) {
-		widgetBFSProp->draw(&painter, width / 2 + 150, 800.0f / width);
+		widgetBFSMulti->draw(&painter, width / 2 + 150, 800.0f / width);
 	}
 
 	if (mode == 6) {
+		widgetBFSProp->draw(&painter, width / 2 + 150, 800.0f / width);
+	}
+
+	if (mode == 7) {
 		widgetMTT->draw(&painter, width / 2 + 150, 800.0f / width);
 	}
 }
@@ -129,10 +137,25 @@ void Morph::startBFS2() {
 	widgetMTT->hide();
 }
 
-void Morph::startBFSProp() {
+void Morph::startBFSMulti() {
 	timer->stop();
 
 	mode = 5;
+
+	// DocWidgetの表示
+	widgetBFSMulti->show();
+	addDockWidget(Qt::RightDockWidgetArea, widgetBFSMulti);
+
+	widgetBFS->hide();
+	widgetBFS2->hide();
+	widgetBFSProp->hide();
+	widgetMTT->hide();
+}
+
+void Morph::startBFSProp() {
+	timer->stop();
+
+	mode = 6;
 
 	// DocWidgetの表示
 	widgetBFSProp->show();
@@ -146,7 +169,7 @@ void Morph::startBFSProp() {
 void Morph::startMTT() {
 	timer->stop();
 
-	mode = 6;
+	mode = 7;
 
 	// DocWidgetの表示
 	widgetMTT->show();

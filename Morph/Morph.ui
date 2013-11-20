@@ -31,6 +31,7 @@
     <addaction name="actionNearestNeighborConnectivity"/>
     <addaction name="actionBFS"/>
     <addaction name="actionBFS2"/>
+    <addaction name="actionBFSMulti"/>
     <addaction name="actionBFSProp"/>
     <addaction name="actionMTT"/>
    </widget>
@@ -73,6 +74,11 @@
   <action name="actionBFSProp">
    <property name="text">
     <string>BFS Proportional</string>
+   </property>
+  </action>
+  <action name="actionBFSMulti">
+   <property name="text">
+    <string>BFS Multi Roots</string>
    </property>
   </action>
  </widget>

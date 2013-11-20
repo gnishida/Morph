@@ -3,7 +3,7 @@
 #include "RoadGraph.h"
 
 class BFSTree {
-private:
+public:
 	RoadGraph* roads;
 	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > children;
 	RoadVertexDesc root;

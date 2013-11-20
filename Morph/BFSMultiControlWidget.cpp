@@ -1,7 +1,7 @@
-#include "BFSPropControlWidget.h"
+#include "BFSMultiControlWidget.h"
 #include "Morph.h"
 
-BFSPropControlWidget::BFSPropControlWidget(Morph* parent) : QDockWidget("BFS Control Widget", (QWidget*)parent) {
+BFSMultiControlWidget::BFSMultiControlWidget(Morph* parent) : QDockWidget("BFS Control Widget", (QWidget*)parent) {
 	ui.setupUi(this);
 	this->parent = parent;
 	this->bfs = NULL;
@@ -16,26 +16,26 @@ BFSPropControlWidget::BFSPropControlWidget(Morph* parent) : QDockWidget("BFS Con
 	connect(ui.pushButtonNext, SIGNAL(clicked()), this, SLOT(nextSequence()));
 
 	// initialize BFS
-	bfs = new BFSProp("paris_4000.gsm", "london_4000.gsm");
+	bfs = new BFSMulti("paris_4000.gsm", "london_4000.gsm");
 	bfs->buildTree();
 	ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 	ui.horizontalSlider->setValue(0);
 	parent->update();
 }
 
-void BFSPropControlWidget::draw(QPainter* painter, int offset, float scale) {
+void BFSMultiControlWidget::draw(QPainter* painter, int offset, float scale) {
 	if (bfs == NULL) return;
 
     bfs->draw(painter, offset, scale);
 }
 
-void BFSPropControlWidget::moveSequence(int value) {
+void BFSMultiControlWidget::moveSequence(int value) {
 	if (bfs == NULL) return;
 	bfs->selectSequence(value);
 	parent->update();
 }
 
-void BFSPropControlWidget::prevSequence() {
+void BFSMultiControlWidget::prevSequence() {
 	if (bfs == NULL) return;
 
 	int value = ui.horizontalSlider->value();
@@ -46,7 +46,7 @@ void BFSPropControlWidget::prevSequence() {
 	parent->update();
 }
 
-void BFSPropControlWidget::nextSequence() {
+void BFSMultiControlWidget::nextSequence() {
 	if (bfs == NULL) return;
 
 	int value = ui.horizontalSlider->value();
