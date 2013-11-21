@@ -124,3 +124,22 @@ void RoadGraph::removeIsolatedVertices() {
 	} while (deleted);
 }
 
+/**
+ * num個のメジャーなエッジを返却する。
+ * レーン数が多い道路を選択する。
+ */
+std::vector<RoadEdgeDesc> RoadGraph::getMajorEdges(RoadGraph* roads, int num) {
+	std::vector<RoadEdgeDesc> data;
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(graph); ei != eend; ++ei) {
+		if (!graph[*ei]->valid) continue;
+
+		data.push_back(*ei);
+	}
+
+	std::sort(data.begin(), data.end(); lessWeight);
+}
+
+bool RoadGraph::lessWeight(const RoadEdgeDesc& left, const RoadEdgeDesc& right) {
+	return graph[left]->lanes < graph[right]->lanes;
+}

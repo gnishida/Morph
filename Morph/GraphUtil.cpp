@@ -913,7 +913,7 @@ bool GraphUtil::nextSequence(std::vector<int>& seq, int N) {
 		seq[index] = 0;
 	}
 
-	if (index < seq.size() {
+	if (index < seq.size()) {
 		seq[index]++;
 		return true;
 	} else {
@@ -921,6 +921,10 @@ bool GraphUtil::nextSequence(std::vector<int>& seq, int N) {
 	}
 }
 
+/**
+ * 道路の統計情報を出力する。
+ * degreeのヒストグラムと、lane数のヒストグラムを標準出力に出力する。
+ */
 void GraphUtil::printStatistics(RoadGraph* roads) {
 	int degreesHistogram[10];
 	int lanesHistogram[10];
@@ -941,9 +945,9 @@ void GraphUtil::printStatistics(RoadGraph* roads) {
 		}
 	}
 
-	fprintf(stderr, "Degrees:\n");
+	fprintf(stdout, "Degrees:\n");
 	for (int i = 0; i < 10; i++) {
-		fprintf(stderr, "%d: %d\n", i, degreesHistogram[i]);
+		fprintf(stdout, "%d: %d\n", i, degreesHistogram[i]);
 	}
 
 	// レーン数のヒストグラムを作成
@@ -957,8 +961,8 @@ void GraphUtil::printStatistics(RoadGraph* roads) {
 		}
 	}
 
-	fprintf(stderr, "Lanes:\n");
+	fprintf(stdout, "Lanes:\n");
 	for (int i = 0; i < 10; i++) {
-		fprintf(stderr, "%d: %d\n", i, degreesHistogram[i]);
+		fprintf(stdout, "%d: %d\n", i, degreesHistogram[i]);
 	}
 }

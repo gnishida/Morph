@@ -52,5 +52,8 @@ public:
 
 	void removeIsolatedVertices();
 
+	std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
+	bool lessWeight(const RoadEdgeDesc& left, const RoadEdgeDesc& right);
+
 };
 

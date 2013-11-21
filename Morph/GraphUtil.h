@@ -46,6 +46,7 @@ public:
 	static float computeDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> correspondence1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc> correspondence2);
 	static bool nextSequence(std::vector<int>& seq, int N);
 
+	static std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
 
 	static void printStatistics(RoadGraph* roads);
 };
