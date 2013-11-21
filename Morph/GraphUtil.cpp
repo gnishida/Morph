@@ -904,6 +904,9 @@ float GraphUtil::computeDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc, R
 /**
  * 与えられた数列の、末尾の桁の値を１インクリメントする。
  * N進法なので、Nになったら、桁が繰り上がる。
+ * ex. {1, 2, 3} => {2, 2, 3}
+ * ex. {N-1, 3, 3} => {0, 4, 3}
+ * ex. {N-1, N-1, 3} => {0, 0, 4}
  */
 bool GraphUtil::nextSequence(std::vector<int>& seq, int N) {
 	int index = 0;
