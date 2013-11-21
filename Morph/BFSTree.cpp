@@ -1,6 +1,10 @@
 ﻿#include "BFSTree.h"
 #include "GraphUtil.h"
 
+BFSTree::BFSTree() {
+	this->roads = NULL;
+}
+
 BFSTree::BFSTree(RoadGraph* roads, RoadVertexDesc root) {
 	this->roads = roads;
 	this->root = root;

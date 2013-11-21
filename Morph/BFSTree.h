@@ -9,6 +9,7 @@ public:
 	RoadVertexDesc root;
 
 public:
+	BFSTree();
 	BFSTree(RoadGraph* roads, RoadVertexDesc root);
 	~BFSTree();
 

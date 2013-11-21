@@ -160,6 +160,16 @@ bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVerte
 	std::vector<RoadVertexDesc> children1 = forest1->getChildren(parent1);
 	std::vector<RoadVertexDesc> children2 = forest2->getChildren(parent2);
 
+	// 手動で（テンポラリ）
+	if (parent1 == 3 && parent2 == 25) {
+		if (!paired1[4] && !paired2[3]) {
+			child1 = 4;
+			child2 = 3;
+
+			return true;
+		}
+	}
+
 	// エッジの角度が最もちかいペアをマッチさせる
 	for (int i = 0; i < children1.size(); i++) {
 		if (paired1.contains(children1[i])) continue;
@@ -242,4 +252,182 @@ bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVerte
 	return false;
 }
 
+/**
+ * 子ノードリスト１と子ノードリスト２から、ベストペアを探し出す。
+ * まずは、ペアになっていないノードから候補を探す。
+ * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
+ */
+/*
+bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVertexDesc parent1, BFSForest* forest1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSForest* forest2, QMap<RoadVertexDesc, bool> paired2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+	float min_angle = std::numeric_limits<float>::max();
+	int min_id1;
+	int min_id2;
 
+	// 子リストを取得
+	std::vector<RoadVertexDesc> children1 = forest1->getChildren(parent1);
+	std::vector<RoadVertexDesc> children2 = forest2->getChildren(parent2);
+
+	// 手動で（テンポラリ）
+	if (parent1 == 3 && parent2 == 25) {
+		if (!paired1[4] && !paired2[3]) {
+			child1 = 4;
+			child2 = 3;
+
+			return true;
+		}
+	}
+
+
+	// エッジの角度が最もちかいペアをマッチさせる
+	for (int i = 0; i < children1.size(); i++) {
+		if (paired1.contains(children1[i])) continue;
+		if (!roads1->graph[children1[i]]->valid) continue;
+
+		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
+		float theta1 = atan2f(dir1.y(), dir1.x()) + theta;
+		for (int j = 0; j < children2.size(); j++) {
+			if (paired2.contains(children2[j])) continue;
+			if (!roads2->graph[children2[j]]->valid) continue;
+
+			QVector2D dir2 = roads2->graph[children2[j]]->getPt() - roads2->graph[parent2]->getPt();
+			float theta2 = atan2f(dir2.y(), dir2.x());
+
+			float angle = GraphUtil::diffAngle(theta1, theta2);
+			if (angle < min_angle) {
+				min_angle = angle;
+				min_id1 = i;
+				min_id2 = j;
+			}
+		}
+	}
+	
+	// ベストペアが見つかったか、チェック
+	if (min_angle < std::numeric_limits<float>::max()) {
+		child1 = children1[min_id1];
+		child2 = children2[min_id2];
+
+		return true;
+	}
+
+	if (onlyUnpairedNode) return false;
+
+	// グラフ１の方で、ペアが見つかってないノードのために、無理やりペアを作る
+	for (int i = 0; i < children1.size(); i++) {
+		if (paired1.contains(children1[i])) continue;
+		if (!roads1->graph[children1[i]]->valid) continue;
+
+		// コピーされたノードで、ペアになっていないものは、この時点で捨てる。
+		if (roads1->graph[children1[i]]->virt) {
+			roads1->graph[GraphUtil::getEdge(roads1, parent1, children1[i])]->valid = false;
+			forest1->removeSubTree(children1[i]);
+			continue;
+		}
+
+		min_angle = std::numeric_limits<float>::max();
+		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
+
+		// ペア済みのノードも含めて、最も角度の近い相手を探す
+		for (int j = 0; j < children2.size(); j++) {
+			if (!roads2->graph[children2[j]]->valid) continue;
+
+			QVector2D dir2 = roads2->graph[children2[j]]->getPt() - roads2->graph[parent2]->getPt();
+
+			float angle = GraphUtil::diffAngle(dir1, dir2);
+			if (angle < min_angle) {
+				min_angle = angle;
+				min_id1 = i;
+				min_id2 = j;
+			}
+		}
+
+		//if (min_angle < std::numeric_limits<float>::max()) {
+		if (min_angle < M_PI / 2.0f) {	// 角度の差が９０度を超えた場合は、無理やりマッチングさせない。
+			// 子ノード（子孫も含めて）をコピーする
+			RoadVertexDesc v_desc = forest2->copySubTree(parent2, children2[min_id2], parent2);
+
+			child1 = children1[min_id1];
+			child2 = v_desc;
+
+			return true;
+		} else {
+			// 相手グラフに子ノードが１つもない場合は、親ノードとマッチさせる
+			RoadVertex* v = new RoadVertex(roads2->graph[parent2]->getPt());
+			RoadVertexDesc v_desc = boost::add_vertex(roads2->graph);
+			roads2->graph[v_desc] = v;
+
+			RoadEdgeDesc e1_desc = GraphUtil::getEdge(roads1, parent1, children1[i]);
+
+			// 相手の親ノードと子ノードの間にエッジを作成する
+			GraphUtil::addEdge(roads2, parent2, v_desc, roads1->graph[e1_desc]->lanes, roads1->graph[e1_desc]->type, roads1->graph[e1_desc]->oneWay);
+
+			forest2->addChild(parent2, v_desc);
+
+			child1 = children1[i];
+			child2 = v_desc;
+
+			return true;
+		}
+	}
+
+	// グラフ２の方で、ペアが見つかってないノードのために、無理やりペアを作る
+	for (int i = 0; i < children2.size(); i++) {
+		if (paired2.contains(children2[i])) continue;
+		if (!roads2->graph[children2[i]]->valid) continue;
+
+		// コピーされたノードで、ペアになっていないものは、この時点で捨てる。
+		if (roads2->graph[children2[i]]->virt) {
+			roads2->graph[GraphUtil::getEdge(roads2, parent2, children2[i])]->valid = false;
+			forest2->removeSubTree(children2[i]);
+			continue;
+		}
+
+		min_angle = std::numeric_limits<float>::max();
+		QVector2D dir2 = roads2->graph[children2[i]]->getPt() - roads2->graph[parent2]->getPt();
+
+		// ペア済みのノードも含めて、最も角度の近い相手を探す
+		for (int j = 0; j < children1.size(); j++) {
+			if (!roads1->graph[children1[j]]->valid) continue;
+
+			QVector2D dir1 = roads1->graph[children1[j]]->getPt() - roads1->graph[parent1]->getPt();
+
+			float angle = GraphUtil::diffAngle(dir1, dir2);
+			if (angle < min_angle) {
+				min_angle = angle;
+				min_id2 = i;
+				min_id1 = j;
+			}
+		}
+
+		//if (min_angle < std::numeric_limits<float>::max()) {
+		if (min_angle < M_PI / 2.0f) {	// 角度の差が９０度を超えた場合は、無理やりマッチングさせない。
+			// 子ノード（子孫も含めて）をコピーする
+			RoadVertexDesc v_desc = forest1->copySubTree(parent1, children1[min_id1], parent1);
+
+			child1 = v_desc;
+			child2 = children2[min_id2];
+
+			return true;
+		} else {
+			// 相手グラフに子ノードが１つもない場合は、親ノードとマッチさせる
+			RoadVertex* v = new RoadVertex(roads1->graph[parent1]->getPt());
+			RoadVertexDesc v_desc = boost::add_vertex(roads1->graph);
+			roads1->graph[v_desc] = v;
+
+			RoadEdgeDesc e2_desc = GraphUtil::getEdge(roads2, parent2, children2[i]);
+
+			// 相手の親ノードと子ノードの間にエッジを作成する
+			GraphUtil::addEdge(roads1, parent1, v_desc, roads2->graph[e2_desc]->lanes, roads2->graph[e2_desc]->type, roads2->graph[e2_desc]->oneWay);
+
+			forest1->addChild(parent1, v_desc);
+
+			child1 = v_desc;
+			child2 = children2[i];
+
+			return true;
+		}
+	}
+
+	// ペアなし、つまり、全ての子ノードがペアになっている
+	return false;
+}
+*/

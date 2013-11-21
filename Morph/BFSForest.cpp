@@ -1,7 +1,7 @@
 ﻿#include "BFSForest.h"
 #include "GraphUtil.h"
 
-BFSForest::BFSForest(RoadGraph* roads, std::vector<RoadVertexDesc> roots) : BFSTree(roads, roots[0]) {
+BFSForest::BFSForest(RoadGraph* roads, std::vector<RoadVertexDesc> roots) : BFSTree() {
 	this->roads = roads;
 	this->roots = roots;
 
