@@ -40,5 +40,13 @@ public:
 	static float normalizeAngle(float angle);
 	static float diffAngle(QVector2D& dir1, QVector2D& dir2);
 	static float diffAngle(float angle1, float angle2);
+
+
+	static float computeMinDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2);
+	static float computeDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> correspondence1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc> correspondence2);
+	static bool nextSequence(std::vector<int>& seq, int N);
+
+
+	static void printStatistics(RoadGraph* roads);
 };
 

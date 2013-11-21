@@ -26,6 +26,6 @@ public:
 
 	void addPoint(const QVector2D &pt);
 	float getWidth();
-
+	float getWeight();
 };
 

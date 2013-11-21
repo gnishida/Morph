@@ -119,6 +119,7 @@ void Morph::startBFS() {
 	addDockWidget(Qt::RightDockWidgetArea, widgetBFS);
 
 	widgetBFS2->hide();
+	widgetBFSMulti->hide();
 	widgetBFSProp->hide();
 	widgetMTT->hide();
 }
@@ -134,6 +135,7 @@ void Morph::startBFS2() {
 
 	widgetBFS->hide();
 	widgetBFSProp->hide();
+	widgetBFSMulti->hide();
 	widgetMTT->hide();
 }
 
@@ -163,6 +165,7 @@ void Morph::startBFSProp() {
 
 	widgetBFS->hide();
 	widgetBFS2->hide();
+	widgetBFSMulti->hide();
 	widgetMTT->hide();
 }
 
@@ -177,6 +180,7 @@ void Morph::startMTT() {
 
 	widgetBFS->hide();
 	widgetBFS2->hide();
+	widgetBFSMulti->hide();
 	widgetBFSProp->hide();
 }
 

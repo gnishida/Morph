@@ -806,3 +806,159 @@ float GraphUtil::diffAngle(QVector2D& dir1, QVector2D& dir2) {
 float GraphUtil::diffAngle(float angle1, float angle2) {
 	return fabs(normalizeAngle(angle1 - angle2));
 }
+
+/**
+ * ２つの道路網のトポロジーの違いの最小値を数値化して返却する。
+ * トポロジーの違いなので、座標は一切関係ない。隣接ノードとの接続性のみを考慮する。
+ */
+float GraphUtil::computeMinDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
+	int N = getNumVertices(roads1);
+	int M = getNumVertices(roads2);
+
+	std::vector<int> corr1;
+	std::vector<int> corr2;
+	for (int i = 0; i < N; i++) {
+		corr1[i] = 0;
+	}
+	for (int i = 0; i < M; i++) {
+		corr2[i] = 0;
+	}
+
+	float min_diff = std::numeric_limits<float>::max();
+	std::vector<int> min_corr1;
+	std::vector<int> min_corr2;
+
+	/*
+	while (true) {
+		// corr1、corr2を元に、mapを生成する
+		map1.clear();
+		map2.clear();
+		for (int i = 0; i < N; i++) {
+			map1[i] = corr1[i];
+			map2[map1[i]] = i;
+		}
+
+		// いろいろやって
+		float diff = computeDiffInTopology(roads1, corr1, roads2, corr2);
+		if (diff < min_diff) {
+			min_corr1 = corr1;
+			min_corr2 = corr2;
+		}
+		
+		if (!nextSequence(corr1, M)) break;
+	}
+	*/
+
+	// 最小値を出した時に、頂点変換テーブルを、返却する
+	map1.clear();
+	map2.clear();
+	for (int i = 0; i < N; i++) {
+		map1[i] = corr1[i];
+	}
+	for (int i = 0; i < M; i++) {
+		map2[i] = corr2[i];
+	}
+
+	return min_diff;
+}
+
+/**
+ * 対応する頂点が与えられている時に、２つの道路網のトポロジーの違いを数値化して返却する。
+ * トポロジーの違いなので、座標は一切関係ない。隣接ノードとの接続性のみを考慮する。
+ */
+float GraphUtil::computeDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc> correspondence1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc> correspondence2) {
+	float ret = 0.0f;
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		RoadVertexDesc v2 = correspondence1[*vi];
+
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads1->graph); ei != eend; ++ei) {
+			RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
+			RoadVertexDesc v2b = correspondence1[v1b];
+
+			if (!hasEdge(roads2, v2, v2b)) {
+				ret += roads1->graph[*ei]->getWeight();
+			}
+		}
+	}
+
+	for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
+		RoadVertexDesc v1 = correspondence2[*vi];
+
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads2->graph); ei != eend; ++ei) {
+			RoadVertexDesc v2b = boost::target(*ei, roads2->graph);
+			RoadVertexDesc v1b = correspondence1[v2b];
+
+			if (!hasEdge(roads1, v1, v1b)) {
+				ret += roads2->graph[*ei]->getWeight();
+			}
+		}
+	}
+
+	return ret;
+}
+
+/**
+ * 与えられた数列の、末尾の桁の値を１インクリメントする。
+ * N進法なので、Nになったら、桁が繰り上がる。
+ */
+bool GraphUtil::nextSequence(std::vector<int>& seq, int N) {
+	int index = 0;
+	while (true) {
+		if (seq[index] < N - 1) break;
+
+		seq[index] = 0;
+	}
+
+	if (index < seq.size() {
+		seq[index]++;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void GraphUtil::printStatistics(RoadGraph* roads) {
+	int degreesHistogram[10];
+	int lanesHistogram[10];
+
+	for (int i = 0; i < 10; i++) {
+		degreesHistogram[i] = 0;
+		lanesHistogram[i] = 0;
+	}
+
+	// degreeのヒストグラムを作成
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
+		int degree = getDegree(roads, *vi);
+		if (degree < 10) {
+			degreesHistogram[degree]++;
+		}
+	}
+
+	fprintf(stderr, "Degrees:\n");
+	for (int i = 0; i < 10; i++) {
+		fprintf(stderr, "%d: %d\n", i, degreesHistogram[i]);
+	}
+
+	// レーン数のヒストグラムを作成
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		int lanes = roads->graph[*ei]->lanes;
+		if (lanes < 10) {
+			lanesHistogram[lanes]++;
+		}
+	}
+
+	fprintf(stderr, "Lanes:\n");
+	for (int i = 0; i < 10; i++) {
+		fprintf(stderr, "%d: %d\n", i, degreesHistogram[i]);
+	}
+}
