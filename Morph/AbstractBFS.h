@@ -27,5 +27,7 @@ public:
 
 	void createRoads1();
 	void createRoads2();
+	void createRoads3();
+	void createRoads4();
 };
 

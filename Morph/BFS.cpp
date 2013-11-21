@@ -76,8 +76,8 @@ void BFS::buildTree() {
 	// テンポラリで、手動でルートを指定
 	//min_v1_desc = 33;
 	//min_v2_desc = 74;
-	min_v1_desc = 851;
-	min_v2_desc = 530;
+	min_v1_desc = 15;
+	min_v2_desc = 5;
 
 	//findBestRoots(roads1, roads2, min_v1_desc, min_v2_desc);
 

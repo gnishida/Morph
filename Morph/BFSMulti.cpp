@@ -79,10 +79,10 @@ void BFSMulti::buildTree() {
 	// テンポラリで、手動でルートを指定
 	//min_v1_desc = 33;
 	//min_v2_desc = 74;
-	roots1.push_back(641);
-	roots1.push_back(225);
-	roots2.push_back(674);
-	roots2.push_back(108);
+	roots1.push_back(3);
+	roots1.push_back(22);
+	roots2.push_back(25);
+	roots2.push_back(11);
 
 	if (forest1 != NULL) delete forest1;
 	if (forest2 != NULL) delete forest2;

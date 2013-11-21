@@ -88,8 +88,8 @@ void BFSProp::buildTree() {
 		}
 	}
 
-	min_v1_desc = 2;
-	min_v2_desc = 8;
+	min_v1_desc = 0;
+	min_v2_desc = 0;
 
 	// 頂点が１つもない場合は、終了
 	if (count == 0) return;
