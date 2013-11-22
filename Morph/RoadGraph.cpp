@@ -101,6 +101,65 @@ void RoadGraph::load(FILE* fp, int roadType) {
 	removeIsolatedVertices();
 }
 
+void RoadGraph::save(FILE* fp) {
+	int nVertices = GraphUtil::getNumVertices(this);
+	fwrite(&nVertices, sizeof(int), 1, fp);
+
+	// 各頂点につき、ID、X座標、Y座標を出力する
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(graph); vi != vend; ++vi) {
+		RoadVertex* v = graph[*vi];
+		if (!v->valid) continue;
+	
+		RoadVertexDesc desc = *vi;
+		float x = v->getPt().x();
+		float y = v->getPt().y();
+		fwrite(&desc, sizeof(RoadVertexDesc), 1, fp);
+		fwrite(&x, sizeof(float), 1, fp);
+		fwrite(&y, sizeof(float), 1, fp);
+	}
+
+	int nEdges = GraphUtil::getNumEdges(this);
+	fwrite(&nEdges, sizeof(int), 1, fp);
+
+	// 各エッジにつき、２つの頂点の各ID、道路タイプ、レーン数、一方通行か、ポリラインを構成するポイント数、各ポイントのX座標とY座標を出力する
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(graph); ei != eend; ++ei) {
+		RoadEdge* edge = graph[*ei];
+		if (!edge->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, graph);
+		RoadVertexDesc tgt = boost::target(*ei, graph);
+
+		fwrite(&src, sizeof(RoadVertexDesc), 1, fp);
+		fwrite(&tgt, sizeof(RoadVertexDesc), 1, fp);
+		
+		unsigned int type = edge->getType();
+		fwrite(&type, sizeof(unsigned int), 1, fp);
+
+		unsigned int lanes = edge->getNumLanes();
+		fwrite(&lanes, sizeof(unsigned int), 1, fp);
+
+		unsigned int oneWay;
+		if (edge->oneWay) {
+			oneWay = 1;
+		} else {
+			oneWay = 0;
+		}
+		fwrite(&oneWay, sizeof(unsigned int), 1, fp);
+
+		int nPoints = edge->getPolyLine().size();
+		fwrite(&nPoints, sizeof(int), 1, fp);
+
+		for (int i = 0; i < edge->getPolyLine().size(); i++) {
+			float x = edge->getPolyLine()[i].x();
+			float y = edge->getPolyLine()[i].y();
+			fwrite(&x, sizeof(float), 1, fp);
+			fwrite(&y, sizeof(float), 1, fp);
+		}
+	}
+}
+
 /**
  * エッジがない頂点を削除する。
  */
@@ -137,9 +196,20 @@ std::vector<RoadEdgeDesc> RoadGraph::getMajorEdges(RoadGraph* roads, int num) {
 		data.push_back(*ei);
 	}
 
-	std::sort(data.begin(), data.end(); lessWeight);
+	std::sort(data.begin(), data.end(), LessWeight(roads));
+
+	std::vector<RoadEdgeDesc> ret;
+	for (int i = 0; i < num; i++) {
+		ret.push_back(data[i]);
+	}
+
+	return ret;
 }
 
-bool RoadGraph::lessWeight(const RoadEdgeDesc& left, const RoadEdgeDesc& right) {
-	return graph[left]->lanes < graph[right]->lanes;
+LessWeight::LessWeight(RoadGraph* roads) {
+	this->roads = roads;
+}
+
+bool LessWeight::operator()(const RoadEdgeDesc& left, const RoadEdgeDesc& right) const {
+	return roads->graph[left]->lanes < roads->graph[right]->lanes;
 }

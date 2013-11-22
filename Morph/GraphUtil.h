@@ -16,6 +16,7 @@ public:
 	static void moveVertex(RoadGraph* roads, RoadVertexDesc v, QVector2D pt);
 	static void collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	static void collapseEdge(RoadGraph* roads, RoadEdgeDesc e);
+	static int getNumEdges(RoadGraph* roads, bool onlyValidEdge = true);
 	static RoadEdgeDesc addEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, unsigned int lanes, unsigned int type, bool oneWay = false);
 	static std::vector<RoadVertexDesc> getNeighbors(RoadGraph* roads, RoadVertexDesc v);
 	static bool isNeighbor(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
@@ -47,6 +48,10 @@ public:
 	static bool nextSequence(std::vector<int>& seq, int N);
 
 	static std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
+
+	static RoadGraph* createGridNetwork(float size, int num);
+	static RoadGraph* createCurvyNetwork(float size, int num, float angle);
+	static RoadGraph* createRadialNetwork(float size, int num);
 
 	static void printStatistics(RoadGraph* roads);
 };

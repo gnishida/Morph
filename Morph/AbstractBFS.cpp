@@ -7,6 +7,7 @@
 #include <qdebug.h>
 
 AbstractBFS::AbstractBFS(const char* filename1, const char* filename2) {
+	/*
 	FILE* fp = fopen(filename1, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
@@ -22,11 +23,16 @@ AbstractBFS::AbstractBFS(const char* filename1, const char* filename2) {
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30);
 	fclose(fp);
+	*/
 
+	FILE* fp = fopen("radial.gsm", "wb");
+	roads1 = GraphUtil::createRadialNetwork(10000, 4);
+	roads1->save(fp);
+	fclose(fp);
 
 	// 道路のヒストグラム情報を出力
-	GraphUtil::printStatistics(roads1);
-	GraphUtil::printStatistics(roads2);
+	//GraphUtil::printStatistics(roads1);
+	//GraphUtil::printStatistics(roads2);
 
 
 

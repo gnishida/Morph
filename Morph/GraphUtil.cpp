@@ -1,5 +1,6 @@
 ﻿#include "GraphUtil.h"
 #include "Util.h"
+#include <qmatrix.h>
 
 #ifndef M_PI
 #define M_PI	3.141592653
@@ -203,6 +204,20 @@ void GraphUtil::collapseEdge(RoadGraph* roads, RoadEdgeDesc e) {
 	ca.removedEdges = removedEdges;
 
 	roads->collapseHistory.push_back(ca);
+}
+
+/**
+ * エッジの数を返却する。
+ */
+int GraphUtil::getNumEdges(RoadGraph* roads, bool onlyValidEdge) {
+	int count = 0;
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (roads->graph[*ei]->valid) count++;
+	}
+
+	return count;
 }
 
 /**
@@ -922,6 +937,231 @@ bool GraphUtil::nextSequence(std::vector<int>& seq, int N) {
 	} else {
 		return false;
 	}
+}
+
+/**
+ * グリッドスタイルの道路網を作成する。
+ *
+ * @param size		一辺の長さ [m]
+ * @param num		一辺のノード数
+ */
+RoadGraph* GraphUtil::createGridNetwork(float size, int num) {
+	RoadGraph* roads = new RoadGraph();
+
+	// 各エッジの長さ
+	float length = size / (float)(num - 1);
+
+	// 原点座標
+	QVector2D orig(-size / 2.0f, -size / 2.0f);
+
+	// ノードを作成
+	for (int i = 0; i < num - 2; i++) {
+		for (int j = 0; j < num; j++) {
+			RoadVertex* v = new RoadVertex(orig + QVector2D(j * length, i * length + length));
+			RoadVertexDesc desc = boost::add_vertex(roads->graph);
+			roads->graph[desc] = v;
+		}
+	}
+	for (int i = 0; i < num - 2; i++) {
+		RoadVertex* v = new RoadVertex(orig + QVector2D(i * length + length, 0));
+		RoadVertexDesc desc = boost::add_vertex(roads->graph);
+		roads->graph[desc] = v;
+	}
+	for (int i = 0; i < num - 2; i++) {
+		RoadVertex* v = new RoadVertex(orig + QVector2D(i * length + length, size));
+		RoadVertexDesc desc = boost::add_vertex(roads->graph);
+		roads->graph[desc] = v;
+	}
+
+	// エッジを作成
+	for (int i = 0; i < num - 2; i++) {
+		for (int j = 0; j < num - 1; j++) {
+			addEdge(roads, i * num + j, i * num + j + 1, 2, 2);
+		}
+	}
+	for (int i = 0; i < num - 3; i++) {
+		for (int j = 0; j < num - 2; j++) {
+			addEdge(roads, i * num + 1 + j, i * num + 1 + j + num, 2, 2);
+		}
+	}
+	for (int i = 0; i < num - 2; i++) {
+		addEdge(roads, num * (num - 2) + i, i + 1, 2, 2);
+		addEdge(roads, num * (num - 2) + (num - 2) + i, num * (num - 3) + i + 1, 2, 2);
+	}
+
+	return roads;
+}
+
+/**
+ * 曲がったスタイルの道路網を作成する。
+ *
+ * @param size		一辺の長さ [m]
+ * @param num		一辺のノード数
+ * @param angle		傾ける角度 [rad]
+ */
+RoadGraph* GraphUtil::createCurvyNetwork(float size, int num, float angle) {
+	RoadGraph* roads = new RoadGraph();
+
+	// 各エッジの長さ
+	float length = size / (float)(num - 1);
+
+	// 原点座標
+	QVector2D orig(-size / 2.0f, -size / 2.0f);
+
+	// ノードを作成
+	for (int i = 0; i < num - 2; i++) {
+		for (int j = 0; j < num; j++) {
+			QVector2D pos = orig + QVector2D(j * length, i * length + length);
+			QVector2D pos2;
+			pos2.setX(pos.x() * cosf(angle) - pos.y() * sinf(angle));
+			pos2.setY(pos.x() * sinf(angle) + pos.y() * cosf(angle));
+			RoadVertex* v = new RoadVertex(pos2);
+			RoadVertexDesc desc = boost::add_vertex(roads->graph);
+			roads->graph[desc] = v;
+		}
+	}
+	for (int i = 0; i < num - 2; i++) {
+		QVector2D pos = orig + QVector2D(i * length + length, 0);
+		QVector2D pos2;
+		pos2.setX(pos.x() * cosf(angle) - pos.y() * sinf(angle));
+		pos2.setY(pos.x() * sinf(angle) + pos.y() * cosf(angle));
+		RoadVertex* v = new RoadVertex(pos2);
+		RoadVertexDesc desc = boost::add_vertex(roads->graph);
+		roads->graph[desc] = v;
+	}
+	for (int i = 0; i < num - 2; i++) {
+		QVector2D pos = orig + QVector2D(i * length + length, size);
+		QVector2D pos2;
+		pos2.setX(pos.x() * cosf(angle) - pos.y() * sinf(angle));
+		pos2.setY(pos.x() * sinf(angle) + pos.y() * cosf(angle));
+		RoadVertex* v = new RoadVertex(pos2);
+		RoadVertexDesc desc = boost::add_vertex(roads->graph);
+		roads->graph[desc] = v;
+	}
+
+	// エッジを作成
+	for (int i = 0; i < num - 2; i++) {
+		for (int j = 0; j < num - 1; j++) {
+			RoadEdge* e = new RoadEdge(2, 2, false);
+			QVector2D pos = orig + QVector2D(j * length, i * length + length);
+			for (int k = 0; k <= 10; k++) {
+				QVector2D pos2 = pos + QVector2D((float)k * 0.1f * length, length * 0.1f * sinf((float)k * M_PI * 2 * 0.1f));
+				QVector2D pos3;
+				pos3.setX(pos2.x() * cosf(angle) - pos2.y() * sinf(angle));
+				pos3.setY(pos2.x() * sinf(angle) + pos2.y() * cosf(angle));
+				e->addPoint(pos3);
+			}
+			
+			std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(i * num + j, i * num + j + 1, roads->graph);
+			roads->graph[edge_pair.first] = e;
+		}
+	}
+	for (int i = 0; i < num - 3; i++) {
+		for (int j = 0; j < num - 2; j++) {
+			RoadEdge* e = new RoadEdge(2, 2, false);
+			QVector2D pos = orig + QVector2D(j * length + length, i * length + length);
+			for (int k = 0; k <= 10; k++) {
+				QVector2D pos2 = pos + QVector2D(length * 0.1f * sinf((float)k * M_PI * 2 * 0.1f), (float)k * 0.1f * length);
+				QVector2D pos3;
+				pos3.setX(pos2.x() * cosf(angle) - pos2.y() * sinf(angle));
+				pos3.setY(pos2.x() * sinf(angle) + pos2.y() * cosf(angle));
+				e->addPoint(pos3);
+			}
+			
+			std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(i * num + 1 + j, i * num + 1 + j + num, roads->graph);
+			roads->graph[edge_pair.first] = e;
+
+			//addEdge(roads, i * num + 1 + j, i * num + 1 + j + num, 2, 2);
+		}
+	}
+	for (int i = 0; i < num - 2; i++) {
+		RoadEdge* e = new RoadEdge(2, 2, false);
+		QVector2D pos = orig + QVector2D(i * length + length, 0);
+		for (int k = 0; k <= 10; k++) {
+			QVector2D pos2 = pos + QVector2D(length * 0.1f * sinf((float)k * M_PI * 2 * 0.1f), (float)k * 0.1f * length);
+			QVector2D pos3;
+			pos3.setX(pos2.x() * cosf(angle) - pos2.y() * sinf(angle));
+			pos3.setY(pos2.x() * sinf(angle) + pos2.y() * cosf(angle));
+			e->addPoint(pos3);
+		}
+			
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(num * (num - 2) + i, i + 1, roads->graph);
+		roads->graph[edge_pair.first] = e;
+
+		//addEdge(roads, num * (num - 2) + i, i + 1, 2, 2);
+	}
+	for (int i = 0; i < num - 2; i++) {
+		RoadEdge* e = new RoadEdge(2, 2, false);
+		QVector2D pos = orig + QVector2D(i * length + length, size - length);
+		for (int k = 0; k <= 10; k++) {
+			QVector2D pos2 = pos + QVector2D(length * 0.1f * sinf((float)k * M_PI * 2 * 0.1f), (float)k * 0.1f * length);
+			QVector2D pos3;
+			pos3.setX(pos2.x() * cosf(angle) - pos2.y() * sinf(angle));
+			pos3.setY(pos2.x() * sinf(angle) + pos2.y() * cosf(angle));
+			e->addPoint(pos3);
+		}
+			
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(num * (num - 2) + (num - 2) + i, num * (num - 3) + i + 1, roads->graph);
+		roads->graph[edge_pair.first] = e;
+		
+		//addEdge(roads, num * (num - 2) + (num - 2) + i, num * (num - 3) + i + 1, 2, 2);
+	}
+
+	return roads;
+}
+
+/**
+ * 放射線状の道路網を作成する。
+ *
+ * @param size		一辺の長さ [m]
+ * @param num		円を何個作るか？
+ */
+RoadGraph* GraphUtil::createRadialNetwork(float size, int num) {
+	RoadGraph* roads = new RoadGraph();
+
+	float length = size / (float)(num + 1) / 2.0f;
+
+	// 頂点を追加
+	RoadVertex* v = new RoadVertex(QVector2D(0, 0));
+	RoadVertexDesc desc = boost::add_vertex(roads->graph);
+	roads->graph[desc] = v;
+
+	for (int i = 0; i < num + 1; i++) {
+		for (int j = 0; j < 12; j++) {
+			float theta = (float)j / 12.0f * M_PI * 2.0f;
+			RoadVertex* v = new RoadVertex(length * QVector2D((float)(i + 1) * cosf(theta), (float)(i + 1) * sinf(theta)));
+			RoadVertexDesc desc = boost::add_vertex(roads->graph);
+			roads->graph[desc] = v;
+		}
+	}
+
+	// エッジを追加
+	for (int i = 0; i < 12; i++) {
+		addEdge(roads, 0, i + 1, 2, 2);
+	}
+	for (int i = 0; i < num; i++) {
+		for (int j = 0; j < 12; j++) {
+			addEdge(roads, 1 + i * 12 + j, 1 + (i + 1) * 12 + j, 2, 2);
+		}
+	}
+	for (int i = 0; i < num; i++) {
+		for (int j = 0; j < 12; j++) {
+			float theta = (float)j / 12.0f * M_PI * 2.0f;
+			float dt = 1.0f / 12.0f * M_PI * 2.0f;
+			RoadEdge* e = new RoadEdge(2, 2, false);
+			for (int k = 0; k <= 4; k++) {
+				QVector2D pos = length * QVector2D((float)(i + 1) * cosf(theta + dt * (float)k / 4.0f), (float)(i + 1) * sinf(theta + dt * (float)k / 4.0f));
+				e->addPoint(pos);
+			}
+			
+			std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(1 + i * 12 + j, 1 + i * 12 + (j + 1) % 12, roads->graph);
+			roads->graph[edge_pair.first] = e;
+			
+			//addEdge(roads, 1 + i * 12 + j, 1 + i * 12 + (j + 1) % 12, 2, 2);
+		}
+	}
+
+	return roads;
 }
 
 /**

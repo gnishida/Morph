@@ -21,7 +21,6 @@ typedef graph_traits<BGLGraph>::edge_iterator RoadEdgeIter;
 typedef graph_traits<BGLGraph>::out_edge_iterator RoadOutEdgeIter;
 typedef graph_traits<BGLGraph>::in_edge_iterator RoadInEdgeIter;
 
-
 class CollapseAction {
 public:
 	RoadVertexDesc childNode;
@@ -49,6 +48,7 @@ public:
 
 	void clear();
 	void load(FILE* fp, int roadType);
+	void save(FILE* fp);
 
 	void removeIsolatedVertices();
 
@@ -57,3 +57,12 @@ public:
 
 };
 
+class LessWeight {
+private:
+	RoadGraph* roads;
+
+public:
+	LessWeight(RoadGraph* roads);
+
+	bool operator()(const RoadEdgeDesc& left, const RoadEdgeDesc& right) const;
+};
