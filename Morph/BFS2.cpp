@@ -6,7 +6,7 @@
 #include <QtTest/qtest.h>
 #include <qdebug.h>
 
-BFS2::BFS2(const char* filename1, const char* filename2) : AbstractBFS(filename1, filename2) {
+BFS2::BFS2() : AbstractBFS() {
 	tree1 = NULL;
 	tree2 = NULL;
 }
@@ -68,7 +68,7 @@ RoadGraph* BFS2::interpolate(float t) {
 	return roads;
 }
 
-void BFS2::buildTree() {
+void BFS2::init() {
 	float min_dist = std::numeric_limits<float>::max();
 	RoadVertexDesc min_v1_desc;
 	RoadVertexDesc min_v2_desc;

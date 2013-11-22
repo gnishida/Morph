@@ -826,7 +826,7 @@ float GraphUtil::diffAngle(float angle1, float angle2) {
  * ２つの道路網のトポロジーの違いの最小値を数値化して返却する。
  * トポロジーの違いなので、座標は一切関係ない。隣接ノードとの接続性のみを考慮する。
  */
-float GraphUtil::computeMinDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
+float GraphUtil::computeMinDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& best_map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& best_map2) {
 	int N = getNumVertices(roads1);
 	int M = getNumVertices(roads2);
 
@@ -843,35 +843,57 @@ float GraphUtil::computeMinDiffInTopology(RoadGraph* roads1, QMap<RoadVertexDesc
 	std::vector<int> min_corr1;
 	std::vector<int> min_corr2;
 
-	/*
 	while (true) {
+		QMap<RoadVertexDesc, RoadVertexDesc> map1;
+		QMap<RoadVertexDesc, RoadVertexDesc> map2;
+
 		// corr1、corr2を元に、mapを生成する
-		map1.clear();
-		map2.clear();
 		for (int i = 0; i < N; i++) {
 			map1[i] = corr1[i];
 			map2[map1[i]] = i;
 		}
 
-		// いろいろやって
-		float diff = computeDiffInTopology(roads1, corr1, roads2, corr2);
+		// map2で相手のいないノードについて、
+		bool updated = true;
+		while (updated) {
+			updated = false;
+
+			RoadVertexIter vi, vend;
+			for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
+				if (map2.contains(*vi)) continue;
+
+				// 最も近い隣接ノードを探す
+				float min_dist = std::numeric_limits<float>::max();	
+				RoadVertexDesc min_tgt;
+				RoadOutEdgeIter ei, eend;
+				for (boost::tie(ei, eend) = boost::out_edges(*vi, roads2->graph); ei != eend; ++ei) {
+					RoadVertexDesc tgt = boost::target(*ei, roads2->graph);
+					if (!map2.contains(tgt)) continue;
+
+					float dist = roads2->graph[*ei]->getLength();
+					if (dist < min_dist) {
+						min_dist = dist;
+						min_tgt = tgt;
+					}
+				}
+
+				// 隣接ノードの相手を、当該ノード(*vi)の相手とする
+				if (min_dist < std::numeric_limits<float>::max()) {
+					map2[*vi] = map2[min_tgt];
+					updated = true;
+					break;
+				}
+			}
+		}
+
+		// 与えられたマッピングについて、非類似度を計算する
+		float diff = computeDiffInTopology(roads1, map1, roads2, map2);
 		if (diff < min_diff) {
-			min_corr1 = corr1;
-			min_corr2 = corr2;
+			best_map1 = map1;
+			best_map2 = map2;
 		}
 		
 		if (!nextSequence(corr1, M)) break;
-	}
-	*/
-
-	// 最小値を出した時に、頂点変換テーブルを、返却する
-	map1.clear();
-	map2.clear();
-	for (int i = 0; i < N; i++) {
-		map1[i] = corr1[i];
-	}
-	for (int i = 0; i < M; i++) {
-		map2[i] = corr2[i];
 	}
 
 	return min_diff;

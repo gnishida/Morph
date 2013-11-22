@@ -14,12 +14,12 @@ public:
 	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
 
 public:
-	BFSProp(const char* filename1, const char* filename2);
+	BFSProp();
 	~BFSProp();
 
 	RoadGraph* interpolate(float t);
 
-	void buildTree();
+	void init();
 	QMap<RoadVertexDesc, RoadVertexDesc> findCorrespondence(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2);
 	bool findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BFSTree* tree1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSTree* tree2, QMap<RoadVertexDesc, bool> paired2, RoadVertexDesc& child1, RoadVertexDesc& child2);
 

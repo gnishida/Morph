@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'Morph.ui'
 **
-** Created: Thu Nov 21 10:49:22 2013
+** Created: Fri Nov 22 01:28:00 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -34,9 +34,12 @@ public:
     QAction *actionBFS2;
     QAction *actionBFSProp;
     QAction *actionBFSMulti;
+    QAction *actionZoomIn;
+    QAction *actionZoomOut;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuMorphing;
+    QMenu *menuView;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
 
@@ -44,7 +47,7 @@ public:
     {
         if (MorphClass->objectName().isEmpty())
             MorphClass->setObjectName(QString::fromUtf8("MorphClass"));
-        MorphClass->resize(600, 400);
+        MorphClass->resize(774, 604);
         actionNearestNeighbor = new QAction(MorphClass);
         actionNearestNeighbor->setObjectName(QString::fromUtf8("actionNearestNeighbor"));
         actionNearestNeighborConnectivity = new QAction(MorphClass);
@@ -59,14 +62,20 @@ public:
         actionBFSProp->setObjectName(QString::fromUtf8("actionBFSProp"));
         actionBFSMulti = new QAction(MorphClass);
         actionBFSMulti->setObjectName(QString::fromUtf8("actionBFSMulti"));
+        actionZoomIn = new QAction(MorphClass);
+        actionZoomIn->setObjectName(QString::fromUtf8("actionZoomIn"));
+        actionZoomOut = new QAction(MorphClass);
+        actionZoomOut->setObjectName(QString::fromUtf8("actionZoomOut"));
         centralWidget = new QWidget(MorphClass);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         MorphClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MorphClass);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 600, 21));
+        menuBar->setGeometry(QRect(0, 0, 774, 21));
         menuMorphing = new QMenu(menuBar);
         menuMorphing->setObjectName(QString::fromUtf8("menuMorphing"));
+        menuView = new QMenu(menuBar);
+        menuView->setObjectName(QString::fromUtf8("menuView"));
         MorphClass->setMenuBar(menuBar);
         mainToolBar = new QToolBar(MorphClass);
         mainToolBar->setObjectName(QString::fromUtf8("mainToolBar"));
@@ -76,6 +85,7 @@ public:
         MorphClass->setStatusBar(statusBar);
 
         menuBar->addAction(menuMorphing->menuAction());
+        menuBar->addAction(menuView->menuAction());
         menuMorphing->addAction(actionNearestNeighbor);
         menuMorphing->addAction(actionNearestNeighborConnectivity);
         menuMorphing->addAction(actionBFS);
@@ -83,6 +93,8 @@ public:
         menuMorphing->addAction(actionBFSMulti);
         menuMorphing->addAction(actionBFSProp);
         menuMorphing->addAction(actionMTT);
+        menuView->addAction(actionZoomIn);
+        menuView->addAction(actionZoomOut);
 
         retranslateUi(MorphClass);
 
@@ -99,7 +111,10 @@ public:
         actionBFS2->setText(QApplication::translate("MorphClass", "BFS N-N", 0, QApplication::UnicodeUTF8));
         actionBFSProp->setText(QApplication::translate("MorphClass", "BFS Proportional", 0, QApplication::UnicodeUTF8));
         actionBFSMulti->setText(QApplication::translate("MorphClass", "BFS Multi Roots", 0, QApplication::UnicodeUTF8));
+        actionZoomIn->setText(QApplication::translate("MorphClass", "Zoom in", 0, QApplication::UnicodeUTF8));
+        actionZoomOut->setText(QApplication::translate("MorphClass", "Zoom out", 0, QApplication::UnicodeUTF8));
         menuMorphing->setTitle(QApplication::translate("MorphClass", "Morphing", 0, QApplication::UnicodeUTF8));
+        menuView->setTitle(QApplication::translate("MorphClass", "View", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

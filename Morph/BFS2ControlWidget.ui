@@ -1,66 +1,112 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
-  <class>BFS2ControlWidget</class>
-  <widget class="QDockWidget" name="BFS2ControlWidget">
+ <class>BFS2ControlWidget</class>
+ <widget class="QDockWidget" name="BFS2ControlWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>145</width>
+    <height>261</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>145</width>
+    <height>261</height>
+   </size>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(181, 181, 181);</string>
+  </property>
+  <widget class="QWidget" name="dockWidgetContents">
+   <widget class="QSlider" name="horizontalSlider">
     <property name="geometry">
-      <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>145</width>
-        <height>261</height>
-      </rect>
+     <rect>
+      <x>10</x>
+      <y>160</y>
+      <width>121</width>
+      <height>19</height>
+     </rect>
     </property>
-    <property name="minimumSize">
-      <size>
-        <width>145</width>
-        <height>261</height>
-      </size>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
     </property>
-    <property name="styleSheet">
-      <string notr="true">background-color: rgb(181, 181, 181);</string>
+   </widget>
+   <widget class="QPushButton" name="pushButtonPrev">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>190</y>
+      <width>41</width>
+      <height>31</height>
+     </rect>
     </property>
-    <widget class="QWidget" name="dockWidgetContents">
-      <widget class="QSlider" name="horizontalSlider">
-        <property name="geometry">
-          <rect>
-            <x>10</x>
-            <y>20</y>
-            <width>121</width>
-            <height>19</height>
-          </rect>
-        </property>
-        <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-        </property>
-      </widget>
-      <widget class="QPushButton" name="pushButtonPrev">
-        <property name="geometry">
-          <rect>
-            <x>10</x>
-            <y>50</y>
-            <width>41</width>
-            <height>31</height>
-          </rect>
-        </property>
-        <property name="text">
-          <string>&lt;</string>
-        </property>
-      </widget>
-      <widget class="QPushButton" name="pushButtonNext">
-        <property name="geometry">
-          <rect>
-            <x>90</x>
-            <y>50</y>
-            <width>41</width>
-            <height>31</height>
-          </rect>
-        </property>
-        <property name="text">
-          <string>&gt;</string>
-        </property>
-      </widget>
-    </widget>
+    <property name="text">
+     <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonNext">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>190</y>
+      <width>41</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEditRoad2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>120</y>
+      <width>131</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonLoadRoad1">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>131</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load Road 1</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonLoadRoad2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>80</y>
+      <width>131</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load Road 2</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEditRoad1">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>50</y>
+      <width>131</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
-  <resources/>
-  <connections/>
+ </widget>
+ <resources/>
+ <connections/>
 </ui>

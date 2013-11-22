@@ -5,7 +5,7 @@
 #include <QtTest/qtest.h>
 #include <qdebug.h>
 
-BFSProp::BFSProp(const char* filename1, const char* filename2) : AbstractBFS(filename1, filename2) {
+BFSProp::BFSProp() : AbstractBFS() {
 	tree1 = NULL;
 	tree2 = NULL;
 }
@@ -67,7 +67,7 @@ RoadGraph* BFSProp::interpolate(float t) {
 	return roads;
 }
 
-void BFSProp::buildTree() {
+void BFSProp::init() {
 	// 最も短い距離のペアを探し、そのペアをルートとしてBFSを実施
 	float min_dist = std::numeric_limits<float>::max();
 	RoadVertexDesc min_v1_desc;

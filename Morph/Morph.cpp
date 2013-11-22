@@ -5,28 +5,28 @@
 #include <limits>
 #include <time.h>
 #include <qdebug.h>
+#include <qscrollarea.h>
 #include <boost/graph/graph_utility.hpp>
 
 Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 	ui.setupUi(this);
 
-	timer = new QTimer(this);
+	canvas = new Canvas(this);
 
-	connect(ui.actionNearestNeighbor, SIGNAL(triggered()), this, SLOT(startNearestNeighbor()));
-	connect(ui.actionNearestNeighborConnectivity, SIGNAL(triggered()), this, SLOT(startNearestNeighborConnectivity()));
+	QScrollArea* scrollArea = new QScrollArea();
+	scrollArea->setBackgroundRole(QPalette::Dark);
+	scrollArea->setWidget(canvas);
+	setCentralWidget(scrollArea);
+
 	connect(ui.actionBFS, SIGNAL(triggered()), this, SLOT(startBFS()));
 	connect(ui.actionBFS2, SIGNAL(triggered()), this, SLOT(startBFS2()));
 	connect(ui.actionBFSMulti, SIGNAL(triggered()), this, SLOT(startBFSMulti()));
 	connect(ui.actionBFSProp, SIGNAL(triggered()), this, SLOT(startBFSProp()));
-	connect(ui.actionMTT, SIGNAL(triggered()), this, SLOT(startMTT()));
-	connect(timer, SIGNAL(timeout()), this, SLOT(tick()) );
+
 
 	width = height = 4000;
 	//width = height = 10000;
 	//cellLength = 1000;
-
-	morphing = NULL;
-	morphing2 = NULL;
 
 	widgetBFS = new BFSControlWidget(this);
 	widgetBFS->hide();
@@ -39,11 +39,6 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 
 	widgetBFSProp = new BFSPropControlWidget(this);
 	widgetBFSProp->hide();
-
-	widgetMTT = new MTTControlWidget(this);
-	widgetMTT->hide();
-
-	mode = 0;
 }
 
 Morph::~Morph() {
@@ -52,6 +47,7 @@ Morph::~Morph() {
 void Morph::paintEvent(QPaintEvent *) {
     QPainter painter(this);
 
+	/*
 	if (mode == 1 && morphing != NULL) {
 		morphing->draw(&painter, t, width / 2 + 150, 800.0f / width);
 	}
@@ -79,40 +75,17 @@ void Morph::paintEvent(QPaintEvent *) {
 	if (mode == 7) {
 		widgetMTT->draw(&painter, width / 2 + 150, 800.0f / width);
 	}
+	*/
 }
 
-void Morph::startNearestNeighbor() {
-	timer->stop();
-
-	mode = 1;
-
-	if (morphing == NULL) {
-		morphing = new Morphing(this);
-		morphing->initRoads("roads1.gsm", "roads2.gsm");
-	}
-
-	t = 1.0f;
-	timer->start(100);
-}
-
-void Morph::startNearestNeighborConnectivity() {
-	timer->stop();
-
-	mode = 2;
-
-	if (morphing2 == NULL) {
-		morphing2 = new Morphing2(this);
-		morphing2->initRoads("roads1.gsm", "roads2.gsm");
-	}
-
-	t = 1.0f;
-	timer->start(100);
+void Morph::resizeEvent(QResizeEvent* event) {
+   QMainWindow::resizeEvent(event);
+   
+   //ui.scrollArea->fit
 }
 
 void Morph::startBFS() {
-	timer->stop();
-
-	mode = 3;
+	canvas->setControlWidget(widgetBFS);
 
 	// DocWidgetの表示
 	widgetBFS->show();
@@ -121,13 +94,10 @@ void Morph::startBFS() {
 	widgetBFS2->hide();
 	widgetBFSMulti->hide();
 	widgetBFSProp->hide();
-	widgetMTT->hide();
 }
 
 void Morph::startBFS2() {
-	timer->stop();
-
-	mode = 4;
+	canvas->setControlWidget(widgetBFS2);
 
 	// DocWidgetの表示
 	widgetBFS2->show();
@@ -136,13 +106,10 @@ void Morph::startBFS2() {
 	widgetBFS->hide();
 	widgetBFSProp->hide();
 	widgetBFSMulti->hide();
-	widgetMTT->hide();
 }
 
 void Morph::startBFSMulti() {
-	timer->stop();
-
-	mode = 5;
+	canvas->setControlWidget(widgetBFSMulti);
 
 	// DocWidgetの表示
 	widgetBFSMulti->show();
@@ -151,13 +118,10 @@ void Morph::startBFSMulti() {
 	widgetBFS->hide();
 	widgetBFS2->hide();
 	widgetBFSProp->hide();
-	widgetMTT->hide();
 }
 
 void Morph::startBFSProp() {
-	timer->stop();
-
-	mode = 6;
+	canvas->setControlWidget(widgetBFSProp);
 
 	// DocWidgetの表示
 	widgetBFSProp->show();
@@ -166,31 +130,12 @@ void Morph::startBFSProp() {
 	widgetBFS->hide();
 	widgetBFS2->hide();
 	widgetBFSMulti->hide();
-	widgetMTT->hide();
 }
 
-void Morph::startMTT() {
-	timer->stop();
-
-	mode = 7;
-
-	// DocWidgetの表示
-	widgetMTT->show();
-	addDockWidget(Qt::RightDockWidgetArea, widgetMTT);
-
-	widgetBFS->hide();
-	widgetBFS2->hide();
-	widgetBFSMulti->hide();
-	widgetBFSProp->hide();
+void Morph::zoomIn() {
+	//scaleImage(1.25);
 }
 
-void Morph::tick() {
-	update();
-
-	t -= 0.02f;
-	if (t < 0.0f) {
-		t = 0.0f;
-		//timer->stop();
-	}
+void Morph::zoomOut(){
+	//scaleImage(0.8);
 }
-

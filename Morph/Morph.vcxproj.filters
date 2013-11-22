@@ -65,32 +65,14 @@
     <ClCompile Include="GraphUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Morphing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Morphing2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BFS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MTT.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PCA.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MTTControlWidget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_MTTControlWidget.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_MTTControlWidget.cpp">
-      <Filter>Generated Files\Release</Filter>
     </ClCompile>
     <ClCompile Include="BFSControlWidget.cpp">
       <Filter>Source Files</Filter>
@@ -146,6 +128,12 @@
     <ClCompile Include="BFSForest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Canvas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ControlWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Morph.h">
@@ -156,12 +144,6 @@
     </CustomBuild>
     <CustomBuild Include="Morph.qrc">
       <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="MTTControlWidget.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="MTTControlWidget.h">
-      <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="BFSControlWidget.ui">
       <Filter>Form Files</Filter>
@@ -207,26 +189,14 @@
     <ClInclude Include="GraphUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Morphing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Morphing2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BFS.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MTT.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PCA.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_MTTControlWidget.h">
-      <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_BFSControlWidget.h">
       <Filter>Generated Files</Filter>
@@ -256,6 +226,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BFSForest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Canvas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ControlWidget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

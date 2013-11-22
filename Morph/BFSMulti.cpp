@@ -6,7 +6,7 @@
 #include <QtTest/qtest.h>
 #include <qdebug.h>
 
-BFSMulti::BFSMulti(const char* filename1, const char* filename2) : AbstractBFS(filename1, filename2) {
+BFSMulti::BFSMulti() : AbstractBFS() {
 	forest1 = NULL;
 	forest2 = NULL;
 }
@@ -71,7 +71,7 @@ RoadGraph* BFSMulti::interpolate(float t) {
 	return roads;
 }
 
-void BFSMulti::buildTree() {
+void BFSMulti::init() {
 	float min_dist = std::numeric_limits<float>::max();
 	std::vector<RoadVertexDesc> roots1;
 	std::vector<RoadVertexDesc> roots2;

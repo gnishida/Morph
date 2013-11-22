@@ -24,7 +24,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>20</y>
+      <y>160</y>
       <width>121</width>
       <height>19</height>
      </rect>
@@ -37,7 +37,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>50</y>
+      <y>190</y>
       <width>41</width>
       <height>31</height>
      </rect>
@@ -50,13 +50,59 @@
     <property name="geometry">
      <rect>
       <x>90</x>
-      <y>50</y>
+      <y>190</y>
       <width>41</width>
       <height>31</height>
      </rect>
     </property>
     <property name="text">
      <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonLoadRoad1">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>131</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load Road 1</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonLoadRoad2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>80</y>
+      <width>131</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load Road 2</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEditRoad1">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>50</y>
+      <width>131</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEditRoad2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>120</y>
+      <width>131</width>
+      <height>20</height>
+     </rect>
     </property>
    </widget>
   </widget>

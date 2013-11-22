@@ -15,12 +15,17 @@ public:
 	int selected;
 
 public:
-	AbstractBFS(const char* filename1, const char* filename2);
+	AbstractBFS();
 	~AbstractBFS();
+	
+	void setRoad1(const char* filename);
+	void setRoad2(const char* filename);
 
-	void draw(QPainter* painter, int offset, float scale);
-	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale, bool label = false);
-	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc>* correspondence, RoadGraph *roads2, int offset, float scale);
+	virtual void init() = 0;
+
+	void draw(QPainter* painter);
+	void drawGraph(QPainter *painter, RoadGraph *roads, QColor col, bool label = false);
+	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc>* correspondence, RoadGraph *roads2);
 	
 	void selectSequence(int selected);
 	void clearSequence();

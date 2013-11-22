@@ -6,42 +6,18 @@
 #include <QtTest/qtest.h>
 #include <qdebug.h>
 
-AbstractBFS::AbstractBFS(const char* filename1, const char* filename2) {
-	/*
-	FILE* fp = fopen(filename1, "rb");
-	roads1 = new RoadGraph();
-	roads1->load(fp, 2);
-	//GraphUtil::planarify(roads1);
-	GraphUtil::singlify(roads1);
-	GraphUtil::simplify(roads1, 30);
-	fclose(fp);
-
-	fp = fopen(filename2, "rb");
-	roads2 = new RoadGraph();
-	roads2->load(fp, 2);
-	//GraphUtil::planarify(roads2);
-	GraphUtil::singlify(roads2);
-	GraphUtil::simplify(roads2, 30);
-	fclose(fp);
-	*/
-
-	FILE* fp = fopen("radial.gsm", "wb");
-	roads1 = GraphUtil::createRadialNetwork(10000, 4);
-	roads1->save(fp);
-	fclose(fp);
-
+AbstractBFS::AbstractBFS() {
 	// 道路のヒストグラム情報を出力
 	//GraphUtil::printStatistics(roads1);
 	//GraphUtil::printStatistics(roads2);
-
-
-
 
 	//createRoads1();
 	//createRoads2();
 	//createRoads3();
 	//createRoads4();
 
+	roads1 = NULL;
+	roads2 = NULL;
 	selected = 0;
 }
 
@@ -51,18 +27,46 @@ AbstractBFS::~AbstractBFS() {
 	clearSequence();
 }
 
-void AbstractBFS::draw(QPainter* painter, int offset, float scale) {
-	if (roads1 == NULL) return;
+void AbstractBFS::setRoad1(const char* filename) {
+	FILE* fp = fopen(filename, "rb");
+	roads1 = new RoadGraph();
+	roads1->load(fp, 2);
+	//GraphUtil::planarify(roads1);
+	GraphUtil::singlify(roads1);
+	GraphUtil::simplify(roads1, 30);
+	fclose(fp);
 
-	//drawGraph(painter, roads1, QColor(0, 0, 255), offset, scale, true);
-	//drawGraph(painter, roads2, QColor(255, 0, 0), offset, scale, true);
-	//drawRelation(painter, roads1, &correspondence, roads2, offset, scale);
-
-	drawGraph(painter, sequence[selected], QColor(0, 0, 255), offset, scale);
+	if (roads2 != NULL) {
+		init();
+	}
 }
 
-void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int offset, float scale, bool label) {
-	if (roads == NULL) return;
+void AbstractBFS::setRoad2(const char* filename) {
+	FILE* fp = fopen(filename, "rb");
+	roads2 = new RoadGraph();
+	roads2->load(fp, 2);
+	//GraphUtil::planarify(roads1);
+	GraphUtil::singlify(roads2);
+	GraphUtil::simplify(roads2, 30);
+	fclose(fp);
+
+	if (roads1 != NULL) {
+		init();
+	}
+}
+
+void AbstractBFS::draw(QPainter* painter) {
+	if (roads1 == NULL || roads2 == NULL) return;
+
+	//drawGraph(painter, roads1, QColor(0, 0, 255), true);
+	//drawGraph(painter, roads2, QColor(255, 0, 0), true);
+	//drawRelation(painter, roads1, &correspondence, roads2);
+
+	drawGraph(painter, sequence[selected], QColor(0, 0, 255));
+}
+
+void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, bool label) {
+	if (roads == NULL || roads2 == NULL) return;
 
 	painter->setRenderHint(QPainter::Antialiasing, true);
 	painter->setPen(QPen(col, 1, Qt::SolidLine, Qt::RoundCap));
@@ -74,10 +78,10 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int
 		if (!edge->valid) continue;
 
 		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {
-			int x1 = (edge->getPolyLine()[i].x() + offset) * scale;
-			int y1 = (-edge->getPolyLine()[i].y() + offset) * scale;
-			int x2 = (edge->getPolyLine()[i+1].x() + offset) * scale;
-			int y2 = (-edge->getPolyLine()[i+1].y() + offset) * scale;
+			int x1 = edge->getPolyLine()[i].x();
+			int y1 = -edge->getPolyLine()[i].y();
+			int x2 = edge->getPolyLine()[i+1].x();
+			int y2 = -edge->getPolyLine()[i+1].y();
 			painter->drawLine(x1, y1, x2, y2);
 		}
 	}
@@ -87,8 +91,8 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int
 		RoadVertex* v = roads->graph[*vi];
 		if (!v->valid) continue;
 
-		int x = (v->getPt().x() + offset) * scale ;
-		int y = (-v->getPt().y() + offset) * scale;
+		int x = v->getPt().x();
+		int y = -v->getPt().y();
 		painter->fillRect(x - 1, y - 1, 3, 3, col);
 
 		if (label) {
@@ -100,7 +104,7 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int
 	}
 }
 
-void AbstractBFS::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc>* correspondence, RoadGraph *roads2, int offset, float scale) {
+void AbstractBFS::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc>* correspondence, RoadGraph *roads2) {
 	if (roads1 == NULL || roads2 == NULL) return;
 
 	painter->setPen(QPen(Qt::black, 1, Qt::DotLine, Qt::RoundCap));
@@ -117,10 +121,10 @@ void AbstractBFS::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVe
 		RoadVertex* v2 = roads2->graph[v2_desc];
 		if (!v2->valid) continue;
 
-		int x1 = (v1->getPt().x() + offset) * scale;
-		int y1 = (-v1->getPt().y() + offset) * scale;
-		int x2 = (v2->getPt().x() + offset) * scale;
-		int y2 = (-v2->getPt().y() + offset) * scale;
+		int x1 = v1->getPt().x();
+		int y1 = -v1->getPt().y();
+		int x2 = v2->getPt().x();
+		int y2 = -v2->getPt().y();
 		painter->drawLine(x1, y1, x2, y2);
 	}
 }
