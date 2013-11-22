@@ -34,6 +34,9 @@ public:
 	BGLGraph graph;
 	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > siblings;
 
+	/** 接続性を保持する */
+	QMap<RoadVertexDesc, QList<RoadVertexDesc> > connectivities;
+
 	/** 木構造を作成するため、親子関係を保持する */
 	QMap<RoadVertexDesc, RoadVertexDesc> childrenToParent;
 	QMap<RoadVertexDesc, std::vector<RoadEdgeDesc> > childrenRemovedEdges;
@@ -51,6 +54,9 @@ public:
 	void save(FILE* fp);
 
 	void removeIsolatedVertices();
+
+	void computeConnectivities();
+	bool isConnected(RoadVertexDesc desc1, RoadVertexDesc desc2);
 
 	std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
 	bool lessWeight(const RoadEdgeDesc& left, const RoadEdgeDesc& right);

@@ -1,5 +1,6 @@
 ﻿#include "RoadGraph.h"
 #include "GraphUtil.h"
+#include <qset.h>
 #include <iostream>
 
 #define _USE_MATH_DEFINES
@@ -181,6 +182,53 @@ void RoadGraph::removeIsolatedVertices() {
 			}
 		}
 	} while (deleted);
+}
+
+/**
+ * 接続性情報を計算する。
+ * 注意：頂点の追加、エッジの追加などにより、この情報は正しくなくなる！
+ */
+void RoadGraph::computeConnectivities() {
+	connectivities.clear();
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(graph); vi != vend; ++vi) {
+		if (!graph[*vi]->valid) continue;
+
+		QList<RoadVertexDesc> list;
+		list.push_back(*vi);
+
+		std::list<RoadVertexDesc> queue;
+
+		queue.push_back(*vi);
+
+		// 各頂点について、到達できる頂点を全て洗い出す
+		while (!queue.empty()) {
+			RoadVertexDesc v = queue.front();
+			queue.pop_front();
+
+			RoadOutEdgeIter ei, eend;
+			for (boost::tie(ei, eend) = boost::out_edges(v, graph); ei != eend; ++ei) {
+				if (!graph[*ei]->valid) continue;
+
+				RoadVertexDesc u = boost::target(*ei, graph);
+				if (!graph[u]->valid) continue;
+
+				if (list.contains(u)) continue;
+
+				list.push_back(u);
+				queue.push_back(u);
+			}
+		}
+
+		connectivities[*vi] = list;
+	}
+}
+
+bool RoadGraph::isConnected(RoadVertexDesc desc1, RoadVertexDesc desc2) {
+	if (!connectivities.contains(desc1)) return false;
+
+	return connectivities[desc1].contains(desc2);
 }
 
 /**

@@ -400,7 +400,7 @@ float BFS::findBestAffineTransofrmation(RoadGraph* roads1, RoadVertexDesc parent
 			transformedTheta1.push_back(GraphUtil::normalizeAngle(theta1[i] + angle));
 		}
 
-		float score = GraphUtil::computeMinDiff(&transformedTheta1, &theta2);
+		float score = GraphUtil::computeMinDiffAngle(&transformedTheta1, &theta2);
 		if (score < min_score) {
 			min_score = score;
 			min_angle = angle;

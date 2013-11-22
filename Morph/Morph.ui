@@ -27,13 +27,10 @@
     <property name="title">
      <string>Morphing</string>
     </property>
-    <addaction name="actionNearestNeighbor"/>
-    <addaction name="actionNearestNeighborConnectivity"/>
     <addaction name="actionBFS"/>
     <addaction name="actionBFS2"/>
     <addaction name="actionBFSMulti"/>
     <addaction name="actionBFSProp"/>
-    <addaction name="actionMTT"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">

@@ -46,5 +46,5 @@ float RoadEdge::getWidth() {
 }
 
 float RoadEdge::getWeight() {
-	return powf(2, lanes * 2.0f);
+	return lanes;
 }

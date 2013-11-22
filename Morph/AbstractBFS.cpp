@@ -7,15 +7,6 @@
 #include <qdebug.h>
 
 AbstractBFS::AbstractBFS() {
-	// 道路のヒストグラム情報を出力
-	//GraphUtil::printStatistics(roads1);
-	//GraphUtil::printStatistics(roads2);
-
-	//createRoads1();
-	//createRoads2();
-	//createRoads3();
-	//createRoads4();
-
 	roads1 = NULL;
 	roads2 = NULL;
 	selected = 0;
@@ -31,10 +22,14 @@ void AbstractBFS::setRoad1(const char* filename) {
 	FILE* fp = fopen(filename, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
+	GraphUtil::reduce(roads1);
 	//GraphUtil::planarify(roads1);
 	GraphUtil::singlify(roads1);
 	GraphUtil::simplify(roads1, 30);
 	fclose(fp);
+
+	// 道路のヒストグラム情報を出力
+	//GraphUtil::printStatistics(roads1);
 
 	if (roads2 != NULL) {
 		init();
@@ -45,10 +40,14 @@ void AbstractBFS::setRoad2(const char* filename) {
 	FILE* fp = fopen(filename, "rb");
 	roads2 = new RoadGraph();
 	roads2->load(fp, 2);
+	GraphUtil::reduce(roads2);
 	//GraphUtil::planarify(roads1);
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 30);
 	fclose(fp);
+
+	// 道路のヒストグラム情報を出力
+	//GraphUtil::printStatistics(roads2);
 
 	if (roads1 != NULL) {
 		init();

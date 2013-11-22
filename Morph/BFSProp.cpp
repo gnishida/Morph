@@ -21,99 +21,98 @@ RoadGraph* BFSProp::interpolate(float t) {
 
 	RoadGraph* roads = new RoadGraph();
 
-	QMap<RoadVertexDesc, QMap<RoadVertexDesc, RoadVertexDesc> > conv;
+	QMap<RoadVertexDesc, RoadVertexDesc> conv;
 
-	// ルートの頂点を作成
-	RoadVertex* v_root = new RoadVertex(roads1->graph[tree1->getRoot()]->getPt() * t + roads2->graph[tree2->getRoot()]->getPt() * (1 - t));
-	RoadVertexDesc v_root_desc = boost::add_vertex(roads->graph);
-	roads->graph[v_root_desc] = v_root;
+	// roads1の各頂点について
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		if (!roads1->graph[*vi]->valid) continue;
 
-	// ルート頂点をシードに入れる
-	std::list<RoadVertexDesc> seeds;
-	std::list<RoadVertexDesc> seeds_new;
-	seeds.push_back(tree1->getRoot());
-	seeds_new.push_back(v_root_desc);
+		// 対応ノードを取得
+		RoadVertexDesc v2 = correspondence[*vi];
 
-	// 木構造を使って、頂点を登録していく
-	while (!seeds.empty()) {
-		RoadVertexDesc parent = seeds.front();
-		seeds.pop_front();
+		// Interpolationノードを作成
+		RoadVertex* new_v = new RoadVertex(roads1->graph[*vi]->getPt() * t + roads2->graph[v2]->getPt() * (1 - t));
+		RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
+		roads->graph[new_v_desc] = new_v;
 
-		RoadVertexDesc parent_new = seeds_new.front();
-		seeds_new.pop_front();
-
-		// 子ノードリストを取得
-		for (int i = 0; i < tree1->getChildren(parent).size(); i++) {
-			// 子ノードを取得
-			RoadVertexDesc child1 = tree1->getChildren(parent)[i];
-			if (!roads1->graph[child1]->valid) continue;
-
-			// 対応ノードを取得
-			RoadVertexDesc child2 = correspondence[child1];
-
-			// 子ノードの頂点を作成
-			RoadVertex* new_v = new RoadVertex(roads1->graph[child1]->getPt() * t + roads2->graph[child2]->getPt() * (1 - t));
-			RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
-			roads->graph[new_v_desc] = new_v;
-
-			// エッジを作成
-			GraphUtil::addEdge(roads, parent_new, new_v_desc, 1, 1, false);
-
-			seeds.push_back(child1);
-			seeds_new.push_back(new_v_desc);
-		}
+		conv[*vi] = new_v_desc;
 	}
 
+	// roads1の各エッジについて
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
+		if (!roads1->graph[*ei]->valid) continue;
+
+		RoadVertexDesc v1a = boost::source(*ei, roads1->graph);
+		RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
+
+		RoadVertexDesc new_va = conv[v1a];
+		RoadVertexDesc new_vb = conv[v1b];
+
+		GraphUtil::addEdge(roads, new_va, new_vb, roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+	}
+	
 	return roads;
 }
 
 void BFSProp::init() {
-	// 最も短い距離のペアを探し、そのペアをルートとしてBFSを実施
-	float min_dist = std::numeric_limits<float>::max();
-	RoadVertexDesc min_v1_desc;
-	RoadVertexDesc min_v2_desc;
+	/*
+	QMap<RoadVertexDesc, RoadVertexDesc> map1;
+	QMap<RoadVertexDesc, RoadVertexDesc> map2;
+	GraphUtil::computeMinUnsimilarity(roads1, map1, roads2, map2);
 
+	for (QMap<RoadVertexDesc, RoadVertexDesc>::iterator it = map1.begin(); it != map1.end(); ++it) {
+		correspondence[it.key()] = it.value();
+	}
+	*/
+
+	/*
+	// 一旦、invalidのノードなどを削除しておく
+	RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
+	delete roads1;
+	roads1 = temp1;
+	RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
+	delete roads2;
+	roads2 = temp2;
+
+	// roads1を、最もエリアの小さいグリッド型に無理やり変換する
+	float min_area = std::numeric_limits<float>::max();
+	RoadVertexDesc min_v1;
 	RoadVertexIter vi, vend;
-	int count = 0;
 	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
-		if (!roads1->graph[*vi]->valid) continue;
-
-		count++;
-		RoadVertexDesc v2_desc = GraphUtil::findNearestVertex(roads2, roads1->graph[*vi]->getPt());
-		float dist = (roads1->graph[*vi]->getPt() - roads2->graph[v2_desc]->getPt()).length();
-		if (dist < min_dist) {
-			min_dist = dist;
-			min_v1_desc = *vi;
-			min_v2_desc = v2_desc;
+		RoadGraph* grid1 = GraphUtil::convertToGridNetwork(roads1, *vi);
+		BBox box = GraphUtil::getBoundingBox(roads1);
+		float area = (box.maxPt.x() - box.minPt.x()) * (box.maxPt.y() - box.minPt.y());
+		if (area < min_area) {
+			min_area = area;
+			min_v1 = *vi;
 		}
 	}
+	temp1 = GraphUtil::convertToGridNetwork(roads1, min_v1);
+	delete roads1;
+	roads1 = temp1;
+	*/
 
-	min_v1_desc = 0;
-	min_v2_desc = 0;
+	clearSequence();
+	sequence.push_back(GraphUtil::copyRoads(roads1));
 
-	// 頂点が１つもない場合は、終了
-	if (count == 0) return;
-
-	if (tree1 != NULL) delete tree1;
-	if (tree2 != NULL) delete tree2;
-	tree1 = new BFSTree(roads1, min_v1_desc);
-	tree2 = new BFSTree(roads2, min_v2_desc);
-
-	correspondence = findCorrespondence(roads1, tree1, roads2, tree2);
 
 	// シーケンスを生成
+	/*
 	clearSequence();
 	for (int i = 0; i <= 20; i++) {
 		float t = 1.0f - (float)i * 0.05f;
 
 		sequence.push_back(interpolate(t));
 	}
+	*/
 }
 
 /**
- * ２つの道路網を、木構造を使ってマッチングさせる。
+ * ２つの道路網を、エッジペアを使ってマッチングさせる。
  */
-QMap<RoadVertexDesc, RoadVertexDesc> BFSProp::findCorrespondence(RoadGraph* roads1, BFSTree* tree1, RoadGraph* roads2, BFSTree* tree2) {
+QMap<RoadVertexDesc, RoadVertexDesc> BFSProp::findCorrespondence(RoadGraph* roads1, QList<RoadEdgeDesc>& chosen1, RoadGraph* roads2, QList<RoadEdgeDesc>& chosen2) {
 	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
 
 	correspondence[tree1->getRoot()] = tree2->getRoot();
