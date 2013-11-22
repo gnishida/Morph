@@ -17,9 +17,6 @@ class Morph : public QMainWindow {
 	Q_OBJECT
 
 public:
-	int width;
-	int height;
-
 	Canvas* canvas;
 
 	BFSControlWidget* widgetBFS;
@@ -33,7 +30,6 @@ public:
 
 protected:
     void paintEvent(QPaintEvent* event);
-	void resizeEvent(QResizeEvent* event);
 
 private:
 	Ui::MorphClass ui;

@@ -37,7 +37,7 @@ void BFSControlWidget::loadRoad1() {
 		if (bfs->sequence.size() > 0) {
 			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 			ui.horizontalSlider->setValue(0);
-			parent->canvas->update();
+			update();
 		}
 	}
 }
@@ -52,7 +52,7 @@ void BFSControlWidget::loadRoad2() {
 		if (bfs->sequence.size() > 0) {
 			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 			ui.horizontalSlider->setValue(0);
-			parent->canvas->update();
+			update();
 		}
 	}
 }
@@ -60,7 +60,7 @@ void BFSControlWidget::loadRoad2() {
 void BFSControlWidget::moveSequence(int value) {
 	if (bfs == NULL) return;
 	bfs->selectSequence(value);
-	parent->canvas->update();
+	update();
 }
 
 void BFSControlWidget::prevSequence() {
@@ -71,7 +71,7 @@ void BFSControlWidget::prevSequence() {
 	ui.horizontalSlider->setValue(value);
 
 	bfs->selectSequence(value);
-	parent->canvas->update();
+	update();
 }
 
 void BFSControlWidget::nextSequence() {
@@ -82,5 +82,5 @@ void BFSControlWidget::nextSequence() {
 	ui.horizontalSlider->setValue(value);
 
 	bfs->selectSequence(value);
-	parent->canvas->update();
+	update();
 }

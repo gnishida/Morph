@@ -95,6 +95,8 @@ void BFS2::init() {
 
 		sequence.push_back(interpolate(t));
 	}
+
+	selected = 0;
 }
 
 /**

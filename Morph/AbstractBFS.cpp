@@ -62,14 +62,14 @@ void AbstractBFS::draw(QPainter* painter) {
 	//drawGraph(painter, roads2, QColor(255, 0, 0), true);
 	//drawRelation(painter, roads1, &correspondence, roads2);
 
-	drawGraph(painter, sequence[selected], QColor(0, 0, 255));
+	drawGraph(painter, sequence[selected], Qt::blue, 30);
 }
 
-void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, bool label) {
+void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, int size, bool label) {
 	if (roads == NULL || roads2 == NULL) return;
 
-	painter->setRenderHint(QPainter::Antialiasing, true);
-	painter->setPen(QPen(col, 1, Qt::SolidLine, Qt::RoundCap));
+	painter->setRenderHint(QPainter::Antialiasing, false);
+	painter->setPen(QPen(col, 10, Qt::SolidLine, Qt::RoundCap));
 	painter->setBrush(QBrush(Qt::green, Qt::SolidPattern));
 
 	RoadEdgeIter ei, eend;
@@ -93,7 +93,7 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, QColor col, boo
 
 		int x = v->getPt().x();
 		int y = -v->getPt().y();
-		painter->fillRect(x - 1, y - 1, 3, 3, col);
+		painter->fillRect(x - size/2, y - size/2, size, size, col);
 
 		if (label) {
 			// 頂点番号をラベルとして表示する

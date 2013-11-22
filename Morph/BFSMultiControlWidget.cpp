@@ -34,9 +34,11 @@ void BFSMultiControlWidget::loadRoad1() {
 
 		ui.lineEditRoad1->setText(filename.split("/").last().split(".").at(0));
 
-		ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
-		ui.horizontalSlider->setValue(0);
-		parent->canvas->update();
+		if (bfs->sequence.size() > 0) {
+			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
+			ui.horizontalSlider->setValue(0);
+			update();
+		}
 	}
 }
 
@@ -47,16 +49,18 @@ void BFSMultiControlWidget::loadRoad2() {
 
 		ui.lineEditRoad2->setText(filename.split("/").last().split(".").at(0));
 
-		ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
-		ui.horizontalSlider->setValue(0);
-		parent->canvas->update();
+		if (bfs->sequence.size() > 0) {
+			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
+			ui.horizontalSlider->setValue(0);
+			update();
+		}
 	}
 }
 
 void BFSMultiControlWidget::moveSequence(int value) {
 	if (bfs == NULL) return;
 	bfs->selectSequence(value);
-	parent->canvas->update();
+	update();
 }
 
 void BFSMultiControlWidget::prevSequence() {
@@ -67,7 +71,7 @@ void BFSMultiControlWidget::prevSequence() {
 	ui.horizontalSlider->setValue(value);
 
 	bfs->selectSequence(value);
-	parent->canvas->update();
+	update();
 }
 
 void BFSMultiControlWidget::nextSequence() {
@@ -78,5 +82,5 @@ void BFSMultiControlWidget::nextSequence() {
 	ui.horizontalSlider->setValue(value);
 
 	bfs->selectSequence(value);
-	parent->canvas->update();
+	update();
 }

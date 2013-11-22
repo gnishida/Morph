@@ -13,5 +13,6 @@ public:
 	~ControlWidget();
 
 	virtual void draw(QPainter* painter) = 0;
+	void update();
 };
 
