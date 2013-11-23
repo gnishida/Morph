@@ -34,13 +34,15 @@ public:
 	static void removeDeadEnd(RoadGraph* roads);
 
 	// 道路網全体に関する関数
+	static RoadGraph* copyRoads(RoadGraph* roads);
+	static void copyRoads(RoadGraph* roads1, RoadGraph* roads2);
 	static BBox getAABoundingBox(RoadGraph* roads);
 	static BBox getBoudingBox(RoadGraph* roads, float theta1, float theta2, float theta_step = 0.087f);
 	static RoadGraph* extractMajorRoad(RoadGraph* roads, bool remove = true);
 	static float extractMajorRoad(RoadGraph* roads, RoadEdgeDesc root, QList<RoadEdgeDesc>& path);
 
 	// 隣接関係、接続性などの関数
-	static std::vector<RoadVertexDesc> getNeighbors(RoadGraph* roads, RoadVertexDesc v);
+	static std::vector<RoadVertexDesc> getNeighbors(RoadGraph* roads, RoadVertexDesc v, bool onlyValidVertex = true);
 	static bool isNeighbor(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	//static bool isReachable(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt);
 	static bool isDirectlyConnected(RoadGraph* roads, RoadVertexDesc desc1, RoadVertexDesc desc2, bool onlyValidEdge = true);
@@ -53,6 +55,7 @@ public:
 	static std::vector<RoadVertexDesc> getChildren(RoadGraph* roads, RoadVertexDesc v);
 
 	// 道路網の変更関係の関数
+	static RoadGraph* clean(RoadGraph* roads);
 	static void reduce(RoadGraph* roads);
 	static bool reduce(RoadGraph* roads, RoadVertexDesc desc);
 	static void simplify(RoadGraph* roads, float dist_threshold);
@@ -60,8 +63,6 @@ public:
 	static void singlify(RoadGraph* roads);
 	static void planarify(RoadGraph* roads);
 	static void rotate(RoadGraph* roads, float theta);
-	static RoadGraph* copyRoads(RoadGraph* roads);
-	static void copyRoads(RoadGraph* roads1, RoadGraph* roads2);
 	static RoadGraph* convertToGridNetwork(RoadGraph* roads, RoadVertexDesc start);
 	static RoadGraph* approximateToGridNetwork(RoadGraph* roads, float cellLength, QVector2D orig);
 	static void scaleToBBox(RoadGraph* roads, BBox& area);

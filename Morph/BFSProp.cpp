@@ -303,45 +303,14 @@ bool BFSProp::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1,
 	return false;
 }
 
-RoadGraph* BFSProp::copyRoads(RoadGraph* roads, BFSTree* tree, int num) {
-	RoadGraph* new_roads = new RoadGraph();
-
-	std::list<RoadVertexDesc> seeds1;
-	seeds1.push_back(tree->getRoot());
-
-	std::list<RoadVertexDesc> seeds2;
-	RoadVertex* v_root = new RoadVertex(roads->graph[tree->getRoot()]->getPt());
-	RoadVertexDesc v_root_desc = boost::add_vertex(new_roads->graph);
-	new_roads->graph[v_root_desc] = v_root;
-	seeds2.push_back(v_root_desc);
-
-
-	int count = 0;
-	while (!seeds1.empty()) {
-		RoadVertexDesc parent1 = seeds1.front();
-		seeds1.pop_front();
-
-		RoadVertexDesc parent2 = seeds2.front();
-		seeds2.pop_front();
-
-		count++;
-		if (count > num) break;
-
-		for (int i = 0; i < tree->getChildren(parent1).size(); i++) {
-			RoadVertexDesc child1_desc = tree->getChildren(parent1)[i];
-
-			RoadVertex* child2 = new RoadVertex(roads->graph[child1_desc]->getPt());
-			RoadVertexDesc child2_desc = boost::add_vertex(new_roads->graph);
-			new_roads->graph[child2_desc] = child2;
-
-			RoadEdgeDesc e1_desc = GraphUtil::getEdge(roads, parent1, child1_desc);
-
-			GraphUtil::addEdge(new_roads, parent2, child2_desc, roads->graph[e1_desc]->lanes, roads->graph[e1_desc]->type, roads->graph[e1_desc]->oneWay);
-
-			seeds1.push_back(child1_desc);
-			seeds2.push_back(child2_desc);
-		}
+bool BFSProp::selectVertex(float x, float y, RoadVertexDesc& v) {
+	if (GraphUtil::getVertex(roads1, QVector2D(x, y), 50.0f, v)) {
+		return true;
+	} else {
+		return false;
 	}
+}
 
-	return new_roads;
+std::vector<RoadVertexDesc> BFSProp::getNeighbors(RoadVertexDesc v) {
+	return GraphUtil::getNeighbors(roads1, v);
 }

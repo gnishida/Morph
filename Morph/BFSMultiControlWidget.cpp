@@ -27,6 +27,9 @@ void BFSMultiControlWidget::draw(QPainter* painter) {
     bfs->draw(painter);
 }
 
+void BFSMultiControlWidget::selectVertex(float x, float y) {
+}
+
 void BFSMultiControlWidget::loadRoad1() {
 	QString filename = QFileDialog::getOpenFileName(this, tr("Load road network ..."), QString(), tr("GSM Files (*.gsm)"));
 	if (filename != QString::null && !filename.isEmpty()) {

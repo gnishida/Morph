@@ -1,5 +1,6 @@
 #include "BFSPropControlWidget.h"
 #include "Morph.h"
+#include "GraphUtil.h"
 #include <qfiledialog.h>
 
 BFSPropControlWidget::BFSPropControlWidget(Morph* parent) : ControlWidget("BFS Control Widget", parent) {
@@ -25,6 +26,25 @@ void BFSPropControlWidget::draw(QPainter* painter) {
 	if (bfs == NULL) return;
 
     bfs->draw(painter);
+}
+
+void BFSPropControlWidget::selectVertex(float x, float y) {
+	RoadVertexDesc v;
+	if (bfs->selectVertex(x, y, v)) {
+		QString str;
+		ui.lineEditNode->setText(str.setNum(v));
+
+		std::vector<RoadVertexDesc> neighbors = bfs->getNeighbors(v);
+		str = "";
+		for (int i = 0; i < neighbors.size(); i++) {
+			QString str2;
+			if (str.length() > 0) {
+				str = str + ",";
+			}
+			str = str + str2.setNum(neighbors[i]);
+		}
+		ui.lineEditNeighbors->setText(str);
+	}
 }
 
 void BFSPropControlWidget::loadRoad1() {
