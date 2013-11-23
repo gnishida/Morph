@@ -67,6 +67,7 @@ public:
 	static RoadGraph* approximateToGridNetwork(RoadGraph* roads, float cellLength, QVector2D orig);
 	static void scaleToBBox(RoadGraph* roads, BBox& area);
 	static void normalizeBySpring(RoadGraph* roads, BBox& area);
+	static void removeDuplicateEdges(RoadGraph* roads);
 
 	// その他
 	static float computeMinDiffAngle(std::vector<float> *data1, std::vector<float> *data2);

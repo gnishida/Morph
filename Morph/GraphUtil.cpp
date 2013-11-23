@@ -1569,6 +1569,23 @@ void GraphUtil::normalizeBySpring(RoadGraph* roads, BBox& area) {
 	}
 }
 
+void GraphUtil::removeDuplicateEdges(RoadGraph* roads) {
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		QList<RoadVertexDesc> targets;
+
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+			RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+			if (targets.contains(tgt)) {
+				roads->graph[*ei]->valid = false;	
+			} else {
+				targets.push_back(tgt);
+			}
+		}
+	}
+}
 
 /**
  * ２つのデータリストの差の最小値を返却する。

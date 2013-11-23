@@ -24,13 +24,16 @@ void AbstractBFS::setRoad1(const char* filename) {
 	roads1->load(fp, 2);
 	fclose(fp);
 
-	//GraphUtil::planarify(roads1);
+	GraphUtil::removeDuplicateEdges(roads1);
+	GraphUtil::clean(roads1);
+
 	GraphUtil::singlify(roads1);
 	GraphUtil::simplify(roads1, 100);
 	GraphUtil::removeDeadEnd(roads1);
 	GraphUtil::reduce(roads1);
 
 	GraphUtil::clean(roads1);
+	GraphUtil::planarify(roads1);
 
 	// 道路のヒストグラム情報を出力
 	GraphUtil::printStatistics(roads1);
@@ -63,12 +66,18 @@ void AbstractBFS::setRoad2(const char* filename) {
 	FILE* fp = fopen(filename, "rb");
 	roads2 = new RoadGraph();
 	roads2->load(fp, 2);
-	//GraphUtil::planarify(roads1);
+	fclose(fp);
+
+	GraphUtil::removeDuplicateEdges(roads2);
+	GraphUtil::clean(roads2);
+
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 100);
-	GraphUtil::reduce(roads2);
 	GraphUtil::removeDeadEnd(roads2);
-	fclose(fp);
+	GraphUtil::reduce(roads2);
+
+	GraphUtil::clean(roads2);
+	GraphUtil::planarify(roads2);
 
 	// 道路のヒストグラム情報を出力
 	//GraphUtil::printStatistics(roads2);
