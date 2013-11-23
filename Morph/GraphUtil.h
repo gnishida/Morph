@@ -33,6 +33,8 @@ public:
 
 	// 道路網全体に関する関数
 	static BBox getBoundingBox(RoadGraph* roads);
+	static RoadGraph* extractMajorRoad(RoadGraph* roads, bool remove = true);
+	static float extractMajorRoad(RoadGraph* roads, RoadEdgeDesc root, QList<RoadEdgeDesc>& path);
 
 	// 隣接関係、接続性などの関数
 	static std::vector<RoadVertexDesc> getNeighbors(RoadGraph* roads, RoadVertexDesc v);

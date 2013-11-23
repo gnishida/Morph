@@ -1,5 +1,6 @@
 ﻿#include "GraphUtil.h"
 #include "Util.h"
+#include <qlist.h>
 #include <qmatrix.h>
 #include <qdebug.h>
 
@@ -402,6 +403,144 @@ BBox GraphUtil::getBoundingBox(RoadGraph* roads) {
 	}
 
 	return box;
+}
+
+/**
+ * 道路網から、メイン道路だけを抽出し、新たな道路網を作成する。（スケルトンのイメージ）
+ * removeフラグがtrueなら、抽出したエッジは、元の道路網ではinvalidにする。
+ */
+RoadGraph* GraphUtil::extractMajorRoad(RoadGraph* roads, bool remove) {
+	float max_length = 0.0f;
+	QList<RoadEdgeDesc> max_path;
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		QList<RoadEdgeDesc> path;
+		float length = extractMajorRoad(roads, *ei, path);
+		if (length > max_length) {
+			max_length = length;
+			max_path = path;
+		}
+	}
+
+	QMap<RoadVertexDesc, RoadVertexDesc> conv;
+
+	// メイン道路１本の道路網を生成する
+	RoadGraph* new_roads = new RoadGraph();
+	for (QList<RoadEdgeDesc>::iterator it = max_path.begin(); it != max_path.end(); ++it) {
+		RoadVertexDesc src = boost::source(*it, roads->graph);
+		RoadVertexDesc tgt = boost::target(*it, roads->graph);
+
+		// src頂点に対応する頂点を取得、または、作成する
+		RoadVertexDesc new_src;
+		if (conv.contains(src)) {
+			new_src = conv[src];
+		} else {
+			RoadVertex* v = new RoadVertex(roads->graph[src]->getPt());
+			new_src = boost::add_vertex(new_roads->graph);
+			new_roads->graph[new_src] = v;
+			conv[src] = new_src;
+		}
+
+		// tgt頂点に対応する頂点を取得、または、作成する
+		RoadVertexDesc new_tgt;
+		if (conv.contains(tgt)) {
+			new_tgt = conv[tgt];
+		} else {
+			RoadVertex* v = new RoadVertex(roads->graph[tgt]->getPt());
+			new_tgt = boost::add_vertex(new_roads->graph);
+			new_roads->graph[new_tgt] = v;
+			conv[tgt] = new_tgt;
+		}
+
+		// エッジを作成する
+		RoadEdgeDesc e = getEdge(roads, src, tgt);
+		addEdge(new_roads, new_src, new_tgt, roads->graph[e]->lanes, roads->graph[e]->type, roads->graph[e]->oneWay);
+
+		if (remove) {
+			// 元の道路網からエッジを削除する
+			roads->graph[e]->valid = false;
+		}
+	}
+
+	return new_roads;
+}
+
+/**
+ * 道路網のあるエッジからスタートし、最もまっすぐな道を返却する。
+ */
+float GraphUtil::extractMajorRoad(RoadGraph* roads, RoadEdgeDesc root, QList<RoadEdgeDesc>& path) {
+	path.clear();
+	path.push_back(root);
+
+	float length = roads->graph[root]->getLength();
+
+	RoadVertexDesc root1 = boost::source(root, roads->graph);
+	RoadVertexDesc root2 = boost::target(root, roads->graph);
+
+	QList<RoadVertexDesc> visited;
+	visited.push_back(root1);
+	visited.push_back(root2);
+
+	QList<RoadVertexDesc> queue;
+	queue.push_back(root1);
+	queue.push_back(root2);
+
+	QList<float> angles;
+	QVector2D dir = roads->graph[root1]->getPt() - roads->graph[root2]->getPt();
+	angles.push_back(atan2f(dir.y(), dir.x()));
+	angles.push_back(atan2f(-dir.y(), -dir.x()));
+
+	while (!queue.empty()) {
+		RoadVertexDesc v = queue.front();
+		queue.pop_front();
+
+		float angle = angles.front();
+		angles.pop_front();
+
+		float min_angle;
+		float min_diff_angle = std::numeric_limits<float>::max();
+		RoadVertexDesc min_u;
+		RoadEdgeDesc min_e;
+		float len;
+
+		// 当該頂点の隣接頂点について
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(v, roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
+			RoadVertexDesc u = boost::target(*ei, roads->graph);
+			if (!roads->graph[u]->valid) continue;
+
+			// 訪問済みの頂点はスキップ
+			if (visited.contains(u)) continue;
+
+			QVector2D dir2 = roads->graph[u]->getPt() - roads->graph[v]->getPt();
+			float angle2 = atan2f(dir2.y(), dir2.x());
+			float diff_angle = diffAngle(angle2, angle);
+			if (diff_angle < min_diff_angle) {
+				min_diff_angle = diff_angle;
+				min_angle = angle2;
+				min_u = u;
+				min_e = *ei;
+				len = roads->graph[*ei]->getLength();
+			}
+		}
+
+		// 角度20度以内なら、まっすぐな道とみなす
+		if (min_diff_angle < M_PI * 20.0f / 180.0f) {
+			path.push_back(min_e);
+			length += len;
+
+			queue.push_back(min_u);
+			angles.push_back(min_angle);
+			visited.push_back(min_u);
+		}
+	}
+
+	return length;
 }
 
 /**

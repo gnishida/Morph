@@ -34,6 +34,9 @@ void AbstractBFS::setRoad1(const char* filename) {
 	if (roads2 != NULL) {
 		init();
 	} else {
+		roads1 = GraphUtil::extractMajorRoad(roads1);
+
+
 		clearSequence();
 		sequence.push_back(GraphUtil::copyRoads(roads1));
 	}
