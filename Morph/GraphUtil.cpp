@@ -1020,26 +1020,29 @@ bool GraphUtil::reduce(RoadGraph* roads, RoadVertexDesc desc) {
 		ed[count] = *ei;
 		edges[count] = roads->graph[*ei];
 		count++;
-
-		// 古いエッジを無効にする
-		roads->graph[*ei]->valid = false;
 	}
 
 	//if (edges[0]->getType() != edges[1]->getType()) return false;
 	//if (edges[0]->lanes != edges[1]->lanes) return false;
 
-	RoadEdge* new_edge = new RoadEdge(edges[0]->oneWay, edges[0]->lanes, edges[0]->type);
-	orderPolyLine(roads, ed[0], vd[0]);
-	orderPolyLine(roads, ed[1], desc);
+	if (!hasEdge(roads, vd[0], vd[1])) {
+		RoadEdge* new_edge = new RoadEdge(edges[0]->oneWay, edges[0]->lanes, edges[0]->type);
+		orderPolyLine(roads, ed[0], vd[0]);
+		orderPolyLine(roads, ed[1], desc);
 	
-	for (int i = 0; i < edges[0]->getPolyLine().size(); i++) {
-		new_edge->addPoint(edges[0]->getPolyLine()[i]);
+		for (int i = 0; i < edges[0]->getPolyLine().size(); i++) {
+			new_edge->addPoint(edges[0]->getPolyLine()[i]);
+		}
+		for (int i = 1; i < edges[1]->getPolyLine().size(); i++) {
+			new_edge->addPoint(edges[1]->getPolyLine()[i]);
+		}
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(vd[0], vd[1], roads->graph);
+		roads->graph[edge_pair.first] = new_edge;
 	}
-	for (int i = 1; i < edges[1]->getPolyLine().size(); i++) {
-		new_edge->addPoint(edges[1]->getPolyLine()[i]);
-	}
-	std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(vd[0], vd[1], roads->graph);
-	roads->graph[edge_pair.first] = new_edge;
+
+	// 古いエッジを無効にする
+	roads->graph[ed[0]]->valid = false;
+	roads->graph[ed[1]]->valid = false;
 
 	// 当該頂点を無効にする
 	roads->graph[desc]->valid = false;
@@ -1569,22 +1572,34 @@ void GraphUtil::normalizeBySpring(RoadGraph* roads, BBox& area) {
 	}
 }
 
-void GraphUtil::removeDuplicateEdges(RoadGraph* roads) {
+/**
+ * 頂点AB間に複数のエッジがある場合、１つ目以外は無効にする。
+ */
+bool GraphUtil::removeDuplicateEdges(RoadGraph* roads) {
+	bool removed = false;
+
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
 		QList<RoadVertexDesc> targets;
 
 		RoadOutEdgeIter ei, eend;
 		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
 			RoadVertexDesc tgt = boost::target(*ei, roads->graph);
 
 			if (targets.contains(tgt)) {
-				roads->graph[*ei]->valid = false;	
+				roads->graph[*ei]->valid = false;
+				removed = true;
 			} else {
 				targets.push_back(tgt);
 			}
 		}
 	}
+	
+	return removed;
 }
 
 /**

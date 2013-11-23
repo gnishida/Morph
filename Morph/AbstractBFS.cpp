@@ -24,16 +24,41 @@ void AbstractBFS::setRoad1(const char* filename) {
 	roads1->load(fp, 2);
 	fclose(fp);
 
-	GraphUtil::removeDuplicateEdges(roads1);
+	if (GraphUtil::removeDuplicateEdges(roads1)) {
+		qDebug() << "there were some duplicate edges.";
+	}
+
 	GraphUtil::clean(roads1);
 
 	GraphUtil::singlify(roads1);
+	if (GraphUtil::removeDuplicateEdges(roads1)) {
+		qDebug() << "singlify has some bugs!!!";
+	}
+
 	GraphUtil::simplify(roads1, 100);
+	if (GraphUtil::removeDuplicateEdges(roads1)) {
+		qDebug() << "simplify has some bugs!!!";
+	}
+
 	GraphUtil::removeDeadEnd(roads1);
+	if (GraphUtil::removeDuplicateEdges(roads1)) {
+		qDebug() << "removeDeadEnd has some bugs!!!";
+	}
+
 	GraphUtil::reduce(roads1);
+	if (GraphUtil::removeDuplicateEdges(roads1)) {
+		qDebug() << "reduce has some bugs!!!";
+	}
 
 	GraphUtil::clean(roads1);
+	if (GraphUtil::removeDuplicateEdges(roads1)) {
+		qDebug() << "clean h as some bugs.!!!";
+	}
+
 	GraphUtil::planarify(roads1);
+	if (GraphUtil::removeDuplicateEdges(roads1)) {
+		qDebug() << "planarify ahs some bugs";
+	}
 
 	// 道路のヒストグラム情報を出力
 	GraphUtil::printStatistics(roads1);
