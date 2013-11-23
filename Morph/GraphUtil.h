@@ -55,6 +55,7 @@ public:
 	static void singlify(RoadGraph* roads);
 	static void planarify(RoadGraph* roads);
 	static RoadGraph* copyRoads(RoadGraph* roads);
+	static void copyRoads(RoadGraph* roads1, RoadGraph* roads2);
 	static RoadGraph* convertToGridNetwork(RoadGraph* roads, RoadVertexDesc start);
 
 	// その他
