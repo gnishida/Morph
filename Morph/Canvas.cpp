@@ -4,10 +4,12 @@
 #include <qdebug.h>
 
 Canvas::Canvas(QWidget *parent) : QLabel(parent) {
+	width = 10000;
+	height = 10000;
 	controlWidget = NULL;
 
-	scale = 1.0f;
-	this->setMinimumSize(10000, 10000);
+	scale = 0.1f;
+	this->setMinimumSize(width * this->scale, height * this->scale);
 }
 
 Canvas::~Canvas() {
@@ -48,5 +50,9 @@ void Canvas::zoom(float scale) {
 		this->scale *= 0.95f;
 	}
 	if (this->scale < 0.01f) this->scale = 0.01f;
+
+	this->setMinimumSize(width * this->scale, height * this->scale);
+
 	update();
+	//repaint();
 }

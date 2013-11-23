@@ -13,8 +13,9 @@ Morph::Morph(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
 
 	canvas = new Canvas(this);
 	
-	QScrollArea* scrollArea = new QScrollArea();
+	scrollArea = new QScrollArea();
 	scrollArea->setWidget(canvas);
+	scrollArea->setWidgetResizable(true);
 	setCentralWidget(scrollArea);
 
 	connect(ui.actionBFS, SIGNAL(triggered()), this, SLOT(startBFS()));
@@ -96,8 +97,10 @@ void Morph::startBFSProp() {
 
 void Morph::zoomIn() {
 	canvas->zoom(0.2f);
+	scrollArea->update();
 }
 
 void Morph::zoomOut(){
 	canvas->zoom(-0.2f);
+	scrollArea->update();
 }

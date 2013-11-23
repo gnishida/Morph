@@ -11,12 +11,14 @@
 #include "BFS2ControlWidget.h"
 #include "BFSMultiControlWidget.h"
 #include "BFSPropControlWidget.h"
+#include <qscrollarea.h>
 #include <qmap.h>
 
 class Morph : public QMainWindow {
 	Q_OBJECT
 
 public:
+	QScrollArea* scrollArea;
 	Canvas* canvas;
 
 	BFSControlWidget* widgetBFS;

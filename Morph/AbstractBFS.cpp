@@ -35,6 +35,7 @@ void AbstractBFS::setRoad1(const char* filename) {
 	if (roads2 != NULL) {
 		init();
 	} else {
+		/*
 		// バネの原理で、normalizeする
 		BBox area;
 		area.addPoint(QVector2D(-5000, -5000));
@@ -46,7 +47,10 @@ void AbstractBFS::setRoad1(const char* filename) {
 			GraphUtil::getBoudingBox(roads1, -M_PI, M_PI);
 			GraphUtil::scaleToBBox(roads1, area);
 			sequence.push_back(GraphUtil::copyRoads(roads1));
-		}
+		}*/
+
+		clearSequence();
+		sequence.push_back(GraphUtil::copyRoads(roads1));
 	}
 }
 

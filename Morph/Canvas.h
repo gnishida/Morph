@@ -6,6 +6,8 @@
 
 class Canvas : public QLabel {
 private:
+	int width;
+	int height;
 	ControlWidget* controlWidget;
 	float scale;
 	QPoint prevMousePos;
