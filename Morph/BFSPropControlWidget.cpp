@@ -29,12 +29,16 @@ void BFSPropControlWidget::draw(QPainter* painter) {
 }
 
 void BFSPropControlWidget::selectVertex(float x, float y) {
+	RoadGraph* roads = bfs->getSelectedRoads();
+	if (roads == NULL) return;
+
 	RoadVertexDesc v;
-	if (bfs->selectVertex(x, y, v)) {
+
+	if (GraphUtil::getVertex(roads, QVector2D(x, y), 50.0f, v)) {
 		QString str;
 		ui.lineEditNode->setText(str.setNum(v));
 
-		std::vector<RoadVertexDesc> neighbors = bfs->getNeighbors(v);
+		std::vector<RoadVertexDesc> neighbors = GraphUtil::getNeighbors(roads, v);
 		str = "";
 		for (int i = 0; i < neighbors.size(); i++) {
 			QString str2;
@@ -57,6 +61,7 @@ void BFSPropControlWidget::loadRoad1() {
 		if (bfs->sequence.size() > 0) {
 			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 			ui.horizontalSlider->setValue(0);
+
 			update();
 		}
 	}
@@ -72,6 +77,7 @@ void BFSPropControlWidget::loadRoad2() {
 		if (bfs->sequence.size() > 0) {
 			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 			ui.horizontalSlider->setValue(0);
+
 			update();
 		}
 	}
@@ -80,6 +86,7 @@ void BFSPropControlWidget::loadRoad2() {
 void BFSPropControlWidget::moveSequence(int value) {
 	if (bfs == NULL) return;
 	bfs->selectSequence(value);
+
 	update();
 }
 

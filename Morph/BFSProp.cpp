@@ -302,15 +302,3 @@ bool BFSProp::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1,
 	// ペアなし、つまり、全ての子ノードがペアになっている
 	return false;
 }
-
-bool BFSProp::selectVertex(float x, float y, RoadVertexDesc& v) {
-	if (GraphUtil::getVertex(roads1, QVector2D(x, y), 50.0f, v)) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-std::vector<RoadVertexDesc> BFSProp::getNeighbors(RoadVertexDesc v) {
-	return GraphUtil::getNeighbors(roads1, v);
-}

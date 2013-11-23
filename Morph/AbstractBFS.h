@@ -29,6 +29,7 @@ public:
 	
 	void selectSequence(int selected);
 	void clearSequence();
+	RoadGraph* getSelectedRoads();
 
 	void createRoads1();
 	void createRoads2();

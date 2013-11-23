@@ -1020,6 +1020,9 @@ bool GraphUtil::reduce(RoadGraph* roads, RoadVertexDesc desc) {
 		ed[count] = *ei;
 		edges[count] = roads->graph[*ei];
 		count++;
+
+		// 古いエッジを無効にする
+		roads->graph[*ei]->valid = false;
 	}
 
 	//if (edges[0]->getType() != edges[1]->getType()) return false;
@@ -1038,14 +1041,8 @@ bool GraphUtil::reduce(RoadGraph* roads, RoadVertexDesc desc) {
 	std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(vd[0], vd[1], roads->graph);
 	roads->graph[edge_pair.first] = new_edge;
 
-	boost::remove_edge(vd[0], desc, roads->graph);
-	boost::remove_edge(vd[1], desc, roads->graph);
-	delete edges[0];
-	if (edges[1] != edges[0]) delete edges[1];
-
-	RoadVertex* vertex = roads->graph[desc];
-	boost::remove_vertex(desc, roads->graph);
-	delete vertex;
+	// 当該頂点を無効にする
+	roads->graph[desc]->valid = false;
 
 	return true;
 }

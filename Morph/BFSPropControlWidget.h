@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "ControlWidget.h"
 #include "ui_BFSPropControlWidget.h"

@@ -22,12 +22,15 @@ void AbstractBFS::setRoad1(const char* filename) {
 	FILE* fp = fopen(filename, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
+	fclose(fp);
+
 	//GraphUtil::planarify(roads1);
 	GraphUtil::singlify(roads1);
 	GraphUtil::simplify(roads1, 100);
-	GraphUtil::reduce(roads1);
 	GraphUtil::removeDeadEnd(roads1);
-	fclose(fp);
+	GraphUtil::reduce(roads1);
+
+	GraphUtil::clean(roads1);
 
 	// 道路のヒストグラム情報を出力
 	GraphUtil::printStatistics(roads1);
@@ -35,7 +38,6 @@ void AbstractBFS::setRoad1(const char* filename) {
 	if (roads2 != NULL) {
 		init();
 	} else {
-		/*
 		// バネの原理で、normalizeする
 		BBox area;
 		area.addPoint(QVector2D(-5000, -5000));
@@ -43,14 +45,17 @@ void AbstractBFS::setRoad1(const char* filename) {
 
 		clearSequence();
 		for (int i = 0; i < 100; i++) {
-			GraphUtil::normalizeBySpring(roads1, area);
-			GraphUtil::getBoudingBox(roads1, -M_PI, M_PI);
-			GraphUtil::scaleToBBox(roads1, area);
 			sequence.push_back(GraphUtil::copyRoads(roads1));
-		}*/
 
+			GraphUtil::normalizeBySpring(roads1, area);
+			//GraphUtil::getBoudingBox(roads1, -M_PI / 4.0f, M_PI / 4.0f);
+			GraphUtil::scaleToBBox(roads1, area);
+		}
+
+		/*
 		clearSequence();
 		sequence.push_back(GraphUtil::copyRoads(roads1));
+		*/
 	}
 }
 
@@ -167,6 +172,12 @@ void AbstractBFS::clearSequence() {
 		delete sequence[i];
 	}
 	sequence.clear();
+}
+
+RoadGraph* AbstractBFS::getSelectedRoads() {
+	if (sequence.size() == 0 || selected < 0 || selected >= sequence.size()) return NULL;
+
+	return sequence[selected];
 }
 
 void AbstractBFS::createRoads1() {
