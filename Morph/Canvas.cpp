@@ -1,12 +1,13 @@
 #include "Canvas.h"
 #include <qdockwidget.h>
 #include <qpainter.h>
+#include <qdebug.h>
 
 Canvas::Canvas(QWidget *parent) : QLabel(parent) {
 	controlWidget = NULL;
 
-	scale = 0.1f;
-	this->setMinimumSize(1000, 1000);
+	scale = 1.0f;
+	this->setMinimumSize(10000, 10000);
 }
 
 Canvas::~Canvas() {
@@ -22,6 +23,8 @@ void Canvas::paintEvent(QPaintEvent* event) {
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event) {
+	qDebug() << event->pos().x() << "," << event->pos().y();
+
 	if (event->buttons() == Qt::RightButton) {
 		prevMousePos = event->pos();
 	}

@@ -16,7 +16,7 @@ public:
 	bool orig;
 
 public:
-	RoadEdge(unsigned int numLanes, unsigned int typeRoad, bool oneWay);
+	RoadEdge(unsigned int lanes, unsigned int type, bool oneWay);
 	~RoadEdge();
 	
 	int getNumLanes();
