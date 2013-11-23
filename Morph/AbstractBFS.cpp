@@ -26,6 +26,7 @@ void AbstractBFS::setRoad1(const char* filename) {
 	GraphUtil::singlify(roads1);
 	GraphUtil::simplify(roads1, 100);
 	GraphUtil::reduce(roads1);
+	GraphUtil::removeDeadEnd(roads1);
 	fclose(fp);
 
 	// 道路のヒストグラム情報を出力
@@ -34,11 +35,18 @@ void AbstractBFS::setRoad1(const char* filename) {
 	if (roads2 != NULL) {
 		init();
 	} else {
-		roads1 = GraphUtil::extractMajorRoad(roads1);
-
+		// バネの原理で、normalizeする
+		BBox area;
+		area.addPoint(QVector2D(-5000, -5000));
+		area.addPoint(QVector2D(5000, 5000));
 
 		clearSequence();
-		sequence.push_back(GraphUtil::copyRoads(roads1));
+		for (int i = 0; i < 100; i++) {
+			GraphUtil::normalizeBySpring(roads1, area);
+			GraphUtil::getBoudingBox(roads1, -M_PI, M_PI);
+			GraphUtil::scaleToBBox(roads1, area);
+			sequence.push_back(GraphUtil::copyRoads(roads1));
+		}
 	}
 }
 
@@ -50,6 +58,7 @@ void AbstractBFS::setRoad2(const char* filename) {
 	GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 100);
 	GraphUtil::reduce(roads2);
+	GraphUtil::removeDeadEnd(roads2);
 	fclose(fp);
 
 	// 道路のヒストグラム情報を出力

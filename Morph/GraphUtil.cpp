@@ -1,5 +1,6 @@
 ﻿#include "GraphUtil.h"
 #include "Util.h"
+#include "Array2D.h"
 #include <qlist.h>
 #include <qmatrix.h>
 #include <qdebug.h>
@@ -390,9 +391,64 @@ void GraphUtil::orderPolyLine(RoadGraph* roads, RoadEdgeDesc e, RoadVertexDesc s
 }
 
 /**
- * 道路網のバウンディングボックスを返却する。
+ * 指定したエッジを、指定した位置に移動する。
  */
-BBox GraphUtil::getBoundingBox(RoadGraph* roads) {
+void GraphUtil::movePolyLine(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos) {
+	RoadVertexDesc src = boost::source(e, roads->graph);
+	RoadVertexDesc tgt = boost::target(e, roads->graph);
+
+	QVector2D src_diff = src_pos - roads->graph[src]->pt;
+	QVector2D tgt_diff = tgt_pos - roads->graph[tgt]->pt;
+
+	if ((roads->graph[e]->getPolyLine()[0] - roads->graph[src]->pt).length() < (roads->graph[e]->getPolyLine()[0] - roads->graph[tgt]->pt).length()) {
+		int n = roads->graph[e]->getPolyLine().size();
+		for (int i = 1; i < n - 1; i++) {
+			roads->graph[e]->getPolyLine()[i] += src_diff + (tgt_diff - src_diff) * (float)i / (float)(n - 1);
+		}
+		roads->graph[e]->getPolyLine()[0] = src_pos;
+		roads->graph[e]->getPolyLine()[n - 1] = tgt_pos;
+	} else {
+		int n = roads->graph[e]->getPolyLine().size();
+		for (int i = 1; i < n - 1; i++) {
+			roads->graph[e]->getPolyLine()[i] += tgt_diff + (src_diff - tgt_diff) * (float)i / (float)(n - 1);
+		}
+		roads->graph[e]->getPolyLine()[0] = tgt_pos;
+		roads->graph[e]->getPolyLine()[n - 1] = src_pos;
+	}
+}
+
+/**
+ * 全ての行き止まりエッジを削除する。
+ */
+void GraphUtil::removeDeadEnd(RoadGraph* roads) {
+	bool removed = true;
+	while (removed) {
+		removed = false;
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+			if (!roads->graph[*vi]->valid) continue;
+
+			if (getDegree(roads, *vi) == 1) {
+				// 全ての隣接エッジを無効にする（実際は、１個しかないはず）
+				RoadOutEdgeIter ei, eend;
+				for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+					roads->graph[*ei]->valid = false;
+				}
+
+				// 当該頂点を無効にする
+				roads->graph[*vi]->valid = false;
+
+				removed = true;
+			}
+		}
+	}
+}
+
+/**
+ * 道路網のAxis Alignedバウンディングボックスを返却する。
+ * バウンディングボックスは、XY軸にalignされたボックスを使う。
+ */
+BBox GraphUtil::getAABoundingBox(RoadGraph* roads) {
 	BBox box;
 
 	RoadVertexIter vi, vend;
@@ -403,6 +459,36 @@ BBox GraphUtil::getBoundingBox(RoadGraph* roads) {
 	}
 
 	return box;
+}
+
+/**
+ * 道路網のバウンディングボックスを返却する。
+ * 
+ * XY軸にalignされていないボックスも含めて、面積が最小となるものを探す。
+ * 実際には、道路網を-90度から+90度まで、5度ずつ回転させ、Axis Alignedバウンディングボックスを計算し、
+ * 最も面積の小さいものを選択する。
+ * 注意：道路網は、回転させた結果の道路網に更新される！
+ */
+BBox GraphUtil::getBoudingBox(RoadGraph* roads, float theta1, float theta2, float theta_step) {
+	float min_area = std::numeric_limits<float>::max();
+	float min_theta;
+	BBox min_box;
+
+	for (float theta = theta1; theta <= theta2; theta += theta_step) {
+		RoadGraph* rotated_roads = copyRoads(roads);
+		rotate(rotated_roads, theta);
+		BBox box = getAABoundingBox(rotated_roads);
+		if (box.dx() * box.dy() < min_area) {
+			min_area = box.dx() * box.dy();
+			min_theta = theta;
+			min_box = box;
+		}
+
+		delete rotated_roads;
+	}
+
+	rotate(roads, min_theta);
+	return min_box;
 }
 
 /**
@@ -1073,6 +1159,32 @@ void GraphUtil::planarify(RoadGraph* roads) {
 }
 
 /**
+ * 道路網をtheta [rad] 回転する
+ *
+ * 無効の頂点、エッジも、とりあえず回転しておく。
+ */
+void GraphUtil::rotate(RoadGraph* roads, float theta) {
+	// 頂点を回転する
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		QVector2D pos = roads->graph[*vi]->pt;
+
+		roads->graph[*vi]->pt.setX(cosf(theta) * pos.x() - sinf(theta) * pos.y());
+		roads->graph[*vi]->pt.setY(sinf(theta) * pos.x() + cosf(theta) * pos.y());
+	}
+
+	// エッジを回転する
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		for (int i = 0; i < roads->graph[*ei]->polyLine.size(); i++) {
+			QVector2D pos = roads->graph[*ei]->polyLine[i];
+			roads->graph[*ei]->polyLine[i].setX(cosf(theta) * pos.x() - sinf(theta) * pos.y());
+			roads->graph[*ei]->polyLine[i].setY(sinf(theta) * pos.x() + cosf(theta) * pos.y());
+		}
+	}
+}
+
+/**
  * 道路網をコピー(deep copy)する。
  */
 RoadGraph* GraphUtil::copyRoads(RoadGraph* roads) {
@@ -1214,6 +1326,213 @@ RoadGraph* GraphUtil::convertToGridNetwork(RoadGraph* roads, RoadVertexDesc star
 
 	return new_roads;
 }
+
+/**
+ * 道路網をグリッド型のネットワークで近似する。
+ * 11/23に実装。急ぎで実装し、ほとんどテストしていない。バグがある可能性大。
+ * 
+ * @param cellLength		１つのセルの１辺の長さ
+ * @param orig				原点の座標
+ */
+RoadGraph* GraphUtil::approximateToGridNetwork(RoadGraph* roads, float cellLength, QVector2D orig) {
+	Array2D<RoadVertexDesc> grid_desc;
+	Array2D<float> grid_weight;
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		int u = (roads->graph[*vi]->getPt().x() - orig.x()) / cellLength;
+		int v = (roads->graph[*vi]->getPt().y() - orig.y()) / cellLength;
+
+		if (u < 0 || v < 0) continue;
+
+		// 当該頂点の重要度を計算する
+		float weight = 0.0f;
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
+			weight += roads->graph[*ei]->getLength() * roads->graph[*ei]->lanes;
+		}
+
+		if (weight > grid_weight[u][v]) {
+			grid_weight[u][v] = weight;
+			grid_desc[u][v] = *vi;
+		}
+	}
+
+	// グリッド情報に基づいて、道路網を作成する
+	RoadGraph* new_roads = new RoadGraph();
+	QMap<RoadVertexDesc, RoadVertexDesc> conv;
+
+	// まずは、頂点のみを作成
+	for (int i = 0; i < grid_desc.size(); i++) {
+		for (int j = 0; j < grid_desc[i].size(); j++) {
+			if (grid_weight[i][j] == 0.0f) continue;
+
+			RoadVertex* v = new RoadVertex(orig + QVector2D(cellLength, 0) * j + QVector2D(0, cellLength) * i);
+			RoadVertexDesc v_desc = boost::add_vertex(new_roads->graph);
+			new_roads->graph[v_desc] = v;
+
+			conv[grid_desc[i][j]] = v_desc;
+		}
+	}
+
+	// 次に、エッジを作成
+	for (int i = 0; i < grid_desc.size(); i++) {
+		for (int j = 0; j < grid_desc[i].size(); j++) {
+			if (grid_weight[i][j] == 0.0f) continue;
+
+			if (j < grid_desc[i].size() - 1) {
+				// 右隣とのエッジをチェック
+				if (grid_weight[i][j+1] > 0.0f) {
+					RoadVertexDesc orig_v1_desc = grid_desc[i][j];
+					RoadVertexDesc orig_v2_desc = grid_desc[i][j+1];
+					if (isConnected(roads, orig_v1_desc, orig_v2_desc)) {
+						addEdge(new_roads, conv[orig_v1_desc], conv[orig_v2_desc], 2, 2);	// to be updated!
+					}
+				}
+			}
+
+			if (j > 0) {
+				// 左隣とのエッジをチェック
+				if (grid_weight[i][j-1] > 0.0f) {
+					RoadVertexDesc orig_v1_desc = grid_desc[i][j];
+					RoadVertexDesc orig_v2_desc = grid_desc[i][j-1];
+					if (isConnected(roads, orig_v1_desc, orig_v2_desc)) {
+						addEdge(new_roads, conv[orig_v1_desc], conv[orig_v2_desc], 2, 2);	// to be updated!
+					}
+				}
+			}
+
+			if (i < grid_desc.size()) {
+				// 上隣とのエッジをチェック
+				if (grid_weight[i+1][j] > 0.0f) {
+					RoadVertexDesc orig_v1_desc = grid_desc[i][j];
+					RoadVertexDesc orig_v2_desc = grid_desc[i+1][j];
+					if (isConnected(roads, orig_v1_desc, orig_v2_desc)) {
+						addEdge(new_roads, conv[orig_v1_desc], conv[orig_v2_desc], 2, 2);	// to be updated!
+					}
+				}
+			}
+
+			if (i > 0) {
+				// 下隣とのエッジをチェック
+				if (grid_weight[i-1][j] > 0.0f) {
+					RoadVertexDesc orig_v1_desc = grid_desc[i][j];
+					RoadVertexDesc orig_v2_desc = grid_desc[i-1][j];
+					if (isConnected(roads, orig_v1_desc, orig_v2_desc)) {
+						addEdge(new_roads, conv[orig_v1_desc], conv[orig_v2_desc], 2, 2);	// to be updated!
+					}
+				}
+			}
+		}
+	}
+
+	return new_roads;
+}
+
+/**
+ * 道路網が指定されたareaにおさまるようにする。
+ */
+void GraphUtil::scaleToBBox(RoadGraph* roads, BBox& area) {
+	BBox curArea = getAABoundingBox(roads);
+	QVector2D scale(area.dx() / curArea.dx(), area.dy() / curArea.dy());
+
+	// 全ての頂点を、指定したareaに入るよう移動する
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
+		QVector2D pos = roads->graph[*vi]->pt - curArea.midPt();
+		pos.setX(pos.x() * scale.x());
+		pos.setY(pos.y() * scale.y());
+		pos += area.midPt();
+
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
+			RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+			if (!roads->graph[tgt]->valid) continue;
+
+			movePolyLine(roads, *ei, pos, roads->graph[tgt]->pt);
+		}
+
+		roads->graph[*vi]->pt = pos;
+	}
+}
+
+/**
+ * バネの原理を使って、道路網のエッジの長さを均等にする。
+ *
+ * まず、全エッジの平均長を計算し、これをエッジの本来の長さと仮定する。
+ * 次に、各頂点について、各隣接エッジの長さの、本来長からの変形量を使って、各頂点にかかる仮想的な力を計算する。
+ * 最後に、この仮想的な力に、適当なdTをかけた値を使って、各頂点を移動させる。
+ * これを、一定数、繰り返す。（終了条件について、要検討）
+ */
+void GraphUtil::normalizeBySpring(RoadGraph* roads, BBox& area) {
+	// バネの原理を使って、各エッジの長さを均等にする
+	float step = 0.05f;
+
+	//for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < 1; i++) {
+		float avg_edge_length = computeAvgEdgeLength(roads);
+
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+			if (!roads->graph[*vi]->valid) continue;
+
+			// 頂点にかかる力を計算する
+			QVector2D force;
+
+			// 隣接エッジからは、引っ張られる
+			RoadOutEdgeIter ei, eend;
+			for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+				if (!roads->graph[*ei]->valid) continue;
+
+				RoadVertexDesc src = boost::source(*ei, roads->graph);
+				RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+				QVector2D dir = roads->graph[tgt]->pt - roads->graph[src]->pt;
+				float x = (roads->graph[tgt]->pt - roads->graph[src]->pt).length() - avg_edge_length * 1.0f;
+				
+				force += dir.normalized() * x;
+			}
+
+			// 接続されていない、近隣の頂点からは、反発力を受ける
+			RoadVertexIter vi2, vend2;
+			for (boost::tie(vi2, vend2) = boost::vertices(roads->graph); vi2 != vend2; ++vi2) {
+				if (!roads->graph[*vi2]->valid) continue;
+
+				if (hasEdge(roads, *vi, *vi2)) continue;
+
+				QVector2D dir = roads->graph[*vi]->pt - roads->graph[*vi2]->pt;
+				float x = avg_edge_length * 1.44f - (roads->graph[*vi2]->pt - roads->graph[*vi]->pt).length();
+
+				if (x > 0.0f) {
+					force += dir.normalized() * x;
+				}
+			}
+
+			// 移動後の位置が、指定された範囲内か、チェック
+			QVector2D pos = roads->graph[*vi]->pt + force * step;
+			if (area.contains(pos)) {
+				// 頂点を移動する
+				roads->graph[*vi]->pt = pos;
+
+				// エッジも移動する
+				for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+					if (!roads->graph[*ei]->valid) continue;
+
+					RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+					movePolyLine(roads, *ei, pos, roads->graph[tgt]->pt);
+				}
+			}
+		}
+	}
+}
+
 
 /**
  * ２つのデータリストの差の最小値を返却する。
@@ -1503,6 +1822,25 @@ bool GraphUtil::nextSequence(std::vector<int>& seq, int N) {
 	} else {
 		return false;
 	}
+}
+
+float GraphUtil::computeAvgEdgeLength(RoadGraph* roads) {
+	float length = 0.0f;
+	int count = 0;
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads->graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+		length += (roads->graph[src]->pt - roads->graph[tgt]->pt).length();
+		count++;
+	}
+
+	if (count == 0) return 0;
+	else return length / (float)count;
 }
 
 /**

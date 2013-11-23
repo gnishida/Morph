@@ -134,6 +134,12 @@
     <ClCompile Include="ControlWidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Array2D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Array1D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Morph.h">
@@ -232,6 +238,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ControlWidget.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Array2D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Array1D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

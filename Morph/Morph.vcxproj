@@ -130,6 +130,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AbstractBFS.cpp" />
+    <ClCompile Include="Array1D.cpp" />
+    <ClCompile Include="Array2D.cpp" />
     <ClCompile Include="BBox.cpp" />
     <ClCompile Include="BFS.cpp" />
     <ClCompile Include="BFS2.cpp" />
@@ -245,6 +247,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AbstractBFS.h" />
+    <ClInclude Include="Array1D.h" />
+    <ClInclude Include="Array2D.h" />
     <ClInclude Include="BBox.h" />
     <ClInclude Include="BFS.h" />
     <CustomBuild Include="BFSControlWidget.h">

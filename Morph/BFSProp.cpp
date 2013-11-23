@@ -67,6 +67,7 @@ void BFSProp::init() {
 	}
 	*/
 
+	/*
 	// 一旦、invalidのノードなどを削除しておく
 	RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
 	delete roads1;
@@ -91,6 +92,14 @@ void BFSProp::init() {
 	temp1 = GraphUtil::convertToGridNetwork(roads1, min_v1);
 	delete roads1;
 	roads1 = temp1;
+	*/
+
+
+
+
+
+
+
 
 	clearSequence();
 	sequence.push_back(GraphUtil::copyRoads(roads1));

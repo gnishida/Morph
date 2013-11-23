@@ -29,10 +29,13 @@ public:
 	static RoadEdgeDesc getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, bool onlyValidEdge = true);
 	static std::vector<QVector2D> getOrderedPolyLine(RoadGraph* roads, RoadEdgeDesc e);
 	static void orderPolyLine(RoadGraph* roads, RoadEdgeDesc e, RoadVertexDesc src);
+	static void movePolyLine(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos);
 	static std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
+	static void removeDeadEnd(RoadGraph* roads);
 
 	// 道路網全体に関する関数
-	static BBox getBoundingBox(RoadGraph* roads);
+	static BBox getAABoundingBox(RoadGraph* roads);
+	static BBox getBoudingBox(RoadGraph* roads, float theta1, float theta2, float theta_step = 0.087f);
 	static RoadGraph* extractMajorRoad(RoadGraph* roads, bool remove = true);
 	static float extractMajorRoad(RoadGraph* roads, RoadEdgeDesc root, QList<RoadEdgeDesc>& path);
 
@@ -56,9 +59,13 @@ public:
 	static void normalize(RoadGraph* roads);
 	static void singlify(RoadGraph* roads);
 	static void planarify(RoadGraph* roads);
+	static void rotate(RoadGraph* roads, float theta);
 	static RoadGraph* copyRoads(RoadGraph* roads);
 	static void copyRoads(RoadGraph* roads1, RoadGraph* roads2);
 	static RoadGraph* convertToGridNetwork(RoadGraph* roads, RoadVertexDesc start);
+	static RoadGraph* approximateToGridNetwork(RoadGraph* roads, float cellLength, QVector2D orig);
+	static void scaleToBBox(RoadGraph* roads, BBox& area);
+	static void normalizeBySpring(RoadGraph* roads, BBox& area);
 
 	// その他
 	static float computeMinDiffAngle(std::vector<float> *data1, std::vector<float> *data2);
@@ -71,6 +78,9 @@ public:
 	static float computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2);
 
 	static bool nextSequence(std::vector<int>& seq, int N);
+
+	// 統計情報
+	static float computeAvgEdgeLength(RoadGraph* roads);
 
 	// サンプル道路網を生成する関数
 	static RoadGraph* createGridNetwork(float size, int num);
