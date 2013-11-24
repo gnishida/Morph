@@ -80,6 +80,8 @@ void BFSMulti::init() {
 	QMap<RoadVertexDesc, RoadVertexDesc> min_map1;
 	QMap<RoadVertexDesc, RoadVertexDesc> min_map2;
 
+	srand(1234567);
+
 	int num = 2;
 	for (int i = 0; i < 1000; i++) {
 		std::random_shuffle(descs1.begin(), descs1.end());	
@@ -95,7 +97,7 @@ void BFSMulti::init() {
 
 		// シードを使ってフォレストを構築
 		BFSForest forest1(roads1, seeds1);
-		BFSForest forest2(roads1, seeds2);
+		BFSForest forest2(roads2, seeds2);
 
 		// フォレストを使って、マッチングを探す
 		QMap<RoadVertexDesc, RoadVertexDesc> map1;

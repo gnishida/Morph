@@ -10,6 +10,7 @@ public:
 	BFSForest(RoadGraph* roads, std::vector<RoadVertexDesc> roots);
 	~BFSForest();
 	
+	QList<RoadVertexDesc> getParent(RoadVertexDesc node);
 	std::vector<RoadVertexDesc> getRoots();
 	void buildForest();
 };

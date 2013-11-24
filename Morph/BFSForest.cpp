@@ -12,6 +12,24 @@ BFSForest::~BFSForest() {
 }
 
 /**
+ * 親ノードのリストを返却する。
+ */
+QList<RoadVertexDesc> BFSForest::getParent(RoadVertexDesc node) {
+	QList<RoadVertexDesc> ret;
+
+	for (QMap<RoadVertexDesc, std::vector<RoadVertexDesc> >::iterator it = children.begin(); it != children.end(); ++it) {
+		RoadVertexDesc parent = it.key();
+		for (int i = 0; i < children[parent].size(); i++) {
+			if (children[parent][i] == node) {
+				ret.push_back(parent);
+			}
+		}
+	}
+
+	return ret;
+}
+
+/**
  * ルートノードを返却する。
  */
 std::vector<RoadVertexDesc> BFSForest::getRoots() {
@@ -41,10 +59,7 @@ void BFSForest::buildForest() {
 			RoadVertexDesc child = boost::target(*ei, roads->graph);
 			if (!roads->graph[child]->valid) continue;
 
-			try {
-				if (child == getParent(parent)) continue;
-			} catch (const char* ex) {
-			}
+			if (getParent(parent).contains(child)) continue;
 
 			nodes.push_back(child);
 		}
@@ -54,6 +69,7 @@ void BFSForest::buildForest() {
 			RoadVertexDesc child = nodes[i];
 
 			if (visited.contains(child)) { // 訪問済みの場合
+				/*
 				RoadEdgeDesc orig_e_desc = GraphUtil::getEdge(roads, parent, child);
 
 				// もともとのエッジを無効にする
@@ -66,6 +82,12 @@ void BFSForest::buildForest() {
 				GraphUtil::addEdge(roads, parent, child2, roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type, roads->graph[orig_e_desc]->oneWay);
 
 				children.push_back(child2);
+				*/
+
+				// 実は分割しない方が良いかも。。。
+				// ということで、分割しない場合を実装してみた。11/24
+				children.push_back(child);
+
 			} else { // 未訪問の場合
 				visited[child] = true;
 
