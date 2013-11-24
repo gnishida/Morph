@@ -2025,8 +2025,68 @@ void GraphUtil::findCorrespondenceByNearestNeighbor(RoadGraph* roads1, RoadGraph
 }
 
 /**
- * 与えられた数列の、末尾の桁の値を１インクリメントする。
- * N進法なので、Nになったら、桁が繰り上がる。
+ * ２つの対応するノードについて、その子ノードのベストマッチングを探す。
+ */
+QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph* roads1, RoadVertexDesc parent1, std::vector<RoadVertexDesc> children1, RoadGraph* roads2, RoadVertexDesc parent2, std::vector<RoadVertexDesc> children2) {
+	QMap<RoadVertexDesc, RoadVertexDesc> map;
+
+	std::vector<int> permutation;
+	float min_diff = std::numeric_limits<float>::max();
+
+	if (children1.size() <= children2.size()) {
+		for (int i = 0; i < children2.size(); i++) {
+			permutation.push_back(children2[i]);
+		}
+
+		do {
+			// マッチングのずれを数値化
+			float diff = 0.0f;
+			for (int i = 0; i < children1.size(); i++) {
+				QVector2D dir1 = roads1->graph[children1[i]]->pt - roads1->graph[parent1]->pt;
+				QVector2D dir2 = roads2->graph[permutation[i]]->pt - roads2->graph[parent2]->pt;
+
+				diff += diffAngle(dir1, dir2);
+			}
+
+			if (diff < min_diff) {
+				min_diff = diff;
+				for (int i = 0; i < children1.size(); i++) {
+					map[children1[i]] = children2[permutation[i]];
+				}
+			}
+
+		} while (std::next_permutation(permutation.begin(), permutation.end()));
+	} else {
+		for (int i = 0; i < children1.size(); i++) {
+			permutation.push_back(children1[i]);
+		}
+
+		do {
+			// マッチングのずれを数値化
+			float diff = 0.0f;
+			for (int i = 0; i < children2.size(); i++) {
+				QVector2D dir1 = roads1->graph[permutation[i]]->pt - roads1->graph[parent1]->pt;
+				QVector2D dir2 = roads2->graph[children2[i]]->pt - roads2->graph[parent2]->pt;
+
+				diff += diffAngle(dir1, dir2);
+			}
+
+			if (diff < min_diff) {
+				min_diff = diff;
+				for (int i = 0; i < children2.size(); i++) {
+					map[permutation[i]] = children2[i];
+				}
+			}
+
+		} while (std::next_permutation(permutation.begin(), permutation.end()));
+	}
+
+	return map;
+}
+
+/**
+ * 与えられた数列の、先頭の値を１インクリメントする。
+ * N進法なので、Nになったら、桁が繰り上がる。つまり、次の要素の値を１インクリメントする。
  * ex. {1, 2, 3} => {2, 2, 3}
  * ex. {N-1, 3, 3} => {0, 4, 3}
  * ex. {N-1, N-1, 3} => {0, 0, 4}

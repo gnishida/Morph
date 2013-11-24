@@ -127,7 +127,7 @@ void BFSMulti::init() {
 
 	srand(1234567);
 
-	int num = descs1.size() / 4;
+	int num = sqrtf(descs1.size());
 	qDebug() << "The num of seeds: " << num;
 
 	for (int i = 0; i < 1000; i++) {
@@ -224,6 +224,25 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 		//float theta = findBestAffineTransofrmation(roads1, parent1, tree1, roads2, parent2, tree2);
 		float theta = 0.0f;
 
+		// 子リストを取得
+		std::vector<RoadVertexDesc> children1 = forest1->getChildren(parent1);
+		std::vector<RoadVertexDesc> children2 = forest2->getChildren(parent2);
+
+		// 子ノード同士のベストマッチングを取得
+		QMap<RoadVertexDesc, RoadVertexDesc> children_map = GraphUtil::findCorrespondentEdges(roads1, parent1, children1, roads2, parent2, children2);
+		for (QMap<RoadVertexDesc, RoadVertexDesc>::iterator it = children_map.begin(); it != children_map.end(); ++it) {
+			RoadVertexDesc child1 = it.key();
+			RoadVertexDesc child2 = it.value();
+
+			// マッチングを更新
+			map1[child1] = child2;
+			map2[child2] = child1;
+
+			seeds1.push_back(child1);
+			seeds2.push_back(child2);
+		}
+
+		// 残り者の子ノードのマッチングを探す
 		while (true) {
 			RoadVertexDesc child1, child2;
 			if (!findBestPairByDirection(theta, roads1, parent1, forest1, map1, roads2, parent2, forest2, map2, false, child1, child2)) break;
