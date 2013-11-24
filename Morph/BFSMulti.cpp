@@ -72,24 +72,48 @@ RoadGraph* BFSMulti::interpolate(float t) {
 }
 
 void BFSMulti::init() {
-	float min_dist = std::numeric_limits<float>::max();
-	std::vector<RoadVertexDesc> roots1;
-	std::vector<RoadVertexDesc> roots2;
+	// 頂点リストを取得
+	std::vector<RoadVertexDesc> descs1 = GraphUtil::getVertices(roads1);
+	std::vector<RoadVertexDesc> descs2 = GraphUtil::getVertices(roads2);
+	
+	float min_unsimilarity = std::numeric_limits<float>::max();
+	QMap<RoadVertexDesc, RoadVertexDesc> min_map1;
+	QMap<RoadVertexDesc, RoadVertexDesc> min_map2;
 
-	// テンポラリで、手動でルートを指定
-	//min_v1_desc = 33;
-	//min_v2_desc = 74;
-	roots1.push_back(3);
-	roots1.push_back(22);
-	roots2.push_back(25);
-	roots2.push_back(11);
+	int num = 2;
+	for (int i = 0; i < 1000; i++) {
+		std::random_shuffle(descs1.begin(), descs1.end());	
+		std::random_shuffle(descs2.begin(), descs2.end());
 
-	if (forest1 != NULL) delete forest1;
-	if (forest2 != NULL) delete forest2;
-	forest1 = new BFSForest(roads1, roots1);
-	forest2 = new BFSForest(roads2, roots2);
+		// 先頭num個の頂点を、シードに入れる
+		std::vector<RoadVertexDesc> seeds1;
+		std::vector<RoadVertexDesc> seeds2;
+		for (int j = 0; j < num; j++) {
+			seeds1.push_back(descs1[j]);
+			seeds2.push_back(descs2[j]);
+		}
 
-	correspondence = findCorrespondence(roads1, forest1, roads2, forest2);
+		// シードを使ってフォレストを構築
+		BFSForest forest1(roads1, seeds1);
+		BFSForest forest2(roads1, seeds2);
+
+		// フォレストを使って、マッチングを探す
+		QMap<RoadVertexDesc, RoadVertexDesc> map1;
+		QMap<RoadVertexDesc, RoadVertexDesc> map2;
+		findCorrespondence(roads1, &forest1, roads2, &forest2, map1, map2);
+
+		// 非類似度を計算
+		float unsimilarity = GraphUtil::computeUnsimilarity(roads1, map1, roads2, map2);
+
+		// 非類似度が最小なら、ベストマッチングとして更新
+		if (unsimilarity < min_unsimilarity) {
+			min_unsimilarity = unsimilarity;
+			min_map1 = map1;
+			min_map2 = map2;
+		}
+	}
+
+	correspondence = min_map1;
 
 	// シーケンスを生成
 	clearSequence();
@@ -103,9 +127,7 @@ void BFSMulti::init() {
 /**
  * ２つの道路網を、木構造を使ってマッチングさせる。
  */
-QMap<RoadVertexDesc, RoadVertexDesc> BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGraph* roads2, BFSForest* forest2) {
-	QMap<RoadVertexDesc, RoadVertexDesc> correspondence;
-
+void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGraph* roads2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
 	std::list<RoadVertexDesc> seeds1;
 	std::list<RoadVertexDesc> seeds2;
 
@@ -135,15 +157,16 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFSMulti::findCorrespondence(RoadGraph* roa
 			RoadVertexDesc child1, child2;
 			if (!findBestPairByDirection(theta, roads1, parent1, forest1, paired1, roads2, parent2, forest2, paired2, false, child1, child2)) break;
 
-			correspondence[child1] = child2;
+			// マッチングを更新
+			map1[child1] = child2;
+			map2[child2] = child1;
+
 			paired1[child1] = true;
 			paired2[child2] = true;
 			seeds1.push_back(child1);
 			seeds2.push_back(child2);
 		}
 	}
-
-	return correspondence;
 }
 
 /**

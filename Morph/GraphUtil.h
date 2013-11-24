@@ -19,6 +19,7 @@ public:
 	static void moveVertex(RoadGraph* roads, RoadVertexDesc v, QVector2D pt);
 	static void collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	static int getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge = true);
+	static std::vector<RoadVertexDesc> getVertices(RoadGraph* roads, bool onlyValidVertex = true);
 
 	// エッジ関係の関数
 	static float getTotalEdgeLength(RoadGraph* roads, RoadVertexDesc v);

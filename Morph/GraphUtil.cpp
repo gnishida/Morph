@@ -206,6 +206,22 @@ int GraphUtil::getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge)
 }
 
 /**
+ * 頂点リストを取得する
+ */
+std::vector<RoadVertexDesc> GraphUtil::getVertices(RoadGraph* roads, bool onlyValidVertex) {
+	std::vector<RoadVertexDesc> ret;
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (onlyValidVertex && !roads->graph[*vi]->valid) continue;
+
+		ret.push_back(*vi);
+	}
+
+	return ret;
+}
+
+/**
  * 指定した頂点から出ているエッジの長さの合計を返却する
  */
 float GraphUtil::getTotalEdgeLength(RoadGraph* roads, RoadVertexDesc v) {

@@ -29,11 +29,8 @@ void AbstractBFS::setRoad1(const char* filename) {
 
 	//GraphUtil::singlify(roads1);			// Canberraなど、singlifyしない方が良いと思われる
 	GraphUtil::simplify(roads1, 100);
-	GraphUtil::removeDeadEnd(roads1);		// やはり、deadEndを残すことにする。
+	//GraphUtil::removeDeadEnd(roads1);		// やはり、deadEndを残すことにする。
 	GraphUtil::reduce(roads1);
-
-	GraphUtil::clean(roads1);
-	GraphUtil::planarify(roads1);
 
 	// 道路のヒストグラム情報を出力
 	//GraphUtil::printStatistics(roads1);
@@ -57,11 +54,8 @@ void AbstractBFS::setRoad2(const char* filename) {
 
 	//GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 100);
-	GraphUtil::removeDeadEnd(roads2);
+	//GraphUtil::removeDeadEnd(roads2);
 	GraphUtil::reduce(roads2);
-
-	GraphUtil::clean(roads2);
-	GraphUtil::planarify(roads2);
 
 	// 道路のヒストグラム情報を出力
 	//GraphUtil::printStatistics(roads2);
