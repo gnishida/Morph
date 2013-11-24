@@ -127,7 +127,9 @@ void BFSMulti::init() {
 
 	srand(1234567);
 
-	int num = descs1.size() / 6;
+	int num = descs1.size() / 4;
+	qDebug() << "The num of seeds: " << num;
+
 	for (int i = 0; i < 1000; i++) {
 		qDebug() << i;
 
