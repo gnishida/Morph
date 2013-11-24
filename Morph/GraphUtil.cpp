@@ -420,10 +420,12 @@ void GraphUtil::movePolyLine(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_po
 /**
  * 全ての行き止まりエッジを削除する。
  */
-void GraphUtil::removeDeadEnd(RoadGraph* roads) {
-	bool removed = true;
-	while (removed) {
-		removed = false;
+bool GraphUtil::removeDeadEnd(RoadGraph* roads) {
+	bool removed = false;
+
+	bool removedOne = true;
+	while (removedOne) {
+		removedOne = false;
 		RoadVertexIter vi, vend;
 		for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
 			if (!roads->graph[*vi]->valid) continue;
@@ -438,10 +440,13 @@ void GraphUtil::removeDeadEnd(RoadGraph* roads) {
 				// 当該頂点を無効にする
 				roads->graph[*vi]->valid = false;
 
+				removedOne = true;
 				removed = true;
 			}
 		}
 	}
+
+	return removed;
 }
 
 /**
@@ -1511,7 +1516,7 @@ void GraphUtil::scaleToBBox(RoadGraph* roads, BBox& area) {
  */
 void GraphUtil::normalizeBySpring(RoadGraph* roads, BBox& area) {
 	// バネの原理を使って、各エッジの長さを均等にする
-	float step = 0.05f;
+	float step = 0.03f;
 
 	//for (int i = 0; i < 1000; i++) {
 	for (int i = 0; i < 1; i++) {
@@ -1529,7 +1534,7 @@ void GraphUtil::normalizeBySpring(RoadGraph* roads, BBox& area) {
 			for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
 				if (!roads->graph[*ei]->valid) continue;
 
-				RoadVertexDesc src = boost::source(*ei, roads->graph);
+				RoadVertexDesc src = *vi;
 				RoadVertexDesc tgt = boost::target(*ei, roads->graph);
 
 				QVector2D dir = roads->graph[tgt]->pt - roads->graph[src]->pt;
@@ -1545,18 +1550,27 @@ void GraphUtil::normalizeBySpring(RoadGraph* roads, BBox& area) {
 
 				if (hasEdge(roads, *vi, *vi2)) continue;
 
+				/*
 				QVector2D dir = roads->graph[*vi]->pt - roads->graph[*vi2]->pt;
 				float x = avg_edge_length * 1.44f - (roads->graph[*vi2]->pt - roads->graph[*vi]->pt).length();
 
 				if (x > 0.0f) {
 					force += dir.normalized() * x;
-				}
+				}*/
+
+				RoadVertexDesc src = *vi;
+				RoadVertexDesc tgt = *vi2;
+
+				QVector2D dir = roads->graph[tgt]->pt - roads->graph[src]->pt;
+				float x = (roads->graph[tgt]->pt - roads->graph[src]->pt).length() - avg_edge_length * 1.0f;
+				
+				force += dir.normalized() * x * 0.02f;	// ←　この係数は、微調整が必要。。。
 			}
 
 			// 移動後の位置が、指定された範囲内か、チェック
 			QVector2D pos = roads->graph[*vi]->pt + force * step;
 			if (area.contains(pos)) {
-				// 頂点を移動する
+				// 頂点をする
 				roads->graph[*vi]->pt = pos;
 
 				// エッジも移動する

@@ -31,7 +31,7 @@ public:
 	static void orderPolyLine(RoadGraph* roads, RoadEdgeDesc e, RoadVertexDesc src);
 	static void movePolyLine(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos);
 	static std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
-	static void removeDeadEnd(RoadGraph* roads);
+	static bool removeDeadEnd(RoadGraph* roads);
 
 	// 道路網全体に関する関数
 	static RoadGraph* copyRoads(RoadGraph* roads);
