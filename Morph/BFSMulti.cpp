@@ -127,8 +127,8 @@ void BFSMulti::init() {
 
 	srand(1234567);
 
-	int num = 3;
-	for (int i = 0; i < 200; i++) {
+	int num = descs1.size() / 6;
+	for (int i = 0; i < 1000; i++) {
 		qDebug() << i;
 
 		std::random_shuffle(descs1.begin(), descs1.end());	
@@ -165,7 +165,7 @@ void BFSMulti::init() {
 		findCorrespondence(temp1, &forest1, temp2, &forest2, map1, map2);
 
 		// 非類似度を計算
-		float unsimilarity = GraphUtil::computeUnsimilarity(temp1, map1, temp2, map2);
+		float unsimilarity = GraphUtil::computeUnsimilarity(temp1, map1, temp2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
 
 		// 非類似度が最小なら、ベストマッチングとして更新
 		if (unsimilarity < min_unsimilarity) {

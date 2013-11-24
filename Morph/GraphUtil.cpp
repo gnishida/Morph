@@ -1853,7 +1853,7 @@ float GraphUtil::computeMinUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, 
 		*/
 
 		// 与えられたマッピングについて、非類似度を計算する
-		float diff = computeUnsimilarity(roads1, map1, roads2, map2);
+		float diff = computeUnsimilarity(roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
 		if (diff < min_diff) {
 			min_diff = diff;
 			best_map1 = map1;
@@ -1869,15 +1869,14 @@ float GraphUtil::computeMinUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, 
 /**
  * 対応する頂点が与えられている時に、２つの道路網のトポロジーの違いを数値化して返却する。
  * トポロジーの違いなので、座標は一切関係ない。隣接ノードとの接続性のみを考慮する。
+ *
+ * @param w_connectivity		対応するエッジがない場合のペナルティ
+ * @param w_split				対応が重複している場合のペナルティ
+ * @param w_angle				エッジの角度のペナルティ
+ * @param w_distance			対応する頂点の距離に対するペナルティ
  */
-float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
+float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, float w_connectivity, float w_split, float w_angle, float w_distance) {
 	float penalty = 0.0f;
-
-	// 非類似性を数値化する上でのパラメータ
-	float w_edge = 1.0f;	// 対応するエッジがない場合のペナルティ
-	float w_split = 1.0f;	// 対応が重複している場合のペナルティ
-	float w_angle = 1.0f;	// エッジの角度のペナルティ
-	float w_vert = 1.0f;	// 対応する頂点の距離に対するペナルティ
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// コネクティビティに基づいたペナルティの計上
@@ -1897,7 +1896,7 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 
 				//if (v2 == v2b || !isConnected(roads2, v2, v2b)) { // 対応ノード間が接続されてない場合
 				if (v2 == v2b || !roads2->isConnected(v2, v2b)) {
-					penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->getWeight() * w_edge;
+					penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->getWeight() * w_connectivity;
 				} else {
 					QVector2D dir1 = roads1->graph[v1b]->getPt() - roads1->graph[*vi]->getPt();
 					QVector2D dir2 = roads2->graph[v2b]->getPt() - roads2->graph[v2]->getPt();
@@ -1911,7 +1910,7 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 
 				RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
 
-				penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->getWeight() * w_edge;
+				penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->getWeight() * w_connectivity;
 			}
 		}
 	}
@@ -1931,7 +1930,7 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 
 				//if (v1 == v1b || !isConnected(roads1, v1, v1b)) { // 対応ノード間が接続されてない場合
 				if (v1 == v1b || !roads1->isConnected(v1, v1b)) {
-					penalty += roads1->graph[*ei]->getLength() * roads2->graph[*ei]->getWeight() * w_edge;
+					penalty += roads1->graph[*ei]->getLength() * roads2->graph[*ei]->getWeight() * w_connectivity;
 				} else {
 					QVector2D dir1 = roads1->graph[v1b]->getPt() - roads1->graph[v1]->getPt();
 					QVector2D dir2 = roads2->graph[v2b]->getPt() - roads2->graph[*vi]->getPt();
@@ -1945,7 +1944,7 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 
 				RoadVertexDesc v2b = boost::target(*ei, roads2->graph);
 
-				penalty += roads2->graph[*ei]->getLength() * roads2->graph[*ei]->getWeight() * w_edge;
+				penalty += roads2->graph[*ei]->getLength() * roads2->graph[*ei]->getWeight() * w_connectivity;
 			}
 		}
 	}
@@ -1969,7 +1968,7 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 		if (map1.contains(*vi)) {
 			RoadVertexDesc v2 = map1[*vi];
 
-			penalty+= (roads1->graph[*vi]->pt - roads2->graph[v2]->pt).length() * w_vert;
+			penalty+= (roads1->graph[*vi]->pt - roads2->graph[v2]->pt).length() * w_distance;
 		} else {
 			// 対応する頂点がない場合、ペナルティはなし？
 		}
