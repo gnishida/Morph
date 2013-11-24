@@ -33,6 +33,7 @@ public:
 	static void movePolyLine(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos);
 	static std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
 	static bool removeDeadEnd(RoadGraph* roads);
+	static std::vector<QVector2D> interpolateEdges(std::vector<QVector2D>& polyLine1, std::vector<QVector2D>& polyLine2, float t);
 
 	// 道路網全体に関する関数
 	static RoadGraph* copyRoads(RoadGraph* roads);

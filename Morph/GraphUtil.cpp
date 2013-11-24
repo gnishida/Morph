@@ -466,6 +466,43 @@ bool GraphUtil::removeDeadEnd(RoadGraph* roads) {
 }
 
 /**
+ * ２つのpolyLineをinterpolateする。
+ * 本実装は、簡易方式だ。polyLineを10個にdiscrete分割し、対応する２つの点をinterpolateする。
+ */
+std::vector<QVector2D> GraphUtil::interpolateEdges(std::vector<QVector2D>& polyLine1, std::vector<QVector2D>& polyLine2, float t) {
+	std::vector<QVector2D> ret;
+
+	int n1 = polyLine1.size();
+	int n2 = polyLine2.size();
+
+	for (float index = 0.0f; index < 1.0f; index += 0.1f) {
+		// １つ目のpolyLineの、index番目の座標を計算
+		int j1 = index * (float)(n1 - 1);
+
+		float s1 = index - (float)j1 / (float)(n1 - 1);
+		float t1 = (float)(j1 + 1) / (float)(n1 - 1);
+
+		QVector2D pt1 = polyLine1[j1] * t1 / (s1 + t1) + polyLine1[j1 + 1] * s1 / (s1 + t1);
+
+		// ２つ目のpolyLineの、index番目の座標を計算
+		int j2 = index * (float)(n2 - 1);
+
+		float s2 = index - (float)j2 / (float)(n2 - 1);
+		float t2 = (float)(j2 + 1) / (float)(n2 - 1);
+
+		QVector2D pt2 = polyLine1[j2] * t2 / (s2 + t2) + polyLine1[j2 + 1] * s2 / (s2 + t2);
+
+		// interpolateする
+		ret.push_back(pt1 * t + pt2 * (1.0f - t));
+	}
+
+	// 最後の点をinterpolateして追加する
+	ret.push_back(polyLine1[polyLine1.size() - 1] * t + polyLine2[polyLine2.size() - 1] * (1.0f - t));
+
+	return ret;
+}
+
+/**
  * 道路網をコピー(deep copy)する。
  * 無効な頂点、エッジもコピーし、無効フラグをつけておく。
  * こうすることで、頂点IDなどが、全く同じグラフが出来上がるはず。
@@ -494,8 +531,18 @@ RoadGraph* GraphUtil::copyRoads(RoadGraph* roads) {
 		RoadVertexDesc new_tgt = conv[tgt];
 
 		// エッジの追加
+		RoadEdge* new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type, roads->graph[*ei]->oneWay);
+		for (int i = 0; i < roads->graph[*ei]->polyLine.size(); i++) {
+			new_e->addPoint(roads->graph[*ei]->polyLine[i]);
+		}
+		new_e->valid = roads->graph[*ei]->valid;
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(new_src, new_tgt, new_roads->graph);
+		new_roads->graph[edge_pair.first] = new_e;
+
+		/*
 		RoadEdgeDesc new_e = addEdge(new_roads, new_src, new_tgt, roads->graph[*ei]->lanes, roads->graph[*ei]->type, roads->graph[*ei]->oneWay);
 		new_roads->graph[new_e]->valid = roads->graph[*ei]->valid;
+		*/
 	}
 
 	return new_roads;
@@ -530,8 +577,16 @@ void GraphUtil::copyRoads(RoadGraph* roads1, RoadGraph* roads2) {
 		RoadVertexDesc new_tgt = conv[tgt];
 
 		// エッジの追加
-		RoadEdgeDesc new_e = addEdge(roads2, new_src, new_tgt, roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
-		roads2->graph[new_e]->valid = roads1->graph[*ei]->valid;
+		RoadEdge* new_e = new RoadEdge(roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+		for (int i = 0; i < roads1->graph[*ei]->polyLine.size(); i++) {
+			new_e->addPoint(roads1->graph[*ei]->polyLine[i]);
+		}
+		new_e->valid = roads1->graph[*ei]->valid;
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(new_src, new_tgt, roads2->graph);
+		roads2->graph[edge_pair.first] = new_e;
+
+		//RoadEdgeDesc new_e = addEdge(roads2, new_src, new_tgt, roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+		//roads2->graph[new_e]->valid = roads1->graph[*ei]->valid;
 	}
 }
 

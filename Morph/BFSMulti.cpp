@@ -49,8 +49,19 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		RoadVertexDesc u2 = correspondence[u1];
 
 		// エッジを作成
-		GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+		/*
+		RoadEdge* new_e = new RoadEdge(roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+		if (GraphUtil::hasEdge(roads2, conv[v1], conv[u1]) && roads2->graph[GraphUtil::getEdge(roads2, conv[v1], conv[u1])]->polyLine.size() > 2 && roads1->graph[*ei]->polyLine.size() > 2) {
+			new_e->polyLine = GraphUtil::interpolateEdges(roads1->graph[*ei]->polyLine, roads2->graph[GraphUtil::getEdge(roads2, conv[v1], conv[u1])]->polyLine, t);
+		} else {
+			new_e->addPoint(new_roads->graph[conv[v1]]->getPt());
+			new_e->addPoint(new_roads->graph[conv[u1]]->getPt());
+		}
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(conv[v1], conv[u1], new_roads->graph);
+		new_roads->graph[edge_pair.first] = new_e;
+		*/
 
+		GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
 	}
 
 	/*
@@ -130,7 +141,7 @@ void BFSMulti::init() {
 	int num = sqrtf(descs1.size());
 	qDebug() << "The num of seeds: " << num;
 
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < 10000; i++) {
 		qDebug() << i;
 
 		std::random_shuffle(descs1.begin(), descs1.end());	
@@ -142,16 +153,6 @@ void BFSMulti::init() {
 		for (int j = 0; j < num; j++) {
 			seeds1.push_back(descs1[j]);
 			seeds2.push_back(descs2[j]);
-		}
-
-		QList<RoadVertexDesc> seeds1_temp;
-		QList<RoadVertexDesc> seeds2_temp;
-		for (int j = 0; j < num; j++) {
-			seeds1_temp.push_back(seeds1[j]);
-			seeds2_temp.push_back(seeds2[j]);
-		}
-		if (seeds1_temp.contains(6) && seeds1_temp.contains(13) && seeds1_temp.contains(17) && seeds2_temp.contains(6) && seeds2_temp.contains(19) && seeds2_temp.contains(21)) {
-			qDebug() << "Good seed is chosen!!!!";
 		}
 
 		RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
