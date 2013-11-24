@@ -79,6 +79,8 @@ void BFSMulti::init() {
 	float min_unsimilarity = std::numeric_limits<float>::max();
 	QMap<RoadVertexDesc, RoadVertexDesc> min_map1;
 	QMap<RoadVertexDesc, RoadVertexDesc> min_map2;
+	RoadGraph* min_roads1 = NULL;
+	RoadGraph* min_roads2 = NULL;
 
 	srand(1234567);
 
@@ -95,27 +97,39 @@ void BFSMulti::init() {
 			seeds2.push_back(descs2[j]);
 		}
 
+		RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
+		RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
+
 		// シードを使ってフォレストを構築
-		BFSForest forest1(roads1, seeds1);
-		BFSForest forest2(roads2, seeds2);
+		BFSForest forest1(temp1, seeds1);
+		BFSForest forest2(temp2, seeds2);
 
 		// フォレストを使って、マッチングを探す
 		QMap<RoadVertexDesc, RoadVertexDesc> map1;
 		QMap<RoadVertexDesc, RoadVertexDesc> map2;
-		findCorrespondence(roads1, &forest1, roads2, &forest2, map1, map2);
+		findCorrespondence(temp1, &forest1, temp2, &forest2, map1, map2);
 
 		// 非類似度を計算
-		float unsimilarity = GraphUtil::computeUnsimilarity(roads1, map1, roads2, map2);
+		float unsimilarity = GraphUtil::computeUnsimilarity(temp1, map1, temp2, map2);
 
 		// 非類似度が最小なら、ベストマッチングとして更新
 		if (unsimilarity < min_unsimilarity) {
 			min_unsimilarity = unsimilarity;
 			min_map1 = map1;
 			min_map2 = map2;
+			min_roads1 = GraphUtil::copyRoads(temp1);
+			min_roads2 = GraphUtil::copyRoads(temp2);
 		}
+
+		delete temp1;
+		delete temp2;
 	}
 
 	correspondence = min_map1;
+	roads1 = GraphUtil::copyRoads(min_roads1);
+	roads2 = GraphUtil::copyRoads(min_roads2);
+	delete min_roads1;
+	delete min_roads2;
 
 	// シーケンスを生成
 	clearSequence();
@@ -134,7 +148,8 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 	std::list<RoadVertexDesc> seeds2;
 
 	for (int i = 0; i < forest1->getRoots().size(); i++) {
-		correspondence[forest1->getRoots()[i]] = forest2->getRoots()[i];
+		map1[forest1->getRoots()[i]] = forest2->getRoots()[i];
+		map2[forest2->getRoots()[i]] = forest1->getRoots()[i];
 
 		seeds1.push_back(forest1->getRoots()[i]);
 		seeds2.push_back(forest2->getRoots()[i]);

@@ -69,7 +69,6 @@ void BFSForest::buildForest() {
 			RoadVertexDesc child = nodes[i];
 
 			if (visited.contains(child)) { // 訪問済みの場合
-				/*
 				RoadEdgeDesc orig_e_desc = GraphUtil::getEdge(roads, parent, child);
 
 				// もともとのエッジを無効にする
@@ -82,11 +81,9 @@ void BFSForest::buildForest() {
 				GraphUtil::addEdge(roads, parent, child2, roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type, roads->graph[orig_e_desc]->oneWay);
 
 				children.push_back(child2);
-				*/
 
-				// 実は分割しない方が良いかも。。。
-				// ということで、分割しない場合を実装してみた。11/24
-				children.push_back(child);
+				// 分割しない案
+				//children.push_back(child);
 
 			} else { // 未訪問の場合
 				visited[child] = true;
