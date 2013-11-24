@@ -2050,8 +2050,9 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 
 			if (diff < min_diff) {
 				min_diff = diff;
+				map.clear();
 				for (int i = 0; i < children1.size(); i++) {
-					map[children1[i]] = children2[permutation[i]];
+					map[children1[i]] = permutation[i];
 				}
 			}
 
@@ -2073,6 +2074,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 
 			if (diff < min_diff) {
 				min_diff = diff;
+				map.clear();
 				for (int i = 0; i < children2.size(); i++) {
 					map[permutation[i]] = children2[i];
 				}
