@@ -1290,6 +1290,38 @@ void GraphUtil::planarify(RoadGraph* roads) {
 }
 
 /**
+ * 道路網をスケルトン化する。
+ * 具体的には、オリジナル道路網で、degreeが1の頂点と、その隣接エッジを無効にする。
+ * 注意：頂点を削除した結果、新たにdegreeが1となる頂点は、その対象ではない。
+ */
+void GraphUtil::skeltonize(RoadGraph* roads) {
+	QList<RoadVertexDesc> list;
+
+	// 削除対象となる頂点リストを取得
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
+		if (getDegree(roads, *vi) == 1) {
+			list.push_back(*vi);
+		}
+	}
+
+	for (int i = 0; i < list.size(); i++) {
+		// 隣接エッジを無効にする
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(list[i], roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
+			roads->graph[*ei]->valid = false;
+		}
+
+		// 頂点を無効にする
+		roads->graph[list[i]]->valid = false;
+	}
+}
+
+/**
  * 道路網をtheta [rad] 回転する
  *
  * 無効の頂点、エッジも、とりあえず回転しておく。
@@ -1845,6 +1877,7 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 	float w_edge = 1.0f;	// 対応するエッジがない場合のペナルティ
 	float w_split = 1.0f;	// 対応が重複している場合のペナルティ
 	float w_angle = 1.0f;	// エッジの角度のペナルティ
+	float w_vert = 1.0f;	// 対応する頂点の距離に対するペナルティ
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// コネクティビティに基づいたペナルティの計上
@@ -1925,6 +1958,20 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 			penalty += w_split;
 		} else {
 			used.insert(it.value());
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	// 頂点に距離に関するペナルティの計上
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		if (!roads1->graph[*vi]->valid) continue;
+
+		if (map1.contains(*vi)) {
+			RoadVertexDesc v2 = map1[*vi];
+
+			penalty+= (roads1->graph[*vi]->pt - roads2->graph[v2]->pt).length() * w_vert;
+		} else {
+			// 対応する頂点がない場合、ペナルティはなし？
 		}
 	}
 

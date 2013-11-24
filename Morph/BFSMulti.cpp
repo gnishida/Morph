@@ -20,8 +20,40 @@ RoadGraph* BFSMulti::interpolate(float t) {
 	if (t == 1.0f) return GraphUtil::copyRoads(roads1);
 	if (t == 0.0f) return GraphUtil::copyRoads(roads2);
 
-	RoadGraph* roads = new RoadGraph();
+	RoadGraph* new_roads = new RoadGraph();
 
+	QMap<RoadVertexDesc, RoadVertexDesc> conv;
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		if (!roads1->graph[*vi]->valid) continue;
+
+		RoadVertexDesc v2 = correspondence[*vi];
+
+		// 頂点を作成
+		RoadVertex* new_v = new RoadVertex(roads1->graph[*vi]->getPt() * t + roads2->graph[v2]->getPt() * (1 - t));
+		RoadVertexDesc new_v_desc = boost::add_vertex(new_roads->graph);
+		new_roads->graph[new_v_desc] = new_v;
+
+		conv[*vi] = new_v_desc;
+	}
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
+		if (!roads1->graph[*ei]->valid) continue;
+
+		RoadVertexDesc v1 = boost::source(*ei, roads1->graph);
+		RoadVertexDesc u1 = boost::target(*ei, roads1->graph);
+
+		RoadVertexDesc v2 = correspondence[v1];
+		RoadVertexDesc u2 = correspondence[u1];
+
+		// エッジを作成
+		GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+
+	}
+
+	/*
 	QMap<RoadVertexDesc, QMap<RoadVertexDesc, RoadVertexDesc> > conv;
 
 	std::list<RoadVertexDesc> seeds;
@@ -67,14 +99,25 @@ RoadGraph* BFSMulti::interpolate(float t) {
 			seeds_new.push_back(new_v_desc);
 		}
 	}
+	*/
 
-	return roads;
+	return new_roads;
 }
 
 void BFSMulti::init() {
-	// 頂点リストを取得
-	std::vector<RoadVertexDesc> descs1 = GraphUtil::getVertices(roads1);
-	std::vector<RoadVertexDesc> descs2 = GraphUtil::getVertices(roads2);
+	// スケルトンを作成
+	RoadGraph* skelton1 = GraphUtil::copyRoads(roads1);
+	RoadGraph* skelton2 = GraphUtil::copyRoads(roads2);
+	GraphUtil::skeltonize(skelton1);
+	GraphUtil::skeltonize(skelton2);
+
+	// スケルトンから頂点リストを取得（シード候補）
+	std::vector<RoadVertexDesc> descs1 = GraphUtil::getVertices(skelton1);
+	std::vector<RoadVertexDesc> descs2 = GraphUtil::getVertices(skelton2);
+
+	// もうスケルトンは不要なので削除
+	delete skelton1;
+	delete skelton2;
 	
 	float min_unsimilarity = std::numeric_limits<float>::max();
 	QMap<RoadVertexDesc, RoadVertexDesc> min_map1;
@@ -84,8 +127,10 @@ void BFSMulti::init() {
 
 	srand(1234567);
 
-	int num = 2;
-	for (int i = 0; i < 1000; i++) {
+	int num = 3;
+	for (int i = 0; i < 200; i++) {
+		qDebug() << i;
+
 		std::random_shuffle(descs1.begin(), descs1.end());	
 		std::random_shuffle(descs2.begin(), descs2.end());
 
@@ -95,6 +140,16 @@ void BFSMulti::init() {
 		for (int j = 0; j < num; j++) {
 			seeds1.push_back(descs1[j]);
 			seeds2.push_back(descs2[j]);
+		}
+
+		QList<RoadVertexDesc> seeds1_temp;
+		QList<RoadVertexDesc> seeds2_temp;
+		for (int j = 0; j < num; j++) {
+			seeds1_temp[j] = seeds1[j];
+			seeds2_temp[j] = seeds2[j];
+		}
+		if (seeds1_temp.contains(6) && seeds1_temp.contains(13) && seeds1_temp.contains(17) && seeds2_temp.contains(6) && seeds2_temp.contains(19) && seeds2_temp.contains(21)) {
+			qDebug() << "Good seed is chosen!!!!";
 		}
 
 		RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
@@ -164,22 +219,17 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 		// どちらのノードにも、子ノードがない場合は、スキップ
 		if (forest1->getChildren(parent1).size() == 0 && forest2->getChildren(parent2).size() == 0) continue;
 
-		QMap<RoadVertexDesc, bool> paired1;
-		QMap<RoadVertexDesc, bool> paired2;
-
 		//float theta = findBestAffineTransofrmation(roads1, parent1, tree1, roads2, parent2, tree2);
 		float theta = 0.0f;
 
 		while (true) {
 			RoadVertexDesc child1, child2;
-			if (!findBestPairByDirection(theta, roads1, parent1, forest1, paired1, roads2, parent2, forest2, paired2, false, child1, child2)) break;
+			if (!findBestPairByDirection(theta, roads1, parent1, forest1, map1, roads2, parent2, forest2, map2, false, child1, child2)) break;
 
 			// マッチングを更新
 			map1[child1] = child2;
 			map2[child2] = child1;
 
-			paired1[child1] = true;
-			paired2[child2] = true;
 			seeds1.push_back(child1);
 			seeds2.push_back(child2);
 		}
@@ -191,7 +241,7 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
  * まずは、ペアになっていないノードから候補を探す。
  * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
  */
-bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVertexDesc parent1, BFSForest* forest1, QMap<RoadVertexDesc, bool> paired1, RoadGraph* roads2, RoadVertexDesc parent2, BFSForest* forest2, QMap<RoadVertexDesc, bool> paired2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVertexDesc parent1, BFSForest* forest1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, RoadVertexDesc parent2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
 	float min_angle = std::numeric_limits<float>::max();
 	int min_id1;
 	int min_id2;
@@ -200,25 +250,15 @@ bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVerte
 	std::vector<RoadVertexDesc> children1 = forest1->getChildren(parent1);
 	std::vector<RoadVertexDesc> children2 = forest2->getChildren(parent2);
 
-	// 手動で（テンポラリ）
-	if (parent1 == 3 && parent2 == 25) {
-		if (!paired1[4] && !paired2[3]) {
-			child1 = 4;
-			child2 = 3;
-
-			return true;
-		}
-	}
-
 	// エッジの角度が最もちかいペアをマッチさせる
 	for (int i = 0; i < children1.size(); i++) {
-		if (paired1.contains(children1[i])) continue;
+		if (map1.contains(children1[i])) continue;
 		if (!roads1->graph[children1[i]]->valid) continue;
 
 		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
 		float theta1 = atan2f(dir1.y(), dir1.x()) + theta;
 		for (int j = 0; j < children2.size(); j++) {
-			if (paired2.contains(children2[j])) continue;
+			if (map2.contains(children2[j])) continue;
 			if (!roads2->graph[children2[j]]->valid) continue;
 
 			QVector2D dir2 = roads2->graph[children2[j]]->getPt() - roads2->graph[parent2]->getPt();
@@ -245,7 +285,7 @@ bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVerte
 
 	// ベストペアが見つからない、つまり、一方のリストが、全てペアになっている場合
 	for (int i = 0; i < children1.size(); i++) {
-		if (paired1.contains(children1[i])) continue;
+		if (map1.contains(children1[i])) continue;
 		if (!roads1->graph[children1[i]]->valid) continue;
 
 		// 相手の親ノードをコピーしてマッチさせる
@@ -267,7 +307,7 @@ bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVerte
 	}
 
 	for (int i = 0; i < children2.size(); i++) {
-		if (paired2.contains(children2[i])) continue;
+		if (map2.contains(children2[i])) continue;
 		if (!roads2->graph[children2[i]]->valid) continue;
 
 		// 相手の親ノードをコピーしてマッチさせる

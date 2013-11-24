@@ -63,6 +63,7 @@ public:
 	static void normalize(RoadGraph* roads);
 	static void singlify(RoadGraph* roads);
 	static void planarify(RoadGraph* roads);
+	static void skeltonize(RoadGraph* roads);
 	static void rotate(RoadGraph* roads, float theta);
 	static void translate(RoadGraph* roads, QVector2D offset);
 	static RoadGraph* convertToGridNetwork(RoadGraph* roads, RoadVertexDesc start);
