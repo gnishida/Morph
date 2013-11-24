@@ -145,8 +145,8 @@ void BFSMulti::init() {
 		QList<RoadVertexDesc> seeds1_temp;
 		QList<RoadVertexDesc> seeds2_temp;
 		for (int j = 0; j < num; j++) {
-			seeds1_temp[j] = seeds1[j];
-			seeds2_temp[j] = seeds2[j];
+			seeds1_temp.push_back(seeds1[j]);
+			seeds2_temp.push_back(seeds2[j]);
 		}
 		if (seeds1_temp.contains(6) && seeds1_temp.contains(13) && seeds1_temp.contains(17) && seeds2_temp.contains(6) && seeds2_temp.contains(19) && seeds2_temp.contains(21)) {
 			qDebug() << "Good seed is chosen!!!!";
