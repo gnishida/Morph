@@ -29,36 +29,20 @@ void AbstractBFS::setRoad1(const char* filename) {
 
 	//GraphUtil::singlify(roads1);			// Canberraなど、singlifyしない方が良いと思われる
 	GraphUtil::simplify(roads1, 100);
-	//GraphUtil::removeDeadEnd(roads1);		// やはり、deadEndを残すことにする。
+	GraphUtil::removeDeadEnd(roads1);		// やはり、deadEndを残すことにする。
 	GraphUtil::reduce(roads1);
 
 	GraphUtil::clean(roads1);
 	GraphUtil::planarify(roads1);
 
 	// 道路のヒストグラム情報を出力
-	GraphUtil::printStatistics(roads1);
+	//GraphUtil::printStatistics(roads1);
 
 	if (roads2 != NULL) {
 		init();
 	} else {
-		// バネの原理で、normalizeする
-		BBox area;
-		area.addPoint(QVector2D(-5000, -5000));
-		area.addPoint(QVector2D(5000, 5000));
-
-		clearSequence();
-		for (int i = 0; i < 300; i++) {
-			sequence.push_back(GraphUtil::copyRoads(roads1));
-
-			GraphUtil::normalizeBySpring(roads1, area);
-			//GraphUtil::getBoudingBox(roads1, -M_PI / 4.0f, M_PI / 4.0f);
-			GraphUtil::scaleToBBox(roads1, area);
-		}
-
-		/*
 		clearSequence();
 		sequence.push_back(GraphUtil::copyRoads(roads1));
-		*/
 	}
 }
 
@@ -73,7 +57,7 @@ void AbstractBFS::setRoad2(const char* filename) {
 
 	//GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 100);
-	//GraphUtil::removeDeadEnd(roads2);
+	GraphUtil::removeDeadEnd(roads2);
 	GraphUtil::reduce(roads2);
 
 	GraphUtil::clean(roads2);
@@ -84,6 +68,9 @@ void AbstractBFS::setRoad2(const char* filename) {
 
 	if (roads1 != NULL) {
 		init();
+	} else {
+		clearSequence();
+		sequence.push_back(GraphUtil::copyRoads(roads2));
 	}
 }
 
@@ -784,35 +771,35 @@ void AbstractBFS::createRoads5() {
 	RoadVertexDesc v27_desc = boost::add_vertex(roads1->graph);
 	roads1->graph[v27_desc] = v27;
 
-	GraphUtil::addEdge(roads1, v0_desc, v1_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v1_desc, v3_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v1_desc, v6_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v2_desc, v3_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v3_desc, v4_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v3_desc, v5_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v6_desc, v8_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v6_desc, v10_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v6_desc, v13_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v7_desc, v8_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v8_desc, v9_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v8_desc, v27_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v10_desc, v11_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v10_desc, v14_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v11_desc, v12_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v11_desc, v14_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v13_desc, v16_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v13_desc, v25_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v14_desc, v15_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v14_desc, v16_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v16_desc, v17_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v17_desc, v18_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v17_desc, v19_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v19_desc, v20_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v19_desc, v21_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v22_desc, v23_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v22_desc, v24_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v22_desc, v25_desc, 1, 1, false);
-	GraphUtil::addEdge(roads1, v25_desc, v26_desc, 1, 1, false);
+	GraphUtil::addEdge(roads1, v0_desc, v1_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v1_desc, v3_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v1_desc, v6_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v2_desc, v3_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v3_desc, v4_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v3_desc, v5_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v6_desc, v8_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v6_desc, v10_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v6_desc, v13_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v7_desc, v8_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v8_desc, v9_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v8_desc, v27_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v10_desc, v11_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v10_desc, v14_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v11_desc, v12_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v11_desc, v14_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v13_desc, v16_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v13_desc, v25_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v14_desc, v15_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v14_desc, v16_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v16_desc, v17_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v17_desc, v18_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v17_desc, v19_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v19_desc, v20_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v19_desc, v21_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v22_desc, v23_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v22_desc, v24_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v22_desc, v25_desc, 2, 2, false);
+	GraphUtil::addEdge(roads1, v25_desc, v26_desc, 2, 2, false);
 }
 
 void AbstractBFS::createRoads6() {
@@ -1006,54 +993,54 @@ void AbstractBFS::createRoads6() {
 	RoadVertexDesc v46_desc = boost::add_vertex(roads2->graph);
 	roads2->graph[v46_desc] = v46;
 
-	GraphUtil::addEdge(roads2, v0_desc, v1_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v1_desc, v3_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v1_desc, v46_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v2_desc, v3_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v3_desc, v5_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v4_desc, v5_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v5_desc, v6_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v6_desc, v8_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v6_desc, v13_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v7_desc, v8_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v8_desc, v10_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v9_desc, v10_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v10_desc, v11_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v10_desc, v14_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v11_desc, v12_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v11_desc, v15_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v13_desc, v14_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v13_desc, v19_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v14_desc, v15_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v14_desc, v20_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v15_desc, v17_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v16_desc, v17_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v17_desc, v18_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v17_desc, v21_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v19_desc, v20_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v19_desc, v23_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v20_desc, v21_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v20_desc, v35_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v21_desc, v22_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v21_desc, v36_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v23_desc, v24_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v23_desc, v25_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v25_desc, v26_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v25_desc, v27_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v27_desc, v28_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v28_desc, v29_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v28_desc, v34_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v29_desc, v30_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v29_desc, v31_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v29_desc, v32_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v32_desc, v33_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v32_desc, v45_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v36_desc, v37_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v36_desc, v38_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v38_desc, v39_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v38_desc, v40_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v40_desc, v41_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v40_desc, v42_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v42_desc, v43_desc, 1, 1, false);
-	GraphUtil::addEdge(roads2, v42_desc, v44_desc, 1, 1, false);
+	GraphUtil::addEdge(roads2, v0_desc, v1_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v1_desc, v3_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v1_desc, v46_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v2_desc, v3_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v3_desc, v5_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v4_desc, v5_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v5_desc, v6_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v6_desc, v8_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v6_desc, v13_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v7_desc, v8_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v8_desc, v10_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v9_desc, v10_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v10_desc, v11_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v10_desc, v14_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v11_desc, v12_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v11_desc, v15_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v13_desc, v14_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v13_desc, v19_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v14_desc, v15_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v14_desc, v20_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v15_desc, v17_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v16_desc, v17_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v17_desc, v18_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v17_desc, v21_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v19_desc, v20_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v19_desc, v23_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v20_desc, v21_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v20_desc, v35_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v21_desc, v22_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v21_desc, v36_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v23_desc, v24_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v23_desc, v25_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v25_desc, v26_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v25_desc, v27_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v27_desc, v28_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v28_desc, v29_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v28_desc, v34_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v29_desc, v30_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v29_desc, v31_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v29_desc, v32_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v32_desc, v33_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v32_desc, v45_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v36_desc, v37_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v36_desc, v38_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v38_desc, v39_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v38_desc, v40_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v40_desc, v41_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v40_desc, v42_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v42_desc, v43_desc, 2, 2, false);
+	GraphUtil::addEdge(roads2, v42_desc, v44_desc, 2, 2, false);
 }

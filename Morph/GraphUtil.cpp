@@ -1030,20 +1030,21 @@ bool GraphUtil::reduce(RoadGraph* roads, RoadVertexDesc desc) {
 	//if (edges[0]->getType() != edges[1]->getType()) return false;
 	//if (edges[0]->lanes != edges[1]->lanes) return false;
 
-	if (!hasEdge(roads, vd[0], vd[1])) {
-		RoadEdge* new_edge = new RoadEdge(edges[0]->oneWay, edges[0]->lanes, edges[0]->type);
-		orderPolyLine(roads, ed[0], vd[0]);
-		orderPolyLine(roads, ed[1], desc);
+	// 三角形の形をしている場合、degreeが2でもreduceしない
+	if (hasEdge(roads, vd[0], vd[1])) return false;
+
+	RoadEdge* new_edge = new RoadEdge(edges[0]->oneWay, edges[0]->lanes, edges[0]->type);
+	orderPolyLine(roads, ed[0], vd[0]);
+	orderPolyLine(roads, ed[1], desc);
 	
-		for (int i = 0; i < edges[0]->getPolyLine().size(); i++) {
-			new_edge->addPoint(edges[0]->getPolyLine()[i]);
-		}
-		for (int i = 1; i < edges[1]->getPolyLine().size(); i++) {
-			new_edge->addPoint(edges[1]->getPolyLine()[i]);
-		}
-		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(vd[0], vd[1], roads->graph);
-		roads->graph[edge_pair.first] = new_edge;
+	for (int i = 0; i < edges[0]->getPolyLine().size(); i++) {
+		new_edge->addPoint(edges[0]->getPolyLine()[i]);
 	}
+	for (int i = 1; i < edges[1]->getPolyLine().size(); i++) {
+		new_edge->addPoint(edges[1]->getPolyLine()[i]);
+	}
+	std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(vd[0], vd[1], roads->graph);
+	roads->graph[edge_pair.first] = new_edge;
 
 	// 古いエッジを無効にする
 	roads->graph[ed[0]]->valid = false;
@@ -1294,6 +1295,27 @@ void GraphUtil::rotate(RoadGraph* roads, float theta) {
 			QVector2D pos = roads->graph[*ei]->polyLine[i];
 			roads->graph[*ei]->polyLine[i].setX(cosf(theta) * pos.x() - sinf(theta) * pos.y());
 			roads->graph[*ei]->polyLine[i].setY(sinf(theta) * pos.x() + cosf(theta) * pos.y());
+		}
+	}
+}
+
+/**
+ * 道路網を移動する
+ *
+ * 無効の頂点、エッジも、とりあえず移動しておく。
+ */
+void GraphUtil::translate(RoadGraph* roads, QVector2D offset) {
+	// 頂点を移動する
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		roads->graph[*vi]->pt += offset;
+	}
+
+	// エッジを移動する
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		for (int i = 0; i < roads->graph[*ei]->polyLine.size(); i++) {
+			roads->graph[*ei]->polyLine[i] += offset;
 		}
 	}
 }
@@ -1812,11 +1834,15 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 	// コネクティビティに基づいたペナルティの計上
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		if (!roads1->graph[*vi]->valid) continue;
+
 		if (map1.contains(*vi)) {
 			RoadVertexDesc v2 = map1[*vi];
 
 			RoadOutEdgeIter ei, eend;
 			for (boost::tie(ei, eend) = boost::out_edges(*vi, roads1->graph); ei != eend; ++ei) {
+				if (!roads1->graph[*ei]->valid) continue;
+
 				RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
 				RoadVertexDesc v2b = map1[v1b];
 
@@ -1832,6 +1858,8 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 		} else { // 当該ノードに対応するノードがない場合は、全てのエッジをペナルティとして計上する
 			RoadOutEdgeIter ei, eend;
 			for (boost::tie(ei, eend) = boost::out_edges(*vi, roads1->graph); ei != eend; ++ei) {
+				if (!roads1->graph[*ei]->valid) continue;
+
 				RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
 
 				penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->getWeight() * w_edge;
@@ -1840,11 +1868,15 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 	}
 
 	for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
+		if (!roads2->graph[*vi]->valid) continue;
+
 		if (map2.contains(*vi)) {
 			RoadVertexDesc v1 = map2[*vi];
 
 			RoadOutEdgeIter ei, eend;
 			for (boost::tie(ei, eend) = boost::out_edges(*vi, roads2->graph); ei != eend; ++ei) {
+				if (!roads2->graph[*ei]->valid) continue;
+
 				RoadVertexDesc v2b = boost::target(*ei, roads2->graph);
 				RoadVertexDesc v1b = map2[v2b];
 
@@ -1860,6 +1892,8 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 		} else { // 当該ノードに対応するノードがない場合は、全てのエッジをペナルティとして計上する
 			RoadOutEdgeIter ei, eend;
 			for (boost::tie(ei, eend) = boost::out_edges(*vi, roads2->graph); ei != eend; ++ei) {
+				if (!roads2->graph[*ei]->valid) continue;
+
 				RoadVertexDesc v2b = boost::target(*ei, roads2->graph);
 
 				penalty += roads2->graph[*ei]->getLength() * roads2->graph[*ei]->getWeight() * w_edge;
@@ -1879,6 +1913,53 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 	}
 
 	return penalty;
+}
+
+/**
+ * NearestNeighborに基づいて、２つの道路網のマッチングを行う。
+ */
+void GraphUtil::findCorrespondenceByNearestNeighbor(RoadGraph* roads1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
+	if (getNumVertices(roads1) < getNumVertices(roads2)) {
+		// 道路網１の各頂点に対して、対応する道路網２の頂点を探す
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+			if (!roads1->graph[*vi]->valid) continue;
+
+			RoadVertexDesc v2 = findNearestVertex(roads2, roads1->graph[*vi]->pt);
+			map1[*vi] = v2;
+			map2[v2] = *vi;
+		}
+
+		// 道路網２の各頂点に対して、まだペアがない場合は、対応する道路網１の頂点を探す
+		for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
+			if (!roads2->graph[*vi]->valid) continue;
+
+			if (map2.contains(*vi)) continue;
+
+			RoadVertexDesc v1 = findNearestVertex(roads1, roads2->graph[*vi]->pt);
+			map2[*vi] = v1;
+		}
+	} else {
+		// 道路網２の各頂点に対して、対応する道路網１の頂点を探す
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = boost::vertices(roads2->graph); vi != vend; ++vi) {
+			if (!roads2->graph[*vi]->valid) continue;
+
+			RoadVertexDesc v1 = findNearestVertex(roads1, roads2->graph[*vi]->pt);
+			map2[*vi] = v1;
+			map1[v1] = *vi;
+		}
+
+		// 道路網１の各頂点に対して、まだペアがない場合は、対応する道路網２の頂点を探す
+		for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+			if (!roads1->graph[*vi]->valid) continue;
+
+			if (map1.contains(*vi)) continue;
+
+			RoadVertexDesc v2 = findNearestVertex(roads2, roads1->graph[*vi]->pt);
+			map1[*vi] = v2;
+		}
+	}
 }
 
 /**

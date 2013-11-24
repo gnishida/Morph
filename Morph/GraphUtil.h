@@ -63,6 +63,7 @@ public:
 	static void singlify(RoadGraph* roads);
 	static void planarify(RoadGraph* roads);
 	static void rotate(RoadGraph* roads, float theta);
+	static void translate(RoadGraph* roads, QVector2D offset);
 	static RoadGraph* convertToGridNetwork(RoadGraph* roads, RoadVertexDesc start);
 	static RoadGraph* approximateToGridNetwork(RoadGraph* roads, float cellLength, QVector2D orig);
 	static void scaleToBBox(RoadGraph* roads, BBox& area);
@@ -78,6 +79,7 @@ public:
 	// 道路網の比較関数
 	static float computeMinUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2);
 	static float computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2);
+	static void findCorrespondenceByNearestNeighbor(RoadGraph* roads1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2);
 
 	static bool nextSequence(std::vector<int>& seq, int N);
 
