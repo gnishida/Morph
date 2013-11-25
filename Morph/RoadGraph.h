@@ -60,7 +60,9 @@ public:
 	void computeEdgeWeights();
 
 	std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
-	bool lessWeight(const RoadEdgeDesc& left, const RoadEdgeDesc& right);
+	//bool lessWeight(const RoadEdgeDesc& left, const RoadEdgeDesc& right);
+
+	QList<RoadEdgeDesc> getOrderedEdgesByImportance();
 
 };
 
@@ -70,6 +72,16 @@ private:
 
 public:
 	LessWeight(RoadGraph* roads);
+
+	bool operator()(const RoadEdgeDesc& left, const RoadEdgeDesc& right) const;
+};
+
+class MoreImportantEdge {
+private:
+	RoadGraph* roads;
+
+public:
+	MoreImportantEdge(RoadGraph* roads);
 
 	bool operator()(const RoadEdgeDesc& left, const RoadEdgeDesc& right) const;
 };

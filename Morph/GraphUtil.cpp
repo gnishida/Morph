@@ -511,6 +511,61 @@ std::vector<QVector2D> GraphUtil::interpolateEdges(std::vector<QVector2D>& polyL
 }
 
 /**
+ * 道路網のエッジのImportanceを計算し、エッジのプロパティとして格納する。
+ * 計算式：MAX( (w_length * length + w_valence * (valence1 + valence2) + w_lanes * lanes) / K, K / initial distance)
+ */
+void GraphUtil::computeImportanceOfEdges(RoadGraph* roads, float w_length, float w_valence, float w_lanes) {
+	float max_importance = 0.0f;
+	int count = 0;
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads->graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+		roads->graph[*ei]->importance = roads->graph[*ei]->getLength() * w_length + (getDegree(roads, src) + getDegree(roads, tgt)) * w_valence + roads->graph[*ei]->lanes * w_lanes;
+
+		if (roads->graph[*ei]->importance > max_importance) {
+			max_importance = roads->graph[*ei]->importance;
+		}
+	}
+
+	// 最大値でnormalizeする
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		roads->graph[*ei]->importance /= max_importance;
+	}
+}
+
+/**
+ * 道路網の２つのエッジの非類似性を計算して返却する。
+ * 事前に、computeImportanceOfEdges()関数を使って、Importanceを計算しておくこと。
+ *
+ * 計算式：Max(２つの頂点の距離の和 + Degreeの差) + レーン数の差
+ */
+float GraphUtil::computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2, float w_distance, float w_degree, float w_lanes) {
+	RoadVertexDesc src1 = boost::source(e1, roads1->graph);
+	RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
+
+	RoadVertexDesc src2 = boost::source(e2, roads2->graph);
+	RoadVertexDesc tgt2 = boost::target(e2, roads2->graph);
+
+	// src1とsrc2、tgt1とtgt2が対応していると仮定して計算
+	float dist1 = (roads1->graph[src1]->pt - roads2->graph[src2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[tgt2]->pt).length();
+	float degree1 = abs(getDegree(roads1, src1) - getDegree(roads2, src2)) + abs(getDegree(roads1, tgt1) - getDegree(roads2, tgt2));
+	float lanes = abs((double)(roads1->graph[e1]->lanes - roads2->graph[e2]->lanes));
+
+	// src1とtgt2、tgt1とsrc2が対応していると仮定して計算
+	float dist2 = (roads1->graph[src1]->pt - roads2->graph[tgt2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[src2]->pt).length();
+	float degree2 = abs(getDegree(roads1, src1) - getDegree(roads2, tgt2)) + abs(getDegree(roads1, tgt1) - getDegree(roads2, src2));
+
+	return std::max(dist1, dist2) * w_distance + std::max(degree1, degree2) * w_degree + lanes * w_lanes;
+}
+
+/**
  * 道路網をコピー(deep copy)する。
  * 無効な頂点、エッジもコピーし、無効フラグをつけておく。
  * こうすることで、頂点IDなどが、全く同じグラフが出来上がるはず。

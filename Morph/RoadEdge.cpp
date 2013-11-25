@@ -7,6 +7,7 @@ RoadEdge::RoadEdge(unsigned int lanes, unsigned int type, bool oneWay) {
 	this->weight = 0.0f;
 	this->valid = true;
 	this->orig = false;
+	this->importance = 0.0f;
 }
 
 RoadEdge::~RoadEdge() {

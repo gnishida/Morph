@@ -22,5 +22,7 @@ public:
 	void init();
 	void findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGraph* roads2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2);
 	bool findBestPairByDirection(float theta, RoadGraph* roads1, RoadVertexDesc parent1, BFSForest* forest1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, RoadVertexDesc parent2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2);
+
+	void getSimilarEdges(RoadGraph* roads1, RoadGraph* roads2, QList<RoadEdgeDesc>& edges1, QList<RoadEdgeDesc>& edges2, RoadEdgeDesc& e1, RoadEdgeDesc& e2);
 };
 

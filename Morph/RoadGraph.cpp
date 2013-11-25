@@ -283,10 +283,40 @@ std::vector<RoadEdgeDesc> RoadGraph::getMajorEdges(RoadGraph* roads, int num) {
 	return ret;
 }
 
+/**
+ * Importanceに基づいて、エッジを並べて返却する。
+ */
+QList<RoadEdgeDesc> RoadGraph::getOrderedEdgesByImportance() {
+	std::vector<RoadEdgeDesc> data;
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(graph); ei != eend; ++ei) {
+		if (!graph[*ei]->valid) continue;
+
+		data.push_back(*ei);
+	}
+
+	std::sort(data.begin(), data.end(), MoreImportantEdge(this));
+
+	QList<RoadEdgeDesc> ret;
+	for (int i = 0; i < data.size(); i++) {
+		ret.push_back(data[i]);
+	}
+
+	return ret;
+}
+
 LessWeight::LessWeight(RoadGraph* roads) {
 	this->roads = roads;
 }
 
 bool LessWeight::operator()(const RoadEdgeDesc& left, const RoadEdgeDesc& right) const {
 	return roads->graph[left]->lanes < roads->graph[right]->lanes;
+}
+
+MoreImportantEdge::MoreImportantEdge(RoadGraph* roads) {
+	this->roads = roads;
+}
+
+bool MoreImportantEdge::operator()(const RoadEdgeDesc& left, const RoadEdgeDesc& right) const {
+	return roads->graph[left]->importance > roads->graph[right]->importance;
 }

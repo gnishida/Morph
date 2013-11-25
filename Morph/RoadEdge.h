@@ -13,6 +13,7 @@ public:
 	bool oneWay;
 	std::vector<QVector2D> polyLine;
 	float weight;
+	float importance;
 	bool valid;
 	bool orig;
 
