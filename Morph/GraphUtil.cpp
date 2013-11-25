@@ -531,11 +531,14 @@ RoadGraph* GraphUtil::copyRoads(RoadGraph* roads) {
 		RoadVertexDesc new_tgt = conv[tgt];
 
 		// エッジの追加
+		RoadEdge* new_e = new RoadEdge(*roads->graph[*ei]);
+		/*
 		RoadEdge* new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type, roads->graph[*ei]->oneWay);
 		for (int i = 0; i < roads->graph[*ei]->polyLine.size(); i++) {
 			new_e->addPoint(roads->graph[*ei]->polyLine[i]);
 		}
 		new_e->valid = roads->graph[*ei]->valid;
+		*/
 		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(new_src, new_tgt, new_roads->graph);
 		new_roads->graph[edge_pair.first] = new_e;
 
@@ -1949,13 +1952,20 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 				RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
 				RoadVertexDesc v2b = map1[v1b];
 
-				//if (v2 == v2b || !isConnected(roads2, v2, v2b)) { // 対応ノード間が接続されてない場合
-				if (v2 == v2b || !roads2->isConnected(v2, v2b)) {
-					penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->getWeight() * w_connectivity;
+				if (v2 == v2b || !isConnected(roads2, v2, v2b)) { // 対応ノード間が接続されてない場合
+				//if (v2 == v2b || !roads2->isConnected(v2, v2b)) { // キャッシュによる高速化（ただし、事前にconnectivityを計算する必要有り
+					penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->weight * w_connectivity;
 				} else {
 					QVector2D dir1 = roads1->graph[v1b]->getPt() - roads1->graph[*vi]->getPt();
 					QVector2D dir2 = roads2->graph[v2b]->getPt() - roads2->graph[v2]->getPt();
-					penalty += diffAngle(dir1, dir2) * w_angle;
+					if (dir1.lengthSquared() > 0.0f && dir2.lengthSquared() > 0.0f) {
+						penalty += diffAngle(dir1, dir2) * w_angle;
+					} else {
+						// どちらかのエッジの長さ＝０、つまり、エッジがないので、コネクティビティのペナルティを課す
+						// 道路網１の方のエッジの長さが０の場合、ペナルティは０となるが、
+						// 道路網２の計算の際に、ペナルティが加算されるので、良いだろう。
+						penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->weight * w_connectivity;
+					}
 				}
 			}
 		} else { // 当該ノードに対応するノードがない場合は、全てのエッジをペナルティとして計上する
@@ -1965,7 +1975,7 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 
 				RoadVertexDesc v1b = boost::target(*ei, roads1->graph);
 
-				penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->getWeight() * w_connectivity;
+				penalty += roads1->graph[*ei]->getLength() * roads1->graph[*ei]->weight * w_connectivity;
 			}
 		}
 	}
@@ -1983,13 +1993,20 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 				RoadVertexDesc v2b = boost::target(*ei, roads2->graph);
 				RoadVertexDesc v1b = map2[v2b];
 
-				//if (v1 == v1b || !isConnected(roads1, v1, v1b)) { // 対応ノード間が接続されてない場合
-				if (v1 == v1b || !roads1->isConnected(v1, v1b)) {
-					penalty += roads1->graph[*ei]->getLength() * roads2->graph[*ei]->getWeight() * w_connectivity;
+				if (v1 == v1b || !isConnected(roads1, v1, v1b)) { // 対応ノード間が接続されてない場合
+				//if (v1 == v1b || !roads1->isConnected(v1, v1b)) { // キャッシュによる高速化（ただし、事前にconnectivityを計算する必要有り
+					penalty += roads2->graph[*ei]->getLength() * roads2->graph[*ei]->weight * w_connectivity;
 				} else {
 					QVector2D dir1 = roads1->graph[v1b]->getPt() - roads1->graph[v1]->getPt();
 					QVector2D dir2 = roads2->graph[v2b]->getPt() - roads2->graph[*vi]->getPt();
-					penalty += diffAngle(dir1, dir2) * w_angle;
+					if (dir1.lengthSquared() > 0.0f && dir2.lengthSquared() > 0.0f) {
+						penalty += diffAngle(dir1, dir2) * w_angle;
+					} else {
+						// どちらかのエッジの長さ＝０、つまり、エッジがないので、コネクティビティのペナルティを課す
+						// 道路網２の方のエッジの長さが０の場合、ペナルティは０となるが、
+						// 道路網１の計算の際に、ペナルティが加算されるので、良いだろう。
+						penalty += roads2->graph[*ei]->getLength() * roads2->graph[*ei]->weight * w_connectivity;
+					}
 				}
 			}
 		} else { // 当該ノードに対応するノードがない場合は、全てのエッジをペナルティとして計上する
@@ -1999,7 +2016,7 @@ float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Roa
 
 				RoadVertexDesc v2b = boost::target(*ei, roads2->graph);
 
-				penalty += roads2->graph[*ei]->getLength() * roads2->graph[*ei]->getWeight() * w_connectivity;
+				penalty += roads2->graph[*ei]->getLength() * roads2->graph[*ei]->weight * w_connectivity;
 			}
 		}
 	}

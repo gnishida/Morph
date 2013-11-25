@@ -4,6 +4,7 @@ RoadEdge::RoadEdge(unsigned int lanes, unsigned int type, bool oneWay) {
 	this->lanes = lanes;
 	this->type = type;
 	this->oneWay = oneWay;
+	this->weight = 0.0f;
 	this->valid = true;
 	this->orig = false;
 }
@@ -43,8 +44,4 @@ void RoadEdge::addPoint(const QVector2D &pt) {
 
 float RoadEdge::getWidth() {
 	return lanes * 2 * 3.5f;
-}
-
-float RoadEdge::getWeight() {
-	return lanes;
 }

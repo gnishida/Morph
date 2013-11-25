@@ -232,6 +232,32 @@ bool RoadGraph::isConnected(RoadVertexDesc desc1, RoadVertexDesc desc2) {
 }
 
 /**
+ * エッジの重みを計算する。
+ * DeadEndを繰り返し削除し、残ったやつの重みを1、削除されたやつの重みを0とする。
+ */
+void RoadGraph::computeEdgeWeights() {
+	RoadGraph* temp = GraphUtil::copyRoads(this);
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(graph); vi != vend; ++vi) {
+		if (!graph[*vi]->valid) continue;
+
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, graph); ei != eend; ++ei) {
+			if (!graph[*ei]->valid) continue;
+
+			RoadVertexDesc tgt = boost::target(*ei, graph);
+
+			if (GraphUtil::hasEdge(temp, *vi, tgt)) {
+				graph[*ei]->weight = 1;
+			} else {
+				graph[*ei]->weight = 0;				
+			}
+		}
+	}
+}
+
+/**
  * num個のメジャーなエッジを返却する。
  * レーン数が多い道路を選択する。
  */

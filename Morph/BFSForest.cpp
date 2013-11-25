@@ -84,7 +84,6 @@ void BFSForest::buildForest() {
 
 				// 分割しない案
 				//children.push_back(child);
-
 			} else { // 未訪問の場合
 				visited[child] = true;
 

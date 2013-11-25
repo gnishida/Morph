@@ -122,6 +122,10 @@ void BFSMulti::init() {
 	GraphUtil::skeltonize(skelton1);
 	GraphUtil::skeltonize(skelton2);
 
+	// 道路網のウェイトを計算する
+	roads1->computeEdgeWeights();
+	roads2->computeEdgeWeights();
+
 	// スケルトンから頂点リストを取得（シード候補）
 	std::vector<RoadVertexDesc> descs1 = GraphUtil::getVertices(skelton1);
 	std::vector<RoadVertexDesc> descs2 = GraphUtil::getVertices(skelton2);
@@ -141,7 +145,7 @@ void BFSMulti::init() {
 	int num = sqrtf(descs1.size());
 	qDebug() << "The num of seeds: " << num;
 
-	for (int i = 0; i < 10000; i++) {
+	for (int i = 0; i < 1000; i++) {
 		qDebug() << i;
 
 		std::random_shuffle(descs1.begin(), descs1.end());	
@@ -154,6 +158,24 @@ void BFSMulti::init() {
 			seeds1.push_back(descs1[j]);
 			seeds2.push_back(descs2[j]);
 		}
+
+
+		/*
+		// 手動でシードで入れてみる！！！
+		seeds1.clear();
+		seeds2.clear();
+		seeds1.push_back(6);
+		seeds1.push_back(13);
+		seeds1.push_back(25);
+		seeds1.push_back(22);
+
+		seeds2.push_back(6);
+		seeds2.push_back(13);
+		seeds2.push_back(19);
+		seeds2.push_back(23);
+		*/
+
+
 
 		RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
 		RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
@@ -182,6 +204,12 @@ void BFSMulti::init() {
 		delete temp1;
 		delete temp2;
 	}
+
+	qDebug() << "Min unsimilarity: " << min_unsimilarity;
+	qDebug() << "    connectivity: " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 1.0f, 0.0f, 0.0f, 0.0f);
+	qDebug() << "    split       : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 1.0f, 0.0f, 0.0f);
+	qDebug() << "    angle       : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 0.0f, 1.0f, 0.0f);
+	qDebug() << "    distance    : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 0.0f, 0.0f, 1.0f);
 
 	correspondence = min_map1;
 	roads1 = GraphUtil::copyRoads(min_roads1);

@@ -57,6 +57,7 @@ public:
 
 	void computeConnectivities();
 	bool isConnected(RoadVertexDesc desc1, RoadVertexDesc desc2);
+	void computeEdgeWeights();
 
 	std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
 	bool lessWeight(const RoadEdgeDesc& left, const RoadEdgeDesc& right);

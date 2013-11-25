@@ -12,6 +12,7 @@ public:
 	unsigned int type;
 	bool oneWay;
 	std::vector<QVector2D> polyLine;
+	float weight;
 	bool valid;
 	bool orig;
 
@@ -26,6 +27,5 @@ public:
 
 	void addPoint(const QVector2D &pt);
 	float getWidth();
-	float getWeight();
 };
 
