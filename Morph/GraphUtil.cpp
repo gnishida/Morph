@@ -467,7 +467,9 @@ bool GraphUtil::removeDeadEnd(RoadGraph* roads) {
 
 /**
  * ２つのpolyLineをinterpolateする。
- * 本実装は、簡易方式だ。polyLineを10個にdiscrete分割し、対応する２つの点をinterpolateする。
+ * 本実装は、簡易方式かも知れない。
+ * ノード数が同じ場合は、順番にinterpolateするだけ。
+ * ノード数が異なる場合は、polyLineを10個にdiscrete分割し、対応する２つの点をinterpolateする。
  */
 std::vector<QVector2D> GraphUtil::interpolateEdges(std::vector<QVector2D>& polyLine1, std::vector<QVector2D>& polyLine2, float t) {
 	std::vector<QVector2D> ret;
@@ -475,29 +477,35 @@ std::vector<QVector2D> GraphUtil::interpolateEdges(std::vector<QVector2D>& polyL
 	int n1 = polyLine1.size();
 	int n2 = polyLine2.size();
 
-	for (float index = 0.0f; index < 1.0f; index += 0.1f) {
-		// １つ目のpolyLineの、index番目の座標を計算
-		int j1 = index * (float)(n1 - 1);
+	if (n1 == n2) {
+		for (int i = 0; i < n1; i++) {
+			ret.push_back(polyLine1[i] * t + polyLine2[i] * (1.0f - t));
+		}
+	} else {
+		for (float index = 0.0f; index < 1.0f; index += 0.1f) {
+			// １つ目のpolyLineの、index番目の座標を計算
+			int j1 = index * (float)(n1 - 1);
 
-		float s1 = index - (float)j1 / (float)(n1 - 1);
-		float t1 = (float)(j1 + 1) / (float)(n1 - 1);
+			float s1 = index - (float)j1 / (float)(n1 - 1);
+			float t1 = (float)(j1 + 1) / (float)(n1 - 1) - index;
 
-		QVector2D pt1 = polyLine1[j1] * t1 / (s1 + t1) + polyLine1[j1 + 1] * s1 / (s1 + t1);
+			QVector2D pt1 = polyLine1[j1] * t1 / (s1 + t1) + polyLine1[j1 + 1] * s1 / (s1 + t1);
 
-		// ２つ目のpolyLineの、index番目の座標を計算
-		int j2 = index * (float)(n2 - 1);
+			// ２つ目のpolyLineの、index番目の座標を計算
+			int j2 = index * (float)(n2 - 1);
 
-		float s2 = index - (float)j2 / (float)(n2 - 1);
-		float t2 = (float)(j2 + 1) / (float)(n2 - 1);
+			float s2 = index - (float)j2 / (float)(n2 - 1);
+			float t2 = (float)(j2 + 1) / (float)(n2 - 1) - index;
 
-		QVector2D pt2 = polyLine1[j2] * t2 / (s2 + t2) + polyLine1[j2 + 1] * s2 / (s2 + t2);
+			QVector2D pt2 = polyLine2[j2] * t2 / (s2 + t2) + polyLine2[j2 + 1] * s2 / (s2 + t2);
 
-		// interpolateする
-		ret.push_back(pt1 * t + pt2 * (1.0f - t));
+			// interpolateする
+			ret.push_back(pt1 * t + pt2 * (1.0f - t));
+		}
+
+		// 最後の点をinterpolateして追加する
+		ret.push_back(polyLine1[polyLine1.size() - 1] * t + polyLine2[polyLine2.size() - 1] * (1.0f - t));
 	}
-
-	// 最後の点をinterpolateして追加する
-	ret.push_back(polyLine1[polyLine1.size() - 1] * t + polyLine2[polyLine2.size() - 1] * (1.0f - t));
 
 	return ret;
 }
