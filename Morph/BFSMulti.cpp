@@ -17,6 +17,9 @@ BFSMulti::~BFSMulti() {
 }
 
 RoadGraph* BFSMulti::interpolate(float t) {
+	float edge_threshold = 500.0f;
+	float snap_threshold = 1000.0f;
+
 	if (t == 1.0f) return GraphUtil::copyRoads(roads1);
 	if (t == 0.0f) return GraphUtil::copyRoads(roads2);
 
@@ -64,53 +67,63 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
 	}
 
-	/*
-	QMap<RoadVertexDesc, QMap<RoadVertexDesc, RoadVertexDesc> > conv;
+	// DeadEndの頂点について、エッジ長がthreshold以下なら頂点とそのエッジを削除する
+	bool deleted = true;
+	while (deleted) {
+		deleted = false;
+		for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
+			if (!new_roads->graph[*vi]->valid) continue;
 
-	std::list<RoadVertexDesc> seeds;
-	std::list<RoadVertexDesc> seeds_new;
+			if (GraphUtil::getDegree(new_roads, *vi) > 1) continue;
 
-	for (int i = 0; i < forest1->getRoots().size(); i++) {
-		// ルートの頂点を作成
-		RoadVertex* v_root = new RoadVertex(roads1->graph[forest1->getRoots()[i]]->getPt() * t + roads2->graph[forest2->getRoots()[i]]->getPt() * (1 - t));
-		RoadVertexDesc v_root_desc = boost::add_vertex(roads->graph);
-		roads->graph[v_root_desc] = v_root;
+			RoadOutEdgeIter ei, eend;
+			for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
+				if (!new_roads->graph[*ei]->valid) continue;
 
-		// ルート頂点をシードに入れる
-		seeds.push_back(forest1->getRoots()[i]);
-		seeds_new.push_back(v_root_desc);
-	}
+				RoadVertexDesc tgt = boost::target(*ei, new_roads->graph);
 
-	// 木構造を使って、頂点を登録していく
-	while (!seeds.empty()) {
-		RoadVertexDesc parent = seeds.front();
-		seeds.pop_front();
-
-		RoadVertexDesc parent_new = seeds_new.front();
-		seeds_new.pop_front();
-
-		// 子ノードリストを取得
-		for (int i = 0; i < forest1->getChildren(parent).size(); i++) {
-			// 子ノードを取得
-			RoadVertexDesc child1 = forest1->getChildren(parent)[i];
-			if (!roads1->graph[child1]->valid) continue;
-
-			// 対応ノードを取得
-			RoadVertexDesc child2 = correspondence[child1];
-
-			// 子ノードの頂点を作成
-			RoadVertex* new_v = new RoadVertex(roads1->graph[child1]->getPt() * t + roads2->graph[child2]->getPt() * (1 - t));
-			RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
-			roads->graph[new_v_desc] = new_v;
-
-			// エッジを作成
-			GraphUtil::addEdge(roads, parent_new, new_v_desc,1, 1, false);
-
-			seeds.push_back(child1);
-			seeds_new.push_back(new_v_desc);
+				if (new_roads->graph[*ei]->getLength() < edge_threshold) {
+					new_roads->graph[*vi]->valid = false;
+					new_roads->graph[*ei]->valid = false;
+					deleted = true;
+				}
+			}
 		}
 	}
-	*/
+
+	// 一旦、無効頂点・エッジを削除して、きれいにする
+	RoadGraph* temp = GraphUtil::clean(new_roads);
+	delete new_roads;
+	new_roads = temp;
+
+	// DeadEndの頂点について、近くの他の頂点にSnapさせる
+	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
+		if (GraphUtil::getDegree(new_roads, *vi) == 1) {
+			new_roads->graph[*vi]->valid = false;
+		}
+	}
+	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
+		if (new_roads->graph[*vi]->valid) continue;
+
+		RoadVertexDesc nearest_v = GraphUtil::findNearestVertex(new_roads, new_roads->graph[*vi]->pt);
+
+		if ((new_roads->graph[*vi]->pt - new_roads->graph[nearest_v]->pt).length() < snap_threshold) {
+			// 当該頂点を、近接頂点にスナップする
+			RoadOutEdgeIter ei, eend;
+			for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
+				RoadVertexDesc tgt = boost::target(*ei, new_roads->graph);
+
+				// 古いエッジを無効にする
+				new_roads->graph[*ei]->valid = false;
+
+				// 新しいエッジを追加する
+				GraphUtil::addEdge(new_roads, tgt, nearest_v, new_roads->graph[*ei]->lanes, new_roads->graph[*ei]->type, new_roads->graph[*ei]->oneWay);
+			}
+		} else {
+			// 当該頂点を、有効に戻す
+			new_roads->graph[*vi]->valid = true;
+		}
+	}
 
 	return new_roads;
 }
