@@ -17,7 +17,7 @@ BFSMulti::~BFSMulti() {
 }
 
 RoadGraph* BFSMulti::interpolate(float t) {
-	float edge_threshold = 500.0f;
+	float edge_threshold = 300.0f;
 	float snap_threshold = 1000.0f;
 
 	if (t == 1.0f) return GraphUtil::copyRoads(roads1);
@@ -52,8 +52,9 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		RoadVertexDesc u2 = correspondence[u1];
 
 		// エッジを作成
+		/*
 		RoadEdge* new_e = new RoadEdge(roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
-		if (GraphUtil::hasEdge(roads2, conv[v1], conv[u1]) && roads2->graph[GraphUtil::getEdge(roads2, conv[v1], conv[u1])]->polyLine.size() > 2 && roads1->graph[*ei]->polyLine.size() > 2) {
+		if (GraphUtil::hasEdge(roads2, conv[v1], conv[u1])) {
 			new_e->polyLine = GraphUtil::interpolateEdges(roads1->graph[*ei]->polyLine, roads2->graph[GraphUtil::getEdge(roads2, conv[v1], conv[u1])]->polyLine, t);
 		} else {
 			new_e->addPoint(new_roads->graph[conv[v1]]->getPt());
@@ -61,8 +62,9 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		}
 		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(conv[v1], conv[u1], new_roads->graph);
 		new_roads->graph[edge_pair.first] = new_e;
-
-		//GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+		*/
+		
+		GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
 	}
 
 	// DeadEndの頂点について、エッジ長がthreshold以下なら頂点とそのエッジを削除する
@@ -158,7 +160,7 @@ void BFSMulti::init() {
 	int num = sqrtf(descs1.size());
 	qDebug() << "The num of seeds: " << num;
 
-	for (int i = 0; i < 5000; i++) {
+	for (int i = 0; i < 1000; i++) {
 		qDebug() << i;
 
 		std::random_shuffle(descs1.begin(), descs1.end());	
