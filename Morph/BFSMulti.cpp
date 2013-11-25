@@ -119,8 +119,10 @@ void BFSMulti::init() {
 	// スケルトンを作成
 	RoadGraph* skelton1 = GraphUtil::copyRoads(roads1);
 	RoadGraph* skelton2 = GraphUtil::copyRoads(roads2);
-	GraphUtil::skeltonize(skelton1);
-	GraphUtil::skeltonize(skelton2);
+	//GraphUtil::skeltonize(skelton1);
+	//GraphUtil::skeltonize(skelton2);
+	GraphUtil::removeDeadEnd(skelton1);
+	GraphUtil::removeDeadEnd(skelton2);
 
 	// 道路網のウェイトを計算する
 	roads1->computeEdgeWeights();
@@ -145,7 +147,7 @@ void BFSMulti::init() {
 	int num = sqrtf(descs1.size());
 	qDebug() << "The num of seeds: " << num;
 
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < 5000; i++) {
 		qDebug() << i;
 
 		std::random_shuffle(descs1.begin(), descs1.end());	
@@ -158,25 +160,7 @@ void BFSMulti::init() {
 			seeds1.push_back(descs1[j]);
 			seeds2.push_back(descs2[j]);
 		}
-
-
-		/*
-		// 手動でシードで入れてみる！！！
-		seeds1.clear();
-		seeds2.clear();
-		seeds1.push_back(6);
-		seeds1.push_back(13);
-		seeds1.push_back(25);
-		seeds1.push_back(22);
-
-		seeds2.push_back(6);
-		seeds2.push_back(13);
-		seeds2.push_back(19);
-		seeds2.push_back(23);
-		*/
-
-
-
+		
 		RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
 		RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
 

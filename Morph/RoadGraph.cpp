@@ -233,11 +233,14 @@ bool RoadGraph::isConnected(RoadVertexDesc desc1, RoadVertexDesc desc2) {
 
 /**
  * エッジの重みを計算する。
- * DeadEndを繰り返し削除し、残ったやつの重みを1、削除されたやつの重みを0とする。
+ * DeadEndを繰り返し削除し、残ったやつの重みを1、削除されたやつの重みを0.1とする。
  */
 void RoadGraph::computeEdgeWeights() {
+	// DeadEndを削除して、重要なエッジのみを残す
 	RoadGraph* temp = GraphUtil::copyRoads(this);
+	GraphUtil::removeDeadEnd(temp);
 
+	// 各エッジについて、重みを計算する
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(graph); vi != vend; ++vi) {
 		if (!graph[*vi]->valid) continue;
@@ -249,9 +252,9 @@ void RoadGraph::computeEdgeWeights() {
 			RoadVertexDesc tgt = boost::target(*ei, graph);
 
 			if (GraphUtil::hasEdge(temp, *vi, tgt)) {
-				graph[*ei]->weight = 1;
+				graph[*ei]->weight = 1.0f;
 			} else {
-				graph[*ei]->weight = 0;				
+				graph[*ei]->weight = 0.1f;
 			}
 		}
 	}
