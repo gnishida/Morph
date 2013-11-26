@@ -501,7 +501,14 @@ bool GraphUtil::removeDeadEnd(RoadGraph* roads) {
  * ノード数が同じ場合は、順番にinterpolateするだけ。
  * ノード数が異なる場合は、polyLineを10個にdiscrete分割し、対応する２つの点をinterpolateする。
  */
-std::vector<QVector2D> GraphUtil::interpolateEdges(std::vector<QVector2D>& polyLine1, std::vector<QVector2D>& polyLine2, float t) {
+std::vector<QVector2D> GraphUtil::interpolateEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadVertexDesc src1, RoadGraph* roads2, RoadEdgeDesc e2, RoadVertexDesc src2, float t) {
+
+	orderPolyLine(roads1, e1, src1);
+	orderPolyLine(roads2, e2, src2);
+
+	std::vector<QVector2D> polyLine1 = roads1->graph[e1]->polyLine;
+	std::vector<QVector2D> polyLine2 = roads2->graph[e2]->polyLine;
+
 	std::vector<QVector2D> ret;
 
 	int n1 = polyLine1.size();

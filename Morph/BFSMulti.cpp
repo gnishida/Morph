@@ -18,7 +18,7 @@ BFSMulti::~BFSMulti() {
 
 RoadGraph* BFSMulti::interpolate(float t) {
 	float edge_threshold = 300.0f;
-	float snap_threshold = 1000.0f;
+	float snap_threshold = 900.0f;
 
 	if (t == 1.0f) return GraphUtil::copyRoads(roads1);
 	if (t == 0.0f) return GraphUtil::copyRoads(roads2);
@@ -53,8 +53,8 @@ RoadGraph* BFSMulti::interpolate(float t) {
 
 		// エッジを作成
 		RoadEdge* new_e = new RoadEdge(roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
-		if (GraphUtil::hasEdge(roads2, conv[v1], conv[u1])) {
-			new_e->polyLine = GraphUtil::interpolateEdges(roads1->graph[*ei]->polyLine, roads2->graph[GraphUtil::getEdge(roads2, conv[v1], conv[u1])]->polyLine, t);
+		if (GraphUtil::hasEdge(roads2, v2, u2)) {
+			new_e->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, GraphUtil::getEdge(roads2, v2, u2), v2, t);
 		} else {
 			new_e->addPoint(new_roads->graph[conv[v1]]->getPt());
 			new_e->addPoint(new_roads->graph[conv[u1]]->getPt());
@@ -215,8 +215,6 @@ void BFSMulti::init() {
 		// 道路網２のTop20 Importantエッジに対して
 		topN = std::min(20, edges2.size());
 		for (int i = 0; i < topN; i++) {
-			qDebug() << i;
-
 			float min_diff = std::numeric_limits<float>::max();
 			RoadEdgeDesc e1;
 			RoadEdgeDesc e2;

@@ -35,7 +35,7 @@ public:
 	static void moveEdge(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos);
 	static std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
 	static bool removeDeadEnd(RoadGraph* roads);
-	static std::vector<QVector2D> interpolateEdges(std::vector<QVector2D>& polyLine1, std::vector<QVector2D>& polyLine2, float t);
+	static std::vector<QVector2D> interpolateEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadVertexDesc src1, RoadGraph* roads2, RoadEdgeDesc e2, RoadVertexDesc src2, float t);
 	static void computeImportanceOfEdges(RoadGraph* roads, float w_length, float w_valence, float w_lanes);
 	static float computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2, float w_distance, float w_degree, float w_lanes);
 	static RoadEdgeDesc getImportantEdge(RoadGraph* roads, int relaxation = 1);
