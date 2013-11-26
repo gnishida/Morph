@@ -13,6 +13,7 @@ BFSMultiControlWidget::BFSMultiControlWidget(Morph* parent) : ControlWidget("BFS
 	// setup the signal handler
 	connect(ui.pushButtonLoadRoad1, SIGNAL(clicked()), this, SLOT(loadRoad1()));
 	connect(ui.pushButtonLoadRoad2, SIGNAL(clicked()), this, SLOT(loadRoad2()));
+	connect(ui.pushButtonCompute, SIGNAL(clicked()), this, SLOT(compute()));
 	connect(ui.horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(moveSequence(int)));
 	connect(ui.pushButtonPrev, SIGNAL(clicked()), this, SLOT(prevSequence()));
 	connect(ui.pushButtonNext, SIGNAL(clicked()), this, SLOT(nextSequence()));
@@ -36,12 +37,6 @@ void BFSMultiControlWidget::loadRoad1() {
 		bfs->setRoad1(filename.toUtf8().data());
 
 		ui.lineEditRoad1->setText(filename.split("/").last().split(".").at(0));
-
-		if (bfs->sequence.size() > 0) {
-			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
-			ui.horizontalSlider->setValue(0);
-			update();
-		}
 	}
 }
 
@@ -51,12 +46,16 @@ void BFSMultiControlWidget::loadRoad2() {
 		bfs->setRoad2(filename.toUtf8().data());
 
 		ui.lineEditRoad2->setText(filename.split("/").last().split(".").at(0));
+	}
+}
 
-		if (bfs->sequence.size() > 0) {
-			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
-			ui.horizontalSlider->setValue(0);
-			update();
-		}
+void BFSMultiControlWidget::compute() {
+	bfs->init();
+
+	if (bfs->sequence.size() > 0) {
+		ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
+		ui.horizontalSlider->setValue(0);
+		update();
 	}
 }
 

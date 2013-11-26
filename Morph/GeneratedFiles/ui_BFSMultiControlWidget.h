@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'BFSMultiControlWidget.ui'
 **
-** Created: Mon Nov 25 23:51:32 2013
+** Created: Tue Nov 26 14:11:47 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -34,26 +34,27 @@ public:
     QLineEdit *lineEditRoad2;
     QPushButton *pushButtonLoadRoad2;
     QPushButton *pushButtonLoadRoad1;
+    QPushButton *pushButtonCompute;
 
     void setupUi(QDockWidget *BFSMultiControlWidget)
     {
         if (BFSMultiControlWidget->objectName().isEmpty())
             BFSMultiControlWidget->setObjectName(QString::fromUtf8("BFSMultiControlWidget"));
-        BFSMultiControlWidget->resize(145, 261);
+        BFSMultiControlWidget->resize(145, 344);
         BFSMultiControlWidget->setMinimumSize(QSize(145, 261));
         BFSMultiControlWidget->setStyleSheet(QString::fromUtf8("background-color: rgb(181, 181, 181);"));
         dockWidgetContents = new QWidget();
         dockWidgetContents->setObjectName(QString::fromUtf8("dockWidgetContents"));
         horizontalSlider = new QSlider(dockWidgetContents);
         horizontalSlider->setObjectName(QString::fromUtf8("horizontalSlider"));
-        horizontalSlider->setGeometry(QRect(10, 160, 121, 19));
+        horizontalSlider->setGeometry(QRect(10, 210, 121, 19));
         horizontalSlider->setOrientation(Qt::Horizontal);
         pushButtonPrev = new QPushButton(dockWidgetContents);
         pushButtonPrev->setObjectName(QString::fromUtf8("pushButtonPrev"));
-        pushButtonPrev->setGeometry(QRect(10, 190, 41, 31));
+        pushButtonPrev->setGeometry(QRect(10, 240, 41, 31));
         pushButtonNext = new QPushButton(dockWidgetContents);
         pushButtonNext->setObjectName(QString::fromUtf8("pushButtonNext"));
-        pushButtonNext->setGeometry(QRect(90, 190, 41, 31));
+        pushButtonNext->setGeometry(QRect(90, 240, 41, 31));
         lineEditRoad1 = new QLineEdit(dockWidgetContents);
         lineEditRoad1->setObjectName(QString::fromUtf8("lineEditRoad1"));
         lineEditRoad1->setGeometry(QRect(10, 50, 131, 20));
@@ -66,6 +67,9 @@ public:
         pushButtonLoadRoad1 = new QPushButton(dockWidgetContents);
         pushButtonLoadRoad1->setObjectName(QString::fromUtf8("pushButtonLoadRoad1"));
         pushButtonLoadRoad1->setGeometry(QRect(10, 10, 131, 31));
+        pushButtonCompute = new QPushButton(dockWidgetContents);
+        pushButtonCompute->setObjectName(QString::fromUtf8("pushButtonCompute"));
+        pushButtonCompute->setGeometry(QRect(10, 170, 121, 31));
         BFSMultiControlWidget->setWidget(dockWidgetContents);
 
         retranslateUi(BFSMultiControlWidget);
@@ -79,6 +83,7 @@ public:
         pushButtonNext->setText(QApplication::translate("BFSMultiControlWidget", ">", 0, QApplication::UnicodeUTF8));
         pushButtonLoadRoad2->setText(QApplication::translate("BFSMultiControlWidget", "Load Road 2", 0, QApplication::UnicodeUTF8));
         pushButtonLoadRoad1->setText(QApplication::translate("BFSMultiControlWidget", "Load Road 1", 0, QApplication::UnicodeUTF8));
+        pushButtonCompute->setText(QApplication::translate("BFSMultiControlWidget", "Compute", 0, QApplication::UnicodeUTF8));
         Q_UNUSED(BFSMultiControlWidget);
     } // retranslateUi
 

@@ -150,12 +150,12 @@ void BFSMulti::init() {
 
 	float min_dissimilarity = std::numeric_limits<float>::max();
 
-	srand(1234567);
-
 	// シード
 	QList<RoadVertexDesc> seeds1;
 	QList<RoadVertexDesc> seeds2;
-	
+
+	srand(1234567);
+
 	// Importance順に並べたエッジリストを取得
 	QList<RoadEdgeDesc> edges1 = roads1->getOrderedEdgesByImportance();
 	QList<RoadEdgeDesc> edges2 = roads2->getOrderedEdgesByImportance();
@@ -166,18 +166,16 @@ void BFSMulti::init() {
 
 		RoadEdgeDesc min_e1;
 		RoadEdgeDesc min_e2;
-		QList<RoadVertexDesc> min_seeds1;
-		QList<RoadVertexDesc> min_seeds2;
 
 		updated = false;
 
-		// 道路網１のTop20 Importantエッジに対して
-		int topN = std::min(20, edges1.size());
-		for (int i = 0; i < topN; i++) {
-			float min_diff = std::numeric_limits<float>::max();
-			RoadEdgeDesc e1;
-			RoadEdgeDesc e2;
+		float min_diff = std::numeric_limits<float>::max();
+		RoadEdgeDesc e1;
+		RoadEdgeDesc e2;
 
+		// 道路網１のTop10 Importantエッジに対して
+		int topN = std::min(10, edges1.size());
+		for (int i = 0; i < topN; i++) {
 			// 似ている対応エッジを道路網２から探す
 			for (int j = 0; j < edges2.size(); j++) {
 				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[i], roads2, edges2[j], 1.0f, 1.0f, 1.0f);
@@ -187,53 +185,11 @@ void BFSMulti::init() {
 					e2 = edges2[j];
 				}
 			}
-
-			// 選択されたペアから、両端のノードを取得
-			RoadVertexDesc src1 = boost::source(e1, roads1->graph);
-			RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
-			RoadVertexDesc src2 = boost::source(e2, roads2->graph);
-			RoadVertexDesc tgt2 = boost::target(e2, roads2->graph);
-
-			QList<RoadVertexDesc> temp_seeds1 = seeds1;
-			QList<RoadVertexDesc> temp_seeds2 = seeds2;
-
-			// テンポラリシードに、シード候補を追加
-			temp_seeds1.push_back(src1);
-			temp_seeds1.push_back(tgt1);
-			temp_seeds2.push_back(src2);
-			temp_seeds2.push_back(tgt2);
-	
-			// テンポラリの道路網を作成する。
-			RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
-			RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
-			
-			// e1、e2のペアをシードにテンポラリで追加し、２つの道路網の類似性を計算する
-			QMap<RoadVertexDesc, RoadVertexDesc> map1;
-			QMap<RoadVertexDesc, RoadVertexDesc> map2;
-			float dissimilarity = computeUnsimilarity(temp1, temp_seeds1, temp2, temp_seeds2, map1, map2);
-
-			// 非類似度が最小なら、ベストマッチングとして更新
-			if (dissimilarity < min_dissimilarity) {
-				updated = true;
-				min_dissimilarity = dissimilarity;
-				min_seeds1 = temp_seeds1;
-				min_seeds2 = temp_seeds2;
-				min_e1 = e1;
-				min_e2 = e2;
-			}
-
-			// テンポラリの道路網を削除する
-			delete temp1;
-			delete temp2;
 		}
 
-		// 道路網２のTop20 Importantエッジに対して
-		topN = std::min(20, edges2.size());
+		// 道路網２のTop10 Importantエッジに対して
+		topN = std::min(10, edges2.size());
 		for (int i = 0; i < topN; i++) {
-			float min_diff = std::numeric_limits<float>::max();
-			RoadEdgeDesc e1;
-			RoadEdgeDesc e2;
-
 			// 似ている対応エッジを道路網１ら探す
 			for (int j = 0; j < edges1.size(); j++) {
 				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[j], roads2, edges2[i], 1.0f, 1.0f, 1.0f);
@@ -243,52 +199,43 @@ void BFSMulti::init() {
 					e2 = edges2[i];
 				}
 			}
-
-			// 選択されたペアから、両端のノードを取得
-			RoadVertexDesc src1 = boost::source(e1, roads1->graph);
-			RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
-			RoadVertexDesc src2 = boost::source(e2, roads2->graph);
-			RoadVertexDesc tgt2 = boost::target(e2, roads2->graph);
-
-			QList<RoadVertexDesc> temp_seeds1 = seeds1;
-			QList<RoadVertexDesc> temp_seeds2 = seeds2;
-
-			// テンポラリシードに、シード候補を追加
-			temp_seeds1.push_back(src1);
-			temp_seeds1.push_back(tgt1);
-			temp_seeds2.push_back(src2);
-			temp_seeds2.push_back(tgt2);
-
-			// テンポラリの道路網を作成する。
-			RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
-			RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
-
-			// e1、e2のペアをシードにテンポラリで追加し、２つの道路網の類似性を計算する
-			QMap<RoadVertexDesc, RoadVertexDesc> map1;
-			QMap<RoadVertexDesc, RoadVertexDesc> map2;
-			float dissimilarity = computeUnsimilarity(temp1, temp_seeds1, temp2, temp_seeds2, map1, map2);
-
-			// 非類似度が最小なら、ベストマッチングとして更新
-			if (dissimilarity < min_dissimilarity) {
-				updated = true;
-				min_dissimilarity = dissimilarity;
-				min_seeds1 = temp_seeds1;
-				min_seeds2 = temp_seeds2;
-				min_e1 = e1;
-				min_e2 = e2;
-			}
-
-			// テンポラリの道路網を削除する
-			delete temp1;
-			delete temp2;
 		}
 
-		// もし、前回のループより、非類似度が改善しないなら、シードを正式採用せずに、ループを終了する
-		if (!updated) break;
+		// 選択されたペアから、両端のノードを取得
+		RoadVertexDesc src1 = boost::source(e1, roads1->graph);
+		RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
+		RoadVertexDesc src2 = boost::source(e2, roads2->graph);
+		RoadVertexDesc tgt2 = boost::target(e2, roads2->graph);
 
-		// シード候補を、正式なシードとして採用
-		seeds1 = min_seeds1;
-		seeds2 = min_seeds2;
+		// シード候補を追加
+		seeds1.push_back(src1);
+		seeds1.push_back(tgt1);
+		seeds2.push_back(src2);
+		seeds2.push_back(tgt2);
+	
+		// テンポラリの道路網を作成する。
+		RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
+		RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
+			
+		// e1、e2のペアをシードにテンポラリで追加し、２つの道路網の類似性を計算する
+		QMap<RoadVertexDesc, RoadVertexDesc> map1;
+		QMap<RoadVertexDesc, RoadVertexDesc> map2;
+		float dissimilarity = computeUnsimilarity(temp1, seeds1, temp2, seeds2, map1, map2);
+
+		// 非類似度が最小なら、ベストマッチングとして更新
+		if (dissimilarity < min_dissimilarity) {
+			updated = true;
+			min_dissimilarity = dissimilarity;
+			min_e1 = e1;
+			min_e2 = e2;
+		}
+
+		// テンポラリの道路網を削除する
+		delete temp1;
+		delete temp2;
+
+		// もし、前回のループより、非類似度が改善しないなら、シードを正式採用せずに、ループを終了する
+		//if (!updated) break;
 
 		// Importance順に並べたエッジリストから、使用したペアを削除
 		for (int j = 0; j < edges1.size(); j++) {
@@ -304,10 +251,6 @@ void BFSMulti::init() {
 			}
 		}
 
-		RoadVertexDesc src1 = boost::source(min_e1, roads1->graph);
-		RoadVertexDesc tgt1 = boost::target(min_e1, roads1->graph);
-		RoadVertexDesc src2 = boost::source(min_e2, roads2->graph);
-		RoadVertexDesc tgt2 = boost::target(min_e2, roads2->graph);
 		qDebug() << "Roads1: " << src1 << "-" << tgt1 << " Roads2: " << src2 << "-" << tgt2;
 
 	}

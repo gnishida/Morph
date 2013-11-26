@@ -19,6 +19,8 @@ AbstractBFS::~AbstractBFS() {
 }
 
 void AbstractBFS::setRoad1(const char* filename) {
+	if (roads1 != NULL) delete roads1;
+
 	FILE* fp = fopen(filename, "rb");
 	roads1 = new RoadGraph();
 	roads1->load(fp, 2);
@@ -35,15 +37,13 @@ void AbstractBFS::setRoad1(const char* filename) {
 	// 道路のヒストグラム情報を出力
 	//GraphUtil::printStatistics(roads1);
 
-	if (roads2 != NULL) {
-		init();
-	} else {
-		clearSequence();
-		sequence.push_back(GraphUtil::copyRoads(roads1));
-	}
+	clearSequence();
+	sequence.push_back(GraphUtil::copyRoads(roads1));
 }
 
 void AbstractBFS::setRoad2(const char* filename) {
+	if (roads2 != NULL) delete roads2;
+
 	FILE* fp = fopen(filename, "rb");
 	roads2 = new RoadGraph();
 	roads2->load(fp, 2);
@@ -60,12 +60,8 @@ void AbstractBFS::setRoad2(const char* filename) {
 	// 道路のヒストグラム情報を出力
 	//GraphUtil::printStatistics(roads2);
 
-	if (roads1 != NULL) {
-		init();
-	} else {
-		clearSequence();
-		sequence.push_back(GraphUtil::copyRoads(roads2));
-	}
+	clearSequence();
+	sequence.push_back(GraphUtil::copyRoads(roads2));
 }
 
 void AbstractBFS::draw(QPainter* painter) {

@@ -22,6 +22,7 @@ public:
 public slots:
 	void loadRoad1();
 	void loadRoad2();
+	void compute();
 	void moveSequence(int value);
 	void prevSequence();
 	void nextSequence();
