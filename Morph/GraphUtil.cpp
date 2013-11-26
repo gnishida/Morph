@@ -222,6 +222,22 @@ std::vector<RoadVertexDesc> GraphUtil::getVertices(RoadGraph* roads, bool onlyVa
 }
 
 /**
+ * index番目のエッジを返却する。
+ */
+RoadEdgeDesc GraphUtil::getEdge(RoadGraph* roads, int index, bool onlyValidEdge) {
+	int count = 0;
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (onlyValidEdge && !roads->graph[*ei]) continue;
+
+		if (index == count) return *ei;
+		count++;
+	}
+
+	throw "No edge found for the specified index.";
+}
+
+/**
  * 指定した頂点から出ているエッジの長さの合計を返却する
  */
 float GraphUtil::getTotalEdgeLength(RoadGraph* roads, RoadVertexDesc v) {

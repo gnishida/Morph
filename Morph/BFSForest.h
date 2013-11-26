@@ -4,14 +4,14 @@
 
 class BFSForest : public BFSTree {
 public:
-	std::vector<RoadVertexDesc> roots;
+	QList<RoadVertexDesc> roots;
 
 public:
-	BFSForest(RoadGraph* roads, std::vector<RoadVertexDesc> roots);
+	BFSForest(RoadGraph* roads, QList<RoadVertexDesc> roots);
 	~BFSForest();
 	
 	QList<RoadVertexDesc> getParent(RoadVertexDesc node);
-	std::vector<RoadVertexDesc> getRoots();
+	QList<RoadVertexDesc> getRoots();
 	void buildForest();
 };
 

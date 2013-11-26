@@ -83,5 +83,6 @@ private:
 public:
 	MoreImportantEdge(RoadGraph* roads);
 
+	//bool operator()(const int& left, const int& right) const;
 	bool operator()(const RoadEdgeDesc& left, const RoadEdgeDesc& right) const;
 };

@@ -1,7 +1,7 @@
 ﻿#include "BFSForest.h"
 #include "GraphUtil.h"
 
-BFSForest::BFSForest(RoadGraph* roads, std::vector<RoadVertexDesc> roots) : BFSTree() {
+BFSForest::BFSForest(RoadGraph* roads, QList<RoadVertexDesc> roots) : BFSTree() {
 	this->roads = roads;
 	this->roots = roots;
 
@@ -32,15 +32,17 @@ QList<RoadVertexDesc> BFSForest::getParent(RoadVertexDesc node) {
 /**
  * ルートノードを返却する。
  */
-std::vector<RoadVertexDesc> BFSForest::getRoots() {
+QList<RoadVertexDesc> BFSForest::getRoots() {
 	return roots;
 }
 
 void BFSForest::buildForest() {
-	std::list<RoadVertexDesc> seeds;
+	QList<RoadVertexDesc> seeds;
 	QMap<RoadVertexDesc, bool> visited;
 
 	for (int i = 0; i < roots.size(); i++) {
+		if (seeds.contains(roots[i])) continue;
+
 		seeds.push_back(roots[i]);
 		visited[roots[i]] = true;
 	}

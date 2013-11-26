@@ -22,6 +22,7 @@ public:
 	static std::vector<RoadVertexDesc> getVertices(RoadGraph* roads, bool onlyValidVertex = true);
 
 	// エッジ関係の関数
+	static RoadEdgeDesc getEdge(RoadGraph* roads, int index, bool onlyValidEdge = true);
 	static float getTotalEdgeLength(RoadGraph* roads, RoadVertexDesc v);
 	static void collapseEdge(RoadGraph* roads, RoadEdgeDesc e);
 	static int getNumEdges(RoadGraph* roads, bool onlyValidEdge = true);

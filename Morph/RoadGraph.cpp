@@ -288,17 +288,23 @@ std::vector<RoadEdgeDesc> RoadGraph::getMajorEdges(RoadGraph* roads, int num) {
  */
 QList<RoadEdgeDesc> RoadGraph::getOrderedEdgesByImportance() {
 	std::vector<RoadEdgeDesc> data;
+	//std::vector<int> data;
+
 	RoadEdgeIter ei, eend;
+	int count = 0;
 	for (boost::tie(ei, eend) = boost::edges(graph); ei != eend; ++ei) {
 		if (!graph[*ei]->valid) continue;
 
 		data.push_back(*ei);
+		//data.push_back(count);
+		count++;
 	}
 
 	std::sort(data.begin(), data.end(), MoreImportantEdge(this));
 
 	QList<RoadEdgeDesc> ret;
 	for (int i = 0; i < data.size(); i++) {
+		//ret.push_back(GraphUtil::getEdge(this, data[i]));
 		ret.push_back(data[i]);
 	}
 
@@ -317,6 +323,10 @@ MoreImportantEdge::MoreImportantEdge(RoadGraph* roads) {
 	this->roads = roads;
 }
 
+//bool MoreImportantEdge::operator()(const int& left, const int& right) const {
 bool MoreImportantEdge::operator()(const RoadEdgeDesc& left, const RoadEdgeDesc& right) const {
-	return roads->graph[left]->importance > roads->graph[right]->importance;
+	RoadEdge* e1 = roads->graph[left];
+	RoadEdge* e2 = roads->graph[right];
+
+	return e1->importance > e2->importance;
 }
