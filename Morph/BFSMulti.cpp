@@ -161,8 +161,7 @@ void BFSMulti::init() {
 	QList<RoadEdgeDesc> edges2 = roads2->getOrderedEdgesByImportance();
 
 	bool updated = false;
-	int iteration = 0;
-	while (!edges1.empty() && !edges2.empty()) {
+	for (int iteration = 0; iteration < 4 && !edges1.empty() && !edges2.empty(); iteration++) {
 		qDebug() << iteration;
 
 		RoadEdgeDesc min_e1;
