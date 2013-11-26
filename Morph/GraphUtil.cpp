@@ -439,7 +439,7 @@ void GraphUtil::orderPolyLine(RoadGraph* roads, RoadEdgeDesc e, RoadVertexDesc s
 /**
  * 指定したエッジを、指定した位置に移動する。
  */
-void GraphUtil::movePolyLine(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos) {
+void GraphUtil::moveEdge(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos) {
 	RoadVertexDesc src = boost::source(e, roads->graph);
 	RoadVertexDesc tgt = boost::target(e, roads->graph);
 
@@ -1702,7 +1702,7 @@ void GraphUtil::scaleToBBox(RoadGraph* roads, BBox& area) {
 			RoadVertexDesc tgt = boost::target(*ei, roads->graph);
 			if (!roads->graph[tgt]->valid) continue;
 
-			movePolyLine(roads, *ei, pos, roads->graph[tgt]->pt);
+			moveEdge(roads, *ei, pos, roads->graph[tgt]->pt);
 		}
 
 		roads->graph[*vi]->pt = pos;
@@ -1782,7 +1782,7 @@ void GraphUtil::normalizeBySpring(RoadGraph* roads, BBox& area) {
 
 					RoadVertexDesc tgt = boost::target(*ei, roads->graph);
 
-					movePolyLine(roads, *ei, pos, roads->graph[tgt]->pt);
+					moveEdge(roads, *ei, pos, roads->graph[tgt]->pt);
 				}
 			}
 		}

@@ -109,11 +109,14 @@ RoadGraph* BFSMulti::interpolate(float t) {
 			for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
 				RoadVertexDesc tgt = boost::target(*ei, new_roads->graph);
 
-				// 古いエッジを無効にする
-				new_roads->graph[*ei]->valid = false;
+				// 一旦、古いエッジを、近接頂点にスナップするよう移動する
+				GraphUtil::moveEdge(new_roads, *ei, new_roads->graph[nearest_v]->pt, new_roads->graph[tgt]->pt);
 
 				// 新しいエッジを追加する
-				GraphUtil::addEdge(new_roads, tgt, nearest_v, new_roads->graph[*ei]->lanes, new_roads->graph[*ei]->type, new_roads->graph[*ei]->oneWay);
+				GraphUtil::addEdge(new_roads, nearest_v, tgt, new_roads->graph[*ei]);
+
+				// 古いエッジを無効にする
+				new_roads->graph[*ei]->valid = false;
 			}
 		} else {
 			// 当該頂点を、有効に戻す
@@ -142,8 +145,9 @@ void BFSMulti::init() {
 	QList<RoadEdgeDesc> edges2 = roads2->getOrderedEdgesByImportance();
 
 	bool updated = false;
-	for (int loop = 0; loop < 1000; loop++) {
-		qDebug() << loop;
+	int iteration = 0;
+	while (!edges1.empty() && !edges2.empty()) {
+		qDebug() << iteration;
 
 		RoadEdgeDesc min_e1;
 		RoadEdgeDesc min_e2;
@@ -153,9 +157,8 @@ void BFSMulti::init() {
 		updated = false;
 
 		// 道路網１のTop20 Importantエッジに対して
-		for (int i = 0; i < 20; i++) {
-			qDebug() << i;
-
+		int topN = std::min(20, edges1.size());
+		for (int i = 0; i < topN; i++) {
 			float min_diff = std::numeric_limits<float>::max();
 			RoadEdgeDesc e1;
 			RoadEdgeDesc e2;
@@ -210,7 +213,8 @@ void BFSMulti::init() {
 		}
 
 		// 道路網２のTop20 Importantエッジに対して
-		for (int i = 0; i < 20; i++) {
+		topN = std::min(20, edges2.size());
+		for (int i = 0; i < topN; i++) {
 			qDebug() << i;
 
 			float min_diff = std::numeric_limits<float>::max();

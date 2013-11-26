@@ -32,7 +32,7 @@ public:
 	static RoadEdgeDesc getEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, bool onlyValidEdge = true);
 	static std::vector<QVector2D> getOrderedPolyLine(RoadGraph* roads, RoadEdgeDesc e);
 	static void orderPolyLine(RoadGraph* roads, RoadEdgeDesc e, RoadVertexDesc src);
-	static void movePolyLine(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos);
+	static void moveEdge(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos);
 	static std::vector<RoadEdgeDesc> getMajorEdges(RoadGraph* roads, int num);
 	static bool removeDeadEnd(RoadGraph* roads);
 	static std::vector<QVector2D> interpolateEdges(std::vector<QVector2D>& polyLine1, std::vector<QVector2D>& polyLine2, float t);
