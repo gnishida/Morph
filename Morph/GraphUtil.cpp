@@ -349,6 +349,8 @@ RoadEdgeDesc GraphUtil::addEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertex
  */
 RoadEdgeDesc GraphUtil::addEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, RoadEdge* ref_edge) {
 	RoadEdge* e = new RoadEdge(*ref_edge);
+	e->valid = true;
+
 	std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(src, tgt, roads->graph);
 	roads->graph[edge_pair.first] = e;
 
@@ -2172,6 +2174,7 @@ void GraphUtil::findCorrespondenceByNearestNeighbor(RoadGraph* roads1, RoadGraph
 
 /**
  * ２つの対応するノードについて、その子ノードのベストマッチングを探す。
+ * アルゴリズム：角度の差の最大値を最小とする組合せを探す。
  */
 QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph* roads1, RoadVertexDesc parent1, std::vector<RoadVertexDesc> children1, RoadGraph* roads2, RoadVertexDesc parent2, std::vector<RoadVertexDesc> children2) {
 	QMap<RoadVertexDesc, RoadVertexDesc> map;
@@ -2185,13 +2188,13 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 		}
 
 		do {
-			// マッチングのずれを数値化
+			// 角度の差の最大値を求める
 			float diff = 0.0f;
 			for (int i = 0; i < children1.size(); i++) {
 				QVector2D dir1 = roads1->graph[children1[i]]->pt - roads1->graph[parent1]->pt;
 				QVector2D dir2 = roads2->graph[permutation[i]]->pt - roads2->graph[parent2]->pt;
 
-				diff += diffAngle(dir1, dir2);
+				diff = std::max(diff, diffAngle(dir1, dir2));
 			}
 
 			if (diff < min_diff) {
@@ -2209,13 +2212,13 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 		}
 
 		do {
-			// マッチングのずれを数値化
+			// 角度の差の最大値を求める
 			float diff = 0.0f;
 			for (int i = 0; i < children2.size(); i++) {
 				QVector2D dir1 = roads1->graph[permutation[i]]->pt - roads1->graph[parent1]->pt;
 				QVector2D dir2 = roads2->graph[children2[i]]->pt - roads2->graph[parent2]->pt;
 
-				diff += diffAngle(dir1, dir2);
+				diff = std::max(diff, diffAngle(dir1, dir2));
 			}
 
 			if (diff < min_diff) {

@@ -129,11 +129,7 @@ void BFSMulti::init() {
 	GraphUtil::computeImportanceOfEdges(roads1, 1.0f, 1.0f, 1.0f);
 	GraphUtil::computeImportanceOfEdges(roads2, 1.0f, 1.0f, 1.0f);
 
-	float min_unsimilarity = std::numeric_limits<float>::max();
-	QMap<RoadVertexDesc, RoadVertexDesc> min_map1;
-	QMap<RoadVertexDesc, RoadVertexDesc> min_map2;
-	RoadGraph* min_roads1 = NULL;
-	RoadGraph* min_roads2 = NULL;
+	float min_dissimilarity = std::numeric_limits<float>::max();
 
 	srand(1234567);
 
@@ -146,8 +142,8 @@ void BFSMulti::init() {
 	QList<RoadEdgeDesc> edges2 = roads2->getOrderedEdgesByImportance();
 
 	bool updated = false;
-	for (int i = 0; i < 1000; i++) {
-		qDebug() << i;
+	for (int loop = 0; loop < 1000; loop++) {
+		qDebug() << loop;
 
 		RoadEdgeDesc min_e1;
 		RoadEdgeDesc min_e2;
@@ -158,6 +154,8 @@ void BFSMulti::init() {
 
 		// 道路網１のTop20 Importantエッジに対して
 		for (int i = 0; i < 20; i++) {
+			qDebug() << i;
+
 			float min_diff = std::numeric_limits<float>::max();
 			RoadEdgeDesc e1;
 			RoadEdgeDesc e2;
@@ -194,29 +192,27 @@ void BFSMulti::init() {
 			// e1、e2のペアをシードにテンポラリで追加し、２つの道路網の類似性を計算する
 			QMap<RoadVertexDesc, RoadVertexDesc> map1;
 			QMap<RoadVertexDesc, RoadVertexDesc> map2;
-			float unsimilarity = computeUnsimilarity(temp1, temp_seeds1, temp2, temp_seeds2, map1, map2);
+			float dissimilarity = computeUnsimilarity(temp1, temp_seeds1, temp2, temp_seeds2, map1, map2);
 
 			// 非類似度が最小なら、ベストマッチングとして更新
-			if (unsimilarity < min_unsimilarity) {
+			if (dissimilarity < min_dissimilarity) {
 				updated = true;
-				min_unsimilarity = unsimilarity;
-				min_map1 = map1;
-				min_map2 = map2;
-				min_roads1 = temp1;
-				min_roads2 = temp2;
+				min_dissimilarity = dissimilarity;
 				min_seeds1 = temp_seeds1;
 				min_seeds2 = temp_seeds2;
 				min_e1 = e1;
 				min_e2 = e2;
-			} else {
-				// テンポラリの道路網を削除する
-				delete temp1;
-				delete temp2;
 			}
+
+			// テンポラリの道路網を削除する
+			delete temp1;
+			delete temp2;
 		}
 
 		// 道路網２のTop20 Importantエッジに対して
 		for (int i = 0; i < 20; i++) {
+			qDebug() << i;
+
 			float min_diff = std::numeric_limits<float>::max();
 			RoadEdgeDesc e1;
 			RoadEdgeDesc e2;
@@ -253,25 +249,21 @@ void BFSMulti::init() {
 			// e1、e2のペアをシードにテンポラリで追加し、２つの道路網の類似性を計算する
 			QMap<RoadVertexDesc, RoadVertexDesc> map1;
 			QMap<RoadVertexDesc, RoadVertexDesc> map2;
-			float unsimilarity = computeUnsimilarity(temp1, temp_seeds1, temp2, temp_seeds2, map1, map2);
+			float dissimilarity = computeUnsimilarity(temp1, temp_seeds1, temp2, temp_seeds2, map1, map2);
 
 			// 非類似度が最小なら、ベストマッチングとして更新
-			if (unsimilarity < min_unsimilarity) {
+			if (dissimilarity < min_dissimilarity) {
 				updated = true;
-				min_unsimilarity = unsimilarity;
-				min_map1 = map1;
-				min_map2 = map2;
-				min_roads1 = temp1;
-				min_roads2 = temp2;
+				min_dissimilarity = dissimilarity;
 				min_seeds1 = temp_seeds1;
 				min_seeds2 = temp_seeds2;
 				min_e1 = e1;
 				min_e2 = e2;
-			} else {
-				// テンポラリの道路網を削除する
-				delete temp1;
-				delete temp2;
 			}
+
+			// テンポラリの道路網を削除する
+			delete temp1;
+			delete temp2;
 		}
 
 		// もし、前回のループより、非類似度が改善しないなら、シードを正式採用せずに、ループを終了する
@@ -303,19 +295,19 @@ void BFSMulti::init() {
 
 	}
 
-	qDebug() << "Min unsimilarity: " << min_unsimilarity;
-	qDebug() << "    connectivity: " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 1.0f, 0.0f, 0.0f, 0.0f);
-	qDebug() << "    split       : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 1.0f, 0.0f, 0.0f);
-	qDebug() << "    angle       : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 0.0f, 1.0f, 0.0f);
-	qDebug() << "    distance    : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 0.0f, 0.0f, 1.0f);
-
+	// 最終的に決まったシードを使って、道路網とマッチング情報を更新
+	QMap<RoadVertexDesc, RoadVertexDesc> min_map1;
+	QMap<RoadVertexDesc, RoadVertexDesc> min_map2;
+	float unsimilarity = computeUnsimilarity(roads1, seeds1, roads2, seeds2, min_map1, min_map2);
 	correspondence = min_map1;
-	delete roads1;
-	delete roads2;
-	roads1 = GraphUtil::copyRoads(min_roads1);
-	roads2 = GraphUtil::copyRoads(min_roads2);
-	delete min_roads1;
-	delete min_roads2;
+
+	/*
+	qDebug() << "Min dissimilarity: " << min_dissimilarity;
+	qDebug() << "     connectivity: " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 1.0f, 0.0f, 0.0f, 0.0f);
+	qDebug() << "     split       : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 1.0f, 0.0f, 0.0f);
+	qDebug() << "     angle       : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 0.0f, 1.0f, 0.0f);
+	qDebug() << "     distance    : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 0.0f, 0.0f, 1.0f);
+	*/
 
 	// シーケンスを生成
 	clearSequence();
