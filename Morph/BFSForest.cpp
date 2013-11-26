@@ -1,7 +1,7 @@
 ﻿#include "BFSForest.h"
 #include "GraphUtil.h"
 
-BFSForest::BFSForest(RoadGraph* roads, QList<RoadVertexDesc> roots) : BFSTree() {
+BFSForest::BFSForest(RoadGraph* roads, QList<RoadVertexDesc> roots) {
 	this->roads = roads;
 	this->roots = roots;
 
@@ -9,6 +9,27 @@ BFSForest::BFSForest(RoadGraph* roads, QList<RoadVertexDesc> roots) : BFSTree() 
 }
 
 BFSForest::~BFSForest() {
+}
+
+/**
+ * 子ノードのリストを返却する。
+ */
+std::vector<RoadVertexDesc>& BFSForest::getChildren(RoadVertexDesc node) {
+	if (!children.contains(node)) {
+		std::vector<RoadVertexDesc> c;
+		children[node] = c;
+	}
+
+	return children[node];
+}
+
+/**
+ * 子ノードを追加する。
+ */
+void BFSForest::addChild(RoadVertexDesc parent, RoadVertexDesc child) {
+	std::vector<RoadVertexDesc> list = getChildren(parent);
+	list.push_back(child);
+	children[parent] = list;
 }
 
 /**
