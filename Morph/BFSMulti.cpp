@@ -52,7 +52,6 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		RoadVertexDesc u2 = correspondence[u1];
 
 		// エッジを作成
-		/*
 		RoadEdge* new_e = new RoadEdge(roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
 		if (GraphUtil::hasEdge(roads2, conv[v1], conv[u1])) {
 			new_e->polyLine = GraphUtil::interpolateEdges(roads1->graph[*ei]->polyLine, roads2->graph[GraphUtil::getEdge(roads2, conv[v1], conv[u1])]->polyLine, t);
@@ -62,9 +61,8 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		}
 		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(conv[v1], conv[u1], new_roads->graph);
 		new_roads->graph[edge_pair.first] = new_e;
-		*/
 		
-		GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+		//GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
 	}
 
 	// DeadEndの頂点について、エッジ長がthreshold以下なら頂点とそのエッジを削除する
@@ -92,9 +90,7 @@ RoadGraph* BFSMulti::interpolate(float t) {
 	}
 
 	// 一旦、無効頂点・エッジを削除して、きれいにする
-	RoadGraph* temp = GraphUtil::clean(new_roads);
-	delete new_roads;
-	new_roads = temp;
+	GraphUtil::clean(new_roads);
 
 	// DeadEndの頂点について、近くの他の頂点にSnapさせる
 	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
@@ -314,6 +310,8 @@ void BFSMulti::init() {
 	qDebug() << "    distance    : " << GraphUtil::computeUnsimilarity(min_roads1, min_map1, min_roads2, min_map2, 0.0f, 0.0f, 0.0f, 1.0f);
 
 	correspondence = min_map1;
+	delete roads1;
+	delete roads2;
 	roads1 = GraphUtil::copyRoads(min_roads1);
 	roads2 = GraphUtil::copyRoads(min_roads2);
 	delete min_roads1;

@@ -611,20 +611,8 @@ RoadGraph* GraphUtil::copyRoads(RoadGraph* roads) {
 
 		// エッジの追加
 		RoadEdge* new_e = new RoadEdge(*roads->graph[*ei]);
-		/*
-		RoadEdge* new_e = new RoadEdge(roads->graph[*ei]->lanes, roads->graph[*ei]->type, roads->graph[*ei]->oneWay);
-		for (int i = 0; i < roads->graph[*ei]->polyLine.size(); i++) {
-			new_e->addPoint(roads->graph[*ei]->polyLine[i]);
-		}
-		new_e->valid = roads->graph[*ei]->valid;
-		*/
 		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(new_src, new_tgt, new_roads->graph);
 		new_roads->graph[edge_pair.first] = new_e;
-
-		/*
-		RoadEdgeDesc new_e = addEdge(new_roads, new_src, new_tgt, roads->graph[*ei]->lanes, roads->graph[*ei]->type, roads->graph[*ei]->oneWay);
-		new_roads->graph[new_e]->valid = roads->graph[*ei]->valid;
-		*/
 	}
 
 	return new_roads;
@@ -659,16 +647,9 @@ void GraphUtil::copyRoads(RoadGraph* roads1, RoadGraph* roads2) {
 		RoadVertexDesc new_tgt = conv[tgt];
 
 		// エッジの追加
-		RoadEdge* new_e = new RoadEdge(roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
-		for (int i = 0; i < roads1->graph[*ei]->polyLine.size(); i++) {
-			new_e->addPoint(roads1->graph[*ei]->polyLine[i]);
-		}
-		new_e->valid = roads1->graph[*ei]->valid;
+		RoadEdge* new_e = new RoadEdge(*roads1->graph[*ei]);
 		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(new_src, new_tgt, roads2->graph);
 		roads2->graph[edge_pair.first] = new_e;
-
-		//RoadEdgeDesc new_e = addEdge(roads2, new_src, new_tgt, roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
-		//roads2->graph[new_e]->valid = roads1->graph[*ei]->valid;
 	}
 }
 
@@ -1101,39 +1082,40 @@ std::vector<RoadVertexDesc> GraphUtil::getChildren(RoadGraph* roads, RoadVertexD
 /**
  * 無効頂点やエッジを全て削除した道路網を返却する。
  */
-RoadGraph* GraphUtil::clean(RoadGraph* roads) {
-	RoadGraph* new_roads = new RoadGraph();
+void GraphUtil::clean(RoadGraph* roads) {
+	//RoadGraph* new_roads = new RoadGraph();
+	RoadGraph* temp = GraphUtil::copyRoads(roads);
+
+	roads = new RoadGraph();
 
 	QMap<RoadVertexDesc, RoadVertexDesc> conv;
 	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
-		if (!roads->graph[*vi]->valid) continue;
+	for (boost::tie(vi, vend) = boost::vertices(temp->graph); vi != vend; ++vi) {
+		if (!temp->graph[*vi]->valid) continue;
 
 		// 道路の追加
-		RoadVertex* new_v = new RoadVertex(roads->graph[*vi]->getPt());
-		RoadVertexDesc new_v_desc = boost::add_vertex(new_roads->graph);
-		new_roads->graph[new_v_desc] = new_v;	
+		RoadVertex* new_v = new RoadVertex(temp->graph[*vi]->getPt());
+		RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
+		roads->graph[new_v_desc] = new_v;	
 
 		conv[*vi] = new_v_desc;
 	}
 
 	RoadEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
-		if (!roads->graph[*ei]->valid) continue;
+	for (boost::tie(ei, eend) = boost::edges(temp->graph); ei != eend; ++ei) {
+		if (!temp->graph[*ei]->valid) continue;
 
-		RoadVertexDesc src = boost::source(*ei, roads->graph);
-		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+		RoadVertexDesc src = boost::source(*ei, temp->graph);
+		RoadVertexDesc tgt = boost::target(*ei, temp->graph);
 
 		RoadVertexDesc new_src = conv[src];
 		RoadVertexDesc new_tgt = conv[tgt];
 
 		// エッジの追加
-		addEdge(new_roads, new_src, new_tgt, roads->graph[*ei]->lanes, roads->graph[*ei]->type, roads->graph[*ei]->oneWay);
+		RoadEdge* new_e = new RoadEdge(*temp->graph[*ei]);
+		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(new_src, new_tgt, roads->graph);
+		roads->graph[edge_pair.first] = new_e;
 	}
-
-	return new_roads;
-
-	return new_roads;
 }
 
 /**

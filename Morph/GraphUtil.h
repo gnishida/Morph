@@ -61,7 +61,7 @@ public:
 	static std::vector<RoadVertexDesc> getChildren(RoadGraph* roads, RoadVertexDesc v);
 
 	// 道路網の変更関係の関数
-	static RoadGraph* clean(RoadGraph* roads);
+	static void clean(RoadGraph* roads);
 	static void reduce(RoadGraph* roads);
 	static bool reduce(RoadGraph* roads, RoadVertexDesc desc);
 	static void simplify(RoadGraph* roads, float dist_threshold);
