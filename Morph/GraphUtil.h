@@ -15,7 +15,7 @@ public:
 	static RoadVertexDesc getVertex(RoadGraph* roads, int index, bool onlyValidVertex = true);
 	static bool getVertex(RoadGraph* roads, QVector2D pos, float threshold, RoadVertexDesc& desc, bool onlyValidVertex = true);
 	static int getVertexIndex(RoadGraph* roads, RoadVertexDesc desc, bool onlyValidVertex = true);
-	static RoadVertexDesc copyVertex(RoadGraph* roads, RoadVertexDesc v, bool virtFlag = true);
+	static RoadVertexDesc addVertex(RoadGraph* roads, RoadVertex* v);
 	static void moveVertex(RoadGraph* roads, RoadVertexDesc v, QVector2D pt);
 	static void collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	static int getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge = true);

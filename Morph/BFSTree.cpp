@@ -70,7 +70,8 @@ int BFSTree::getHeight(RoadVertexDesc node) {
  */
 RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc node1, RoadVertexDesc node2) {
 	// トップノードをコピーする
-	RoadVertexDesc v_desc = GraphUtil::copyVertex(roads, node1, true);
+	RoadVertexDesc v_desc = GraphUtil::addVertex(roads, roads->graph[node1]);
+	roads->graph[v_desc]->virt = true;
 
 	RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, node1_parent, node1);
 
@@ -94,7 +95,8 @@ RoadVertexDesc BFSTree::copySubTree(RoadVertexDesc node1_parent, RoadVertexDesc 
 
 		for (int i = 0; i < children[parent1].size(); i++) {
 			// コピー先にノードを作成する
-			RoadVertexDesc v_desc = GraphUtil::copyVertex(roads, children[parent1][i], true);
+			RoadVertexDesc v_desc = GraphUtil::addVertex(roads, roads->graph[children[parent1][i]]);
+			roads->graph[v_desc]->virt = true;
 
 			// エッジを取得
 			RoadEdgeDesc e_desc = GraphUtil::getEdge(roads, parent1, children[parent1][i]);
@@ -213,7 +215,8 @@ void BFSTree::buildTree() {
 				roads->graph[orig_e_desc]->valid = false;
 
 				// 対象ノードが訪問済みの場合、対象ノードをコピーして子ノードにする
-				RoadVertexDesc child2 = GraphUtil::copyVertex(roads, child, false);
+				RoadVertexDesc child2 = GraphUtil::addVertex(roads, roads->graph[child]);
+				roads->graph[child2]->virt = false;
 
 				// エッジ作成
 				GraphUtil::addEdge(roads, parent, child2, roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type, roads->graph[orig_e_desc]->oneWay);

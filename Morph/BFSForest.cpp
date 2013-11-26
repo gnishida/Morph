@@ -77,7 +77,8 @@ void BFSForest::buildForest() {
 				roads->graph[orig_e_desc]->valid = false;
 
 				// 対象ノードが訪問済みの場合、対象ノードをコピーして子ノードにする
-				RoadVertexDesc child2 = GraphUtil::copyVertex(roads, child, false);
+				RoadVertexDesc child2 = GraphUtil::addVertex(roads, roads->graph[child]);
+				roads->graph[child2]->virt = false;
 
 				// エッジ作成
 				GraphUtil::addEdge(roads, parent, child2, roads->graph[orig_e_desc]);

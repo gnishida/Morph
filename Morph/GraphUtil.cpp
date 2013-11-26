@@ -122,11 +122,10 @@ int GraphUtil::getVertexIndex(RoadGraph* roads, RoadVertexDesc desc, bool onlyVa
 }
 
 /**
- * 指定された頂点をコピーする。
+ * 頂点を追加する。
  */
-RoadVertexDesc GraphUtil::copyVertex(RoadGraph* roads, RoadVertexDesc v, bool virtFlag) {
-	RoadVertex* new_v = new RoadVertex(roads->graph[v]->getPt());
-	new_v->virt = virtFlag;
+RoadVertexDesc GraphUtil::addVertex(RoadGraph* roads, RoadVertex* v) {
+	RoadVertex* new_v = new RoadVertex(*v);
 	RoadVertexDesc new_v_desc = boost::add_vertex(roads->graph);
 	roads->graph[new_v_desc] = new_v;
 
