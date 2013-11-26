@@ -54,6 +54,7 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		// エッジを作成
 		RoadEdge* new_e = new RoadEdge(roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
 		if (GraphUtil::hasEdge(roads2, v2, u2)) {
+		//if (GraphUtil::hasEdge(roads2, conv[v1], conv[u1])) {
 			new_e->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, GraphUtil::getEdge(roads2, v2, u2), v2, t);
 		} else {
 			new_e->addPoint(new_roads->graph[conv[v1]]->getPt());
@@ -90,37 +91,55 @@ RoadGraph* BFSMulti::interpolate(float t) {
 	}
 
 	// 一旦、無効頂点・エッジを削除して、きれいにする
-	GraphUtil::clean(new_roads);
+	//GraphUtil::clean(new_roads);
 
-	// DeadEndの頂点について、近くの他の頂点にSnapさせる
 	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
-		if (GraphUtil::getDegree(new_roads, *vi) == 1) {
-			new_roads->graph[*vi]->valid = false;
+		if (!new_roads->graph[*vi]->valid) continue;
+
+		if (GraphUtil::getDegree(new_roads, *vi) != 1) continue;
+
+		// 当該頂点と接続されている唯一の頂点を取得
+		RoadVertexDesc tgt;
+		RoadEdgeDesc e_desc;
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
+			if (!new_roads->graph[*ei]->valid) continue;
+
+			tgt = boost::target(*ei, new_roads->graph);
+			e_desc = *ei;
+			break;
 		}
-	}
-	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
-		if (new_roads->graph[*vi]->valid) continue;
 
-		RoadVertexDesc nearest_v = GraphUtil::findNearestVertex(new_roads, new_roads->graph[*vi]->pt);
+		// 近接頂点を探す
+		RoadVertexDesc nearest_desc;
+		float min_dist = std::numeric_limits<float>::max();
 
-		if ((new_roads->graph[*vi]->pt - new_roads->graph[nearest_v]->pt).length() < snap_threshold) {
-			// 当該頂点を、近接頂点にスナップする
-			RoadOutEdgeIter ei, eend;
-			for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
-				RoadVertexDesc tgt = boost::target(*ei, new_roads->graph);
+		RoadVertexIter vi2, vend2;
+		for (boost::tie(vi2, vend2) = boost::vertices(new_roads->graph); vi2 != vend2; ++vi2) {
+			if (!new_roads->graph[*vi2]->valid) continue;
+			if (*vi2 == tgt) continue;
+			if (GraphUtil::getDegree(new_roads, *vi2) == 1) continue;
 
-				// 一旦、古いエッジを、近接頂点にスナップするよう移動する
-				GraphUtil::moveEdge(new_roads, *ei, new_roads->graph[nearest_v]->pt, new_roads->graph[tgt]->pt);
-
-				// 新しいエッジを追加する
-				GraphUtil::addEdge(new_roads, nearest_v, tgt, new_roads->graph[*ei]);
-
-				// 古いエッジを無効にする
-				new_roads->graph[*ei]->valid = false;
+			float dist = (new_roads->graph[*vi2]->pt - new_roads->graph[*vi]->pt).length();
+			if (dist < min_dist) {
+				nearest_desc = *vi2;
+				min_dist = dist;
 			}
-		} else {
-			// 当該頂点を、有効に戻す
-			new_roads->graph[*vi]->valid = true;
+		}
+
+		// 当該頂点と近接頂点との距離が、snap_threshold未満か？
+		if ((new_roads->graph[*vi]->pt - new_roads->graph[nearest_desc]->pt).length() < snap_threshold) {
+			// 一旦、古いエッジを、近接頂点にスナップするよう移動する
+			GraphUtil::moveEdge(new_roads, e_desc, new_roads->graph[nearest_desc]->pt, new_roads->graph[tgt]->pt);
+
+			// 新しいエッジを追加する
+			GraphUtil::addEdge(new_roads, nearest_desc, tgt, new_roads->graph[e_desc]);
+
+			// 古いエッジを無効にする
+			new_roads->graph[e_desc]->valid = false;
+
+			// 当該頂点を無効にする
+			new_roads->graph[*vi]->valid = false;
 		}
 	}
 

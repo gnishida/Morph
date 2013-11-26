@@ -446,20 +446,20 @@ void GraphUtil::moveEdge(RoadGraph* roads, RoadEdgeDesc e, QVector2D& src_pos, Q
 	QVector2D src_diff = src_pos - roads->graph[src]->pt;
 	QVector2D tgt_diff = tgt_pos - roads->graph[tgt]->pt;
 
-	if ((roads->graph[e]->getPolyLine()[0] - roads->graph[src]->pt).length() < (roads->graph[e]->getPolyLine()[0] - roads->graph[tgt]->pt).length()) {
-		int n = roads->graph[e]->getPolyLine().size();
+	if ((roads->graph[e]->polyLine[0] - roads->graph[src]->pt).length() < (roads->graph[e]->polyLine[0] - roads->graph[tgt]->pt).length()) {
+		int n = roads->graph[e]->polyLine.size();
 		for (int i = 1; i < n - 1; i++) {
-			roads->graph[e]->getPolyLine()[i] += src_diff + (tgt_diff - src_diff) * (float)i / (float)(n - 1);
+			roads->graph[e]->polyLine[i] += src_diff + (tgt_diff - src_diff) * (float)i / (float)(n - 1);
 		}
-		roads->graph[e]->getPolyLine()[0] = src_pos;
-		roads->graph[e]->getPolyLine()[n - 1] = tgt_pos;
+		roads->graph[e]->polyLine[0] = src_pos;
+		roads->graph[e]->polyLine[n - 1] = tgt_pos;
 	} else {
-		int n = roads->graph[e]->getPolyLine().size();
+		int n = roads->graph[e]->polyLine.size();
 		for (int i = 1; i < n - 1; i++) {
-			roads->graph[e]->getPolyLine()[i] += tgt_diff + (src_diff - tgt_diff) * (float)i / (float)(n - 1);
+			roads->graph[e]->polyLine[i] += tgt_diff + (src_diff - tgt_diff) * (float)i / (float)(n - 1);
 		}
-		roads->graph[e]->getPolyLine()[0] = tgt_pos;
-		roads->graph[e]->getPolyLine()[n - 1] = src_pos;
+		roads->graph[e]->polyLine[0] = tgt_pos;
+		roads->graph[e]->polyLine[n - 1] = src_pos;
 	}
 }
 
@@ -1101,13 +1101,12 @@ std::vector<RoadVertexDesc> GraphUtil::getChildren(RoadGraph* roads, RoadVertexD
 }
 
 /**
- * 無効頂点やエッジを全て削除した道路網を返却する。
+ * 無効頂点やエッジを全て削除する。
  */
 void GraphUtil::clean(RoadGraph* roads) {
-	//RoadGraph* new_roads = new RoadGraph();
 	RoadGraph* temp = GraphUtil::copyRoads(roads);
 
-	roads = new RoadGraph();
+	roads->clear();
 
 	QMap<RoadVertexDesc, RoadVertexDesc> conv;
 	RoadVertexIter vi, vend;
