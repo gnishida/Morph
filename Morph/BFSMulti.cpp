@@ -90,9 +90,6 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		}
 	}
 
-	// 一旦、無効頂点・エッジを削除して、きれいにする
-	//GraphUtil::clean(new_roads);
-
 	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
 		if (!new_roads->graph[*vi]->valid) continue;
 
@@ -321,6 +318,10 @@ void BFSMulti::init() {
 	QMap<RoadVertexDesc, RoadVertexDesc> min_map2;
 	float unsimilarity = computeUnsimilarity(roads1, seeds1, roads2, seeds2, min_map1, min_map2);
 	correspondence = min_map1;
+
+	// 孤立した頂点を削除
+	GraphUtil::removeIsolatedVertices(roads1);
+	GraphUtil::removeIsolatedVertices(roads2);
 
 	/*
 	qDebug() << "Min dissimilarity: " << min_dissimilarity;

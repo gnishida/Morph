@@ -20,6 +20,7 @@ public:
 	static void collapseVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	static int getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge = true);
 	static std::vector<RoadVertexDesc> getVertices(RoadGraph* roads, bool onlyValidVertex = true);
+	static void removeIsolatedVertices(RoadGraph* roads, bool onlyValidVertex = true);
 
 	// エッジ関係の関数
 	static RoadEdgeDesc getEdge(RoadGraph* roads, int index, bool onlyValidEdge = true);

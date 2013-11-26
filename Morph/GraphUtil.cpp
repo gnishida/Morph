@@ -221,6 +221,20 @@ std::vector<RoadVertexDesc> GraphUtil::getVertices(RoadGraph* roads, bool onlyVa
 }
 
 /**
+ * 孤立した頂点を無効にする
+ */
+void GraphUtil::removeIsolatedVertices(RoadGraph* roads, bool onlyValidVertex) {
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
+		if (getDegree(roads, *vi, onlyValidVertex) == 0) {
+			roads->graph[*vi]->valid = false;
+		}
+	}
+}
+
+/**
  * index番目のエッジを返却する。
  */
 RoadEdgeDesc GraphUtil::getEdge(RoadGraph* roads, int index, bool onlyValidEdge) {
@@ -552,28 +566,26 @@ std::vector<QVector2D> GraphUtil::interpolateEdges(RoadGraph* roads1, RoadEdgeDe
  * 計算式：MAX( (w_length * length + w_valence * (valence1 + valence2) + w_lanes * lanes) / K, K / initial distance)
  */
 void GraphUtil::computeImportanceOfEdges(RoadGraph* roads, float w_length, float w_valence, float w_lanes) {
+	// エッジの最大長を計算する
+	float max_length = 0.0f;
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (!roads->graph[*ei]->valid) continue;
+
+		float length = roads->graph[*ei]->getLength();
+		if (length > max_length) max_length = length;
+	}
+	
 	float max_importance = 0.0f;
 	int count = 0;
 
-	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
 		if (!roads->graph[*ei]->valid) continue;
 
 		RoadVertexDesc src = boost::source(*ei, roads->graph);
 		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
 
-		roads->graph[*ei]->importance = roads->graph[*ei]->getLength() * w_length + (getDegree(roads, src) + getDegree(roads, tgt)) * w_valence + roads->graph[*ei]->lanes * w_lanes;
-
-		if (roads->graph[*ei]->importance > max_importance) {
-			max_importance = roads->graph[*ei]->importance;
-		}
-	}
-
-	// 最大値でnormalizeする
-	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
-		if (!roads->graph[*ei]->valid) continue;
-
-		roads->graph[*ei]->importance /= max_importance;
+		roads->graph[*ei]->importance = roads->graph[*ei]->getLength() / max_length * w_length + (getDegree(roads, src) + getDegree(roads, tgt)) * w_valence + roads->graph[*ei]->lanes * w_lanes;
 	}
 }
 
