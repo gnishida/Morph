@@ -80,7 +80,7 @@ void BFSForest::buildForest() {
 				RoadVertexDesc child2 = GraphUtil::copyVertex(roads, child, false);
 
 				// エッジ作成
-				GraphUtil::addEdge(roads, parent, child2, roads->graph[orig_e_desc]->lanes, roads->graph[orig_e_desc]->type, roads->graph[orig_e_desc]->oneWay);
+				GraphUtil::addEdge(roads, parent, child2, roads->graph[orig_e_desc]);
 
 				children.push_back(child2);
 

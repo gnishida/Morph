@@ -330,12 +330,25 @@ int GraphUtil::getNumEdges(RoadGraph* roads, bool onlyValidEdge) {
 
 /**
  * エッジを追加する
+ * 注意：この関数では、polyLineには両端ノードしか登録されない。つまり、直線のエッジとなる。
  */
 RoadEdgeDesc GraphUtil::addEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, unsigned int lanes, unsigned int type, bool oneWay) {
 	RoadEdge* e = new RoadEdge(lanes, type, oneWay);
 	e->addPoint(roads->graph[src]->getPt());
 	e->addPoint(roads->graph[tgt]->getPt());
 
+	std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(src, tgt, roads->graph);
+	roads->graph[edge_pair.first] = e;
+
+	return edge_pair.first;
+}
+
+/**
+ * エッジを追加する
+ * 参照エッジref_edgeを使って、レーン数、タイプ、一方通行、polyLineなどを設定する。
+ */
+RoadEdgeDesc GraphUtil::addEdge(RoadGraph* roads, RoadVertexDesc src, RoadVertexDesc tgt, RoadEdge* ref_edge) {
+	RoadEdge* e = new RoadEdge(*ref_edge);
 	std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(src, tgt, roads->graph);
 	roads->graph[edge_pair.first] = e;
 
@@ -1340,7 +1353,7 @@ void GraphUtil::singlify(RoadGraph* roads) {
 
 			// エッジを作成する。
 			if (!hasEdge(new_roads, new_v_desc, new_u_desc)) {
-				addEdge(new_roads, new_v_desc, new_u_desc, roads->graph[*oei]->lanes, roads->graph[*oei]->type, roads->graph[*oei]->oneWay);
+				addEdge(new_roads, new_v_desc, new_u_desc, roads->graph[*oei]);
 			}
 
 			if (!conv.contains(u_desc)) {
