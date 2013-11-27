@@ -2146,6 +2146,47 @@ float GraphUtil::computeDissimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, Ro
 }
 
 /**
+ * 対応する頂点が与えられている時に、２つの道路網のトポロジーの違いを数値化して返却する。
+ * トポロジーの違いなので、座標は一切関係ない。隣接ノードとの接続性のみを考慮する。
+ *
+ * @param w_matching			対応するエッジがない場合のペナルティ
+ */
+float GraphUtil::computeDissimilarity2(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, float w_matching, float w_split, float w_angle, float w_distance) {
+	float penalty = 0.0f;
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	// 道路網１の各エッジについて、対応エッジがない場合のペナルティ
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
+		if (!roads1->graph[*ei]->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads1->graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads1->graph);
+		
+		if (!map1.contains(src) || !map1.contains(tgt)) {
+			// 対応エッジがないので、当該エッジのImportanceに基づいて、ペナルティを追加
+			penalty += roads1->graph[*ei]->importance * w_matching;
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	// 道路網２の各エッジについて、対応エッジがない場合のペナルティ
+	for (boost::tie(ei, eend) = boost::edges(roads2->graph); ei != eend; ++ei) {
+		if (!roads2->graph[*ei]->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads2->graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads2->graph);
+		
+		if (!map2.contains(src) || !map2.contains(tgt)) {
+			// 対応エッジがないので、当該エッジのImportanceに基づいて、ペナルティを追加
+			penalty += roads2->graph[*ei]->importance * w_matching;
+		}
+	}
+
+	return penalty;
+}
+
+/**
  * NearestNeighborに基づいて、２つの道路網のマッチングを行う。
  */
 void GraphUtil::findCorrespondenceByNearestNeighbor(RoadGraph* roads1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
@@ -2204,7 +2245,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 
 	if (children1.size() <= children2.size()) {
 		for (int i = 0; i < children2.size(); i++) {
-			permutation.push_back(children2[i]);
+			permutation.push_back(i);
 		}
 
 		do {
@@ -2212,7 +2253,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 			float diff = 0.0f;
 			for (int i = 0; i < children1.size(); i++) {
 				QVector2D dir1 = roads1->graph[children1[i]]->pt - roads1->graph[parent1]->pt;
-				QVector2D dir2 = roads2->graph[permutation[i]]->pt - roads2->graph[parent2]->pt;
+				QVector2D dir2 = roads2->graph[children2[permutation[i]]]->pt - roads2->graph[parent2]->pt;
 
 				diff = std::max(diff, diffAngle(dir1, dir2));
 			}
@@ -2221,21 +2262,21 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 				min_diff = diff;
 				map.clear();
 				for (int i = 0; i < children1.size(); i++) {
-					map[children1[i]] = permutation[i];
+					map[children1[i]] = children2[permutation[i]];
 				}
 			}
 
 		} while (std::next_permutation(permutation.begin(), permutation.end()));
 	} else {
 		for (int i = 0; i < children1.size(); i++) {
-			permutation.push_back(children1[i]);
+			permutation.push_back(i);
 		}
 
 		do {
 			// 角度の差の最大値を求める
 			float diff = 0.0f;
 			for (int i = 0; i < children2.size(); i++) {
-				QVector2D dir1 = roads1->graph[permutation[i]]->pt - roads1->graph[parent1]->pt;
+				QVector2D dir1 = roads1->graph[children1[permutation[i]]]->pt - roads1->graph[parent1]->pt;
 				QVector2D dir2 = roads2->graph[children2[i]]->pt - roads2->graph[parent2]->pt;
 
 				diff = std::max(diff, diffAngle(dir1, dir2));
@@ -2245,7 +2286,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 				min_diff = diff;
 				map.clear();
 				for (int i = 0; i < children2.size(); i++) {
-					map[permutation[i]] = children2[i];
+					map[children1[permutation[i]]] = children2[i];
 				}
 			}
 

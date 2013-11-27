@@ -253,10 +253,21 @@ void BFSMulti::init() {
 
 	}
 
+	/*
 	// 最終的に決まったシードを使って、最終的な非類似度を計算
 	QMap<RoadVertexDesc, RoadVertexDesc> map1;
 	QMap<RoadVertexDesc, RoadVertexDesc> map2;
 	float dissimilarity = computeDissimilarity(roads1, seeds1, roads2, seeds2, map1, map2);
+	*/
+
+	// 最終的に決まったシードを使って、フォレストを構築
+	BFSForest forest1(roads1, seeds1);
+	BFSForest forest2(roads2, seeds2);
+
+	// フォレストを使って、最終的なマッチングを探す
+	QMap<RoadVertexDesc, RoadVertexDesc> map1;
+	QMap<RoadVertexDesc, RoadVertexDesc> map2;
+	findCorrespondence(roads1, &forest1, roads2, &forest2, true, map1, map2);
 
 	correspondence = map1;
 
@@ -283,8 +294,9 @@ void BFSMulti::init() {
 
 /**
  * ２つの道路網を、木構造を使ってマッチングさせる。
+ * completeMatchingフラグがtrueなら、対応がない子ノードも、無理やり対応相手を作って対応させる。
  */
-void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGraph* roads2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
+void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGraph* roads2, BFSForest* forest2, bool completeMatching, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
 	std::list<RoadVertexDesc> seeds1;
 	std::list<RoadVertexDesc> seeds2;
 
@@ -328,6 +340,8 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 			seeds1.push_back(child1);
 			seeds2.push_back(child2);
 		}
+
+		if (!completeMatching) continue;
 
 		// 残り者の子ノードのマッチングを探す
 		while (true) {
@@ -449,10 +463,10 @@ float BFSMulti::computeDissimilarity(RoadGraph* roads1, QList<RoadVertexDesc> se
 	BFSForest forest2(roads2, seeds2);
 
 	// フォレストを使って、マッチングを探す
-	findCorrespondence(roads1, &forest1, roads2, &forest2, map1, map2);
+	findCorrespondence(roads1, &forest1, roads2, &forest2, false, map1, map2);
 
 	// 非類似度を計算
-	float unsimilarity = GraphUtil::computeDissimilarity(roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
+	float unsimilarity = GraphUtil::computeDissimilarity2(roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
 
 	return unsimilarity;
 }
