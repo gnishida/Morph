@@ -11,6 +11,10 @@ public:
 	RoadGraph* roads1;
 	RoadGraph* roads2;
 
+	bool showRoads1;
+	bool showRoads2;
+	bool showInterpolation;
+
 	std::vector<RoadGraph*> sequence;
 	int selected;
 
@@ -24,7 +28,7 @@ public:
 	virtual void init() = 0;
 
 	void draw(QPainter* painter);
-	void drawGraph(QPainter *painter, RoadGraph *roads, int size, bool label = false);
+	void drawGraph(QPainter *painter, RoadGraph *roads, int line_width, int rect_size, bool label = false);
 	void drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVertexDesc, RoadVertexDesc>* correspondence, RoadGraph *roads2);
 	
 	void selectSequence(int selected);

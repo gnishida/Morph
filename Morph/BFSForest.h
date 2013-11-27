@@ -8,6 +8,7 @@ public:
 	RoadGraph* roads;
 	QMap<RoadVertexDesc, std::vector<RoadVertexDesc> > children;
 
+	//QList<RoadEdgeDesc> rootEdges;
 	QList<RoadVertexDesc> roots;
 
 public:

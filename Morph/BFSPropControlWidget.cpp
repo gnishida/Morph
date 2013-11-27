@@ -28,7 +28,7 @@ void BFSPropControlWidget::draw(QPainter* painter) {
     bfs->draw(painter);
 }
 
-void BFSPropControlWidget::selectVertex(float x, float y) {
+void BFSPropControlWidget::onClick(float x, float y) {
 	RoadGraph* roads = bfs->getSelectedRoads();
 	if (roads == NULL) return;
 

@@ -28,7 +28,7 @@ void Canvas::mousePressEvent(QMouseEvent *event) {
 	qDebug() << event->pos().x() << "," << event->pos().y();
 
 	if (event->buttons() == Qt::LeftButton) {
-		controlWidget->selectVertex(event->pos().x() / scale - 5000.0f, 5000.0f - event->pos().y() / scale);
+		controlWidget->onClick(event->pos().x() / scale - 5000.0f, 5000.0f - event->pos().y() / scale);
 	} else if (event->buttons() == Qt::RightButton) {
 		prevMousePos = event->pos();
 	}

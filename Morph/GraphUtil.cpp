@@ -1,6 +1,7 @@
 ﻿#include "GraphUtil.h"
 #include "Util.h"
 #include "Array2D.h"
+#include "BFSForest.h"
 #include <qlist.h>
 #include <qmatrix.h>
 #include <qdebug.h>
@@ -591,27 +592,29 @@ void GraphUtil::computeImportanceOfEdges(RoadGraph* roads, float w_length, float
 
 /**
  * 道路網の２つのエッジの非類似性を計算して返却する。
- * 事前に、computeImportanceOfEdges()関数を使って、Importanceを計算しておくこと。
  *
- * 計算式：Max(２つの頂点の距離の和 + Degreeの差) + レーン数の差
+ * 計算式：２つの頂点の距離 + Angleの差 + Degreeの差 + レーン数の差
  */
-float GraphUtil::computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2, float w_distance, float w_degree, float w_lanes) {
+float GraphUtil::computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2, float w_distance, float w_angle, float w_degree, float w_lanes) {
 	RoadVertexDesc src1 = boost::source(e1, roads1->graph);
 	RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
 
 	RoadVertexDesc src2 = boost::source(e2, roads2->graph);
 	RoadVertexDesc tgt2 = boost::target(e2, roads2->graph);
 
-	// src1とsrc2、tgt1とtgt2が対応していると仮定して計算
-	float dist1 = (roads1->graph[src1]->pt - roads2->graph[src2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[tgt2]->pt).length();
-	float degree1 = abs(getDegree(roads1, src1) - getDegree(roads2, src2)) + abs(getDegree(roads1, tgt1) - getDegree(roads2, tgt2));
+	// src1とtgt2、tgt1とsrc2が近い場合、src2、tgt2を入れ替える
+	if ((roads1->graph[src1]->pt - roads2->graph[src2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[tgt2]->pt).length() > (roads1->graph[src1]->pt - roads2->graph[tgt2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[src2]->pt).length()) {
+		src2 = boost::target(e2, roads2->graph);
+		tgt2 = boost::source(e2, roads2->graph);
+	}
+
+	// 各要素を計算
+	float dist = (roads1->graph[src1]->pt - roads2->graph[src2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[tgt2]->pt).length();
+	float angle = diffAngle(roads1->graph[src1]->pt - roads1->graph[tgt1]->pt, roads2->graph[src2]->pt - roads2->graph[tgt2]->pt);
+	float degree = abs(getDegree(roads1, src1) - getDegree(roads2, src2)) + abs(getDegree(roads1, tgt1) - getDegree(roads2, tgt2));
 	float lanes = abs((double)(roads1->graph[e1]->lanes - roads2->graph[e2]->lanes));
 
-	// src1とtgt2、tgt1とsrc2が対応していると仮定して計算
-	float dist2 = (roads1->graph[src1]->pt - roads2->graph[tgt2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[src2]->pt).length();
-	float degree2 = abs(getDegree(roads1, src1) - getDegree(roads2, tgt2)) + abs(getDegree(roads1, tgt1) - getDegree(roads2, src2));
-
-	return std::max(dist1, dist2) * w_distance + std::max(degree1, degree2) * w_degree + lanes * w_lanes;
+	return dist * w_distance + angle * w_angle + degree * w_degree + lanes * w_lanes;
 }
 
 /**
@@ -1040,8 +1043,8 @@ RoadVertexDesc GraphUtil::findConnectedNearestNeighbor(RoadGraph* roads, const Q
 /**
  * 指定された点に最も近いエッジを返却する。
  */
-RoadEdgeDesc GraphUtil::findNearestEdge(RoadGraph* roads, const QVector2D &pt, float& dist, QVector2D& closestPt, bool onlyValidEdge) {
-	dist = std::numeric_limits<float>::max();
+bool GraphUtil::getEdge(RoadGraph* roads, const QVector2D &pt, float threshold, RoadEdgeDesc& e, bool onlyValidEdge) {
+	float min_dist = std::numeric_limits<float>::max();
 	RoadEdgeDesc min_e;
 
 	RoadEdgeIter ei, eend;
@@ -1055,15 +1058,15 @@ RoadEdgeDesc GraphUtil::findNearestEdge(RoadGraph* roads, const QVector2D &pt, f
 		if (onlyValidEdge && !tgt->valid) continue;
 
 		QVector2D pt2;
-		float d = Util::pointSegmentDistanceXY(src->getPt(), tgt->getPt(), pt, pt2);
-		if (d < dist) {
-			dist = d;
-			min_e = *ei;
-			closestPt = pt2;
+		float dist = Util::pointSegmentDistanceXY(src->getPt(), tgt->getPt(), pt, pt2);
+		if (dist < min_dist) {
+			min_dist = dist;
+			e = *ei;
 		}
 	}
 
-	return min_e;
+	if (min_dist < threshold) return true;
+	else return false;
 }
 
 /**
@@ -1918,7 +1921,7 @@ float GraphUtil::normalizeAngle(float angle) {
 /**
  * 角度の差を、[0, PI]の範囲で返却する。
  */
-float GraphUtil::diffAngle(QVector2D& dir1, QVector2D& dir2) {
+float GraphUtil::diffAngle(const QVector2D& dir1, const QVector2D& dir2) {
 	float ang1 = atan2f(dir1.y(), dir1.x());
 	float ang2 = atan2f(dir2.y(), dir2.x());
 
@@ -2004,7 +2007,7 @@ float GraphUtil::computeMinUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, 
 		*/
 
 		// 与えられたマッピングについて、非類似度を計算する
-		float diff = computeUnsimilarity(roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
+		float diff = computeDissimilarity(roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
 		if (diff < min_diff) {
 			min_diff = diff;
 			best_map1 = map1;
@@ -2026,7 +2029,7 @@ float GraphUtil::computeMinUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, 
  * @param w_angle				エッジの角度のペナルティ
  * @param w_distance			対応する頂点の距離に対するペナルティ
  */
-float GraphUtil::computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, float w_connectivity, float w_split, float w_angle, float w_distance) {
+float GraphUtil::computeDissimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, float w_connectivity, float w_split, float w_angle, float w_distance) {
 	float penalty = 0.0f;
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////

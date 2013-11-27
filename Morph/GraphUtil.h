@@ -4,6 +4,8 @@
 #include "BBox.h"
 #include <vector>
 
+class BFSForest;
+
 class GraphUtil {
 protected:
 	GraphUtil() {}
@@ -38,8 +40,8 @@ public:
 	static bool removeDeadEnd(RoadGraph* roads);
 	static std::vector<QVector2D> interpolateEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadVertexDesc src1, RoadGraph* roads2, RoadEdgeDesc e2, RoadVertexDesc src2, float t);
 	static void computeImportanceOfEdges(RoadGraph* roads, float w_length, float w_valence, float w_lanes);
-	static float computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2, float w_distance, float w_degree, float w_lanes);
-	static RoadEdgeDesc getImportantEdge(RoadGraph* roads, int relaxation = 1);
+	static float computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2, float w_distance, float w_angle, float w_degree, float w_lanes);
+	//static RoadEdgeDesc getImportantEdge(RoadGraph* roads, int relaxation = 1);
 
 	// 道路網全体に関する関数
 	static RoadGraph* copyRoads(RoadGraph* roads);
@@ -58,7 +60,7 @@ public:
 	static RoadVertexDesc findNearestVertex(RoadGraph* roads, const QVector2D &pt);
 	static RoadVertexDesc findNearestVertex(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc ignore);
 	static RoadVertexDesc findConnectedNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc v);
-	static RoadEdgeDesc findNearestEdge(RoadGraph* roads, const QVector2D &pt, float& dist, QVector2D& closestPt, bool onlyValidEdge = true);
+	static bool getEdge(RoadGraph* roads, const QVector2D &pt, float threshold, RoadEdgeDesc& e, bool onlyValidEdge = true);
 	static RoadEdgeDesc findNearestEdge(RoadGraph* roads, RoadVertexDesc v, float& dist, QVector2D& closestPt, bool onlyValidEdge = true);
 	static std::vector<RoadVertexDesc> getChildren(RoadGraph* roads, RoadVertexDesc v);
 
@@ -82,12 +84,12 @@ public:
 	// その他
 	static float computeMinDiffAngle(std::vector<float> *data1, std::vector<float> *data2);
 	static float normalizeAngle(float angle);
-	static float diffAngle(QVector2D& dir1, QVector2D& dir2);
+	static float diffAngle(const QVector2D& dir1, const QVector2D& dir2);
 	static float diffAngle(float angle1, float angle2);
 
 	// 道路網の比較関数
 	static float computeMinUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2);
-	static float computeUnsimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, float w_connectivity, float w_split, float w_angle, float w_distance);
+	static float computeDissimilarity(RoadGraph* roads1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, float w_connectivity, float w_split, float w_angle, float w_distance);
 	static void findCorrespondenceByNearestNeighbor(RoadGraph* roads1, RoadGraph* roads2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2);
 	static QMap<RoadVertexDesc, RoadVertexDesc> findCorrespondentEdges(RoadGraph* roads1, RoadVertexDesc parent1, std::vector<RoadVertexDesc> children1, RoadGraph* roads2, RoadVertexDesc parent2, std::vector<RoadVertexDesc> children2);
 

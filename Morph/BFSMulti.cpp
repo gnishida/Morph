@@ -52,18 +52,14 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		RoadVertexDesc u2 = correspondence[u1];
 
 		// エッジを作成
-		RoadEdge* new_e = new RoadEdge(roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
+		RoadEdgeDesc e_desc = GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]);
 		if (GraphUtil::hasEdge(roads2, v2, u2)) {
-		//if (GraphUtil::hasEdge(roads2, conv[v1], conv[u1])) {
-			new_e->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, GraphUtil::getEdge(roads2, v2, u2), v2, t);
+			new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, GraphUtil::getEdge(roads2, v2, u2), v2, t);
 		} else {
-			new_e->addPoint(new_roads->graph[conv[v1]]->getPt());
-			new_e->addPoint(new_roads->graph[conv[u1]]->getPt());
+			new_roads->graph[e_desc]->polyLine.clear();
+			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[v1]]->getPt());
+			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[u1]]->getPt());
 		}
-		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(conv[v1], conv[u1], new_roads->graph);
-		new_roads->graph[edge_pair.first] = new_e;
-		
-		//GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]->lanes, roads1->graph[*ei]->type, roads1->graph[*ei]->oneWay);
 	}
 
 	// DeadEndの頂点について、エッジ長がthreshold以下なら頂点とそのエッジを削除する
@@ -160,12 +156,10 @@ void BFSMulti::init() {
 	QList<RoadEdgeDesc> edges1 = roads1->getOrderedEdgesByImportance();
 	QList<RoadEdgeDesc> edges2 = roads2->getOrderedEdgesByImportance();
 
-	bool updated = false;
-	for (int iteration = 0; iteration < 4 && !edges1.empty() && !edges2.empty(); iteration++) {
-		qDebug() << iteration;
-
-		RoadEdgeDesc min_e1;
-		RoadEdgeDesc min_e2;
+	bool updated = true;
+	int iteration = 0;
+	while (updated && !edges1.empty() && !edges2.empty()) {
+		qDebug() << (iteration++);
 
 		updated = false;
 
@@ -178,7 +172,7 @@ void BFSMulti::init() {
 		for (int i = 0; i < topN; i++) {
 			// 似ている対応エッジを道路網２から探す
 			for (int j = 0; j < edges2.size(); j++) {
-				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[i], roads2, edges2[j], 1.0f, 1.0f, 1.0f);
+				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[i], roads2, edges2[j], 1.0f, 1.0f, 1.0f, 1.0f);
 				if (diff < min_diff) {
 					min_diff = diff;
 					e1 = edges1[i];
@@ -192,7 +186,7 @@ void BFSMulti::init() {
 		for (int i = 0; i < topN; i++) {
 			// 似ている対応エッジを道路網１ら探す
 			for (int j = 0; j < edges1.size(); j++) {
-				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[j], roads2, edges2[i], 1.0f, 1.0f, 1.0f);
+				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[j], roads2, edges2[i], 1.0f, 1.0f, 1.0f, 1.0f);
 				if (diff < min_diff) {
 					min_diff = diff;
 					e1 = edges1[j];
@@ -207,6 +201,12 @@ void BFSMulti::init() {
 		RoadVertexDesc src2 = boost::source(e2, roads2->graph);
 		RoadVertexDesc tgt2 = boost::target(e2, roads2->graph);
 
+		// もしsrc1-tgt2、tgt1-src2の方が近かったら、src2とtgt2を入れ替える
+		if ((roads1->graph[src1]->pt - roads2->graph[src2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[tgt2]->pt).length() > (roads1->graph[src1]->pt - roads2->graph[tgt2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[src2]->pt).length()) {
+			src2 = boost::target(e2, roads2->graph);
+			tgt2 = boost::source(e2, roads2->graph);
+		}
+
 		// シード候補を追加
 		seeds1.push_back(src1);
 		seeds1.push_back(tgt1);
@@ -216,18 +216,16 @@ void BFSMulti::init() {
 		// テンポラリの道路網を作成する。
 		RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
 		RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
-			
-		// e1、e2のペアをシードにテンポラリで追加し、２つの道路網の類似性を計算する
+
+		// シードを使ってマッチングを探し、非類似度を計算する
 		QMap<RoadVertexDesc, RoadVertexDesc> map1;
 		QMap<RoadVertexDesc, RoadVertexDesc> map2;
-		float dissimilarity = computeUnsimilarity(temp1, seeds1, temp2, seeds2, map1, map2);
-
+		float dissimilarity = computeDissimilarity(temp1, seeds1, temp2, seeds2, map1, map2);
+		
 		// 非類似度が最小なら、ベストマッチングとして更新
-		if (dissimilarity < min_dissimilarity) {
+		if (dissimilarity < min_dissimilarity * 1.1f) {
 			updated = true;
-			min_dissimilarity = dissimilarity;
-			min_e1 = e1;
-			min_e2 = e2;
+			min_dissimilarity = std::min(dissimilarity, min_dissimilarity);
 		}
 
 		// テンポラリの道路網を削除する
@@ -239,13 +237,13 @@ void BFSMulti::init() {
 
 		// Importance順に並べたエッジリストから、使用したペアを削除
 		for (int j = 0; j < edges1.size(); j++) {
-			if (edges1[j] == min_e1) {
+			if (edges1[j] == e1) {
 				edges1.removeAt(j);
 				break;
 			}
 		}
 		for (int j = 0; j < edges2.size(); j++) {
-			if (edges2[j] == min_e2) {
+			if (edges2[j] == e2) {
 				edges2.removeAt(j);
 				break;
 			}
@@ -255,11 +253,12 @@ void BFSMulti::init() {
 
 	}
 
-	// 最終的に決まったシードを使って、道路網とマッチング情報を更新
-	QMap<RoadVertexDesc, RoadVertexDesc> min_map1;
-	QMap<RoadVertexDesc, RoadVertexDesc> min_map2;
-	float unsimilarity = computeUnsimilarity(roads1, seeds1, roads2, seeds2, min_map1, min_map2);
-	correspondence = min_map1;
+	// 最終的に決まったシードを使って、最終的な非類似度を計算
+	QMap<RoadVertexDesc, RoadVertexDesc> map1;
+	QMap<RoadVertexDesc, RoadVertexDesc> map2;
+	float dissimilarity = computeDissimilarity(roads1, seeds1, roads2, seeds2, map1, map2);
+
+	correspondence = map1;
 
 	// 孤立した頂点を削除
 	GraphUtil::removeIsolatedVertices(roads1);
@@ -289,12 +288,18 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 	std::list<RoadVertexDesc> seeds1;
 	std::list<RoadVertexDesc> seeds2;
 
+	// 各ルートエッジについて
 	for (int i = 0; i < forest1->getRoots().size(); i++) {
-		map1[forest1->getRoots()[i]] = forest2->getRoots()[i];
-		map2[forest2->getRoots()[i]] = forest1->getRoots()[i];
+		RoadVertexDesc v1 = forest1->getRoots()[i];
+		RoadVertexDesc v2 = forest2->getRoots()[i];
 
-		seeds1.push_back(forest1->getRoots()[i]);
-		seeds2.push_back(forest2->getRoots()[i]);
+		// ルート頂点をマッチングさせる
+		map1[v1] = v2;
+		map2[v2] = v1;
+
+		// ルート頂点を、シードに追加する
+		seeds1.push_back(v1);
+		seeds2.push_back(v2);
 	}
 
 	while (!seeds1.empty()) {
@@ -305,9 +310,6 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 
 		// どちらのノードにも、子ノードがない場合は、スキップ
 		if (forest1->getChildren(parent1).size() == 0 && forest2->getChildren(parent2).size() == 0) continue;
-
-		//float theta = findBestAffineTransofrmation(roads1, parent1, tree1, roads2, parent2, tree2);
-		float theta = 0.0f;
 
 		// 子リストを取得
 		std::vector<RoadVertexDesc> children1 = forest1->getChildren(parent1);
@@ -330,7 +332,7 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 		// 残り者の子ノードのマッチングを探す
 		while (true) {
 			RoadVertexDesc child1, child2;
-			if (!findBestPairByDirection(theta, roads1, parent1, forest1, map1, roads2, parent2, forest2, map2, false, child1, child2)) break;
+			if (!findBestPairByDirection(roads1, parent1, forest1, map1, roads2, parent2, forest2, map2, false, child1, child2)) break;
 
 			// マッチングを更新
 			map1[child1] = child2;
@@ -347,7 +349,7 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
  * まずは、ペアになっていないノードから候補を探す。
  * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
  */
-bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVertexDesc parent1, BFSForest* forest1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, RoadVertexDesc parent2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+bool BFSMulti::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BFSForest* forest1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, RoadVertexDesc parent2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
 	float min_angle = std::numeric_limits<float>::max();
 	int min_id1;
 	int min_id2;
@@ -362,7 +364,7 @@ bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVerte
 		if (!roads1->graph[children1[i]]->valid) continue;
 
 		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
-		float theta1 = atan2f(dir1.y(), dir1.x()) + theta;
+		float theta1 = atan2f(dir1.y(), dir1.x());
 		for (int j = 0; j < children2.size(); j++) {
 			if (map2.contains(children2[j])) continue;
 			if (!roads2->graph[children2[j]]->valid) continue;
@@ -439,9 +441,9 @@ bool BFSMulti::findBestPairByDirection(float theta, RoadGraph* roads1, RoadVerte
 }
 
 /**
- * ペアのエッジを使って、テンポラリでシードとして追加し、２つの道路網の類似性を計算する。
+ * 与えられたシードを使ってフォレストを作成し、２つの道路網の類似性を計算する。
  */
-float BFSMulti::computeUnsimilarity(RoadGraph* roads1, QList<RoadVertexDesc> seeds1, RoadGraph* roads2, QList<RoadVertexDesc> seeds2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
+float BFSMulti::computeDissimilarity(RoadGraph* roads1, QList<RoadVertexDesc> seeds1, RoadGraph* roads2, QList<RoadVertexDesc> seeds2, QMap<RoadVertexDesc, RoadVertexDesc>& map1, QMap<RoadVertexDesc, RoadVertexDesc>& map2) {
 	// シードを使ってフォレストを構築
 	BFSForest forest1(roads1, seeds1);
 	BFSForest forest2(roads2, seeds2);
@@ -450,7 +452,7 @@ float BFSMulti::computeUnsimilarity(RoadGraph* roads1, QList<RoadVertexDesc> see
 	findCorrespondence(roads1, &forest1, roads2, &forest2, map1, map2);
 
 	// 非類似度を計算
-	float unsimilarity = GraphUtil::computeUnsimilarity(roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
+	float unsimilarity = GraphUtil::computeDissimilarity(roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
 
 	return unsimilarity;
 }

@@ -17,12 +17,17 @@ public:
 	BFSMultiControlWidget(Morph* parent);
 
 	void draw(QPainter* painter);
-	void selectVertex(float x, float y);
+	void onClick(float x, float y);
+	bool selectVertex(float x, float y);
+	bool selectEdge(float x, float y);
 
 public slots:
 	void loadRoad1();
 	void loadRoad2();
 	void compute();
+	void showRoads1(bool flag);
+	void showRoads2(bool flag);
+	void showInterpolation(bool flag);
 	void moveSequence(int value);
 	void prevSequence();
 	void nextSequence();

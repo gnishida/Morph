@@ -116,7 +116,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> BFSProp::findMinUnsimilarity(RoadGraph* roa
 				GraphUtil::findCorrespondenceByNearestNeighbor(roads1, roads2, map1, map2);
 
 				// 道路網１と道路網２の非類似性を計算する。
-				float diff = GraphUtil::computeUnsimilarity(transformed_roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
+				float diff = GraphUtil::computeDissimilarity(transformed_roads1, map1, roads2, map2, 1.0f, 1.0f, 1.0f, 1.0f);
 				if (diff < min_diff) {
 					min_diff = diff;
 					min_theta = theta;

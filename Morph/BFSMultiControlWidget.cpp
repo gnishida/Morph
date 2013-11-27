@@ -1,5 +1,6 @@
-#include "BFSMultiControlWidget.h"
+﻿#include "BFSMultiControlWidget.h"
 #include "Morph.h"
+#include "GraphUtil.h"
 #include <qfiledialog.h>
 
 BFSMultiControlWidget::BFSMultiControlWidget(Morph* parent) : ControlWidget("BFS Multi Control Widget", parent) {
@@ -7,6 +8,9 @@ BFSMultiControlWidget::BFSMultiControlWidget(Morph* parent) : ControlWidget("BFS
 	this->bfs = NULL;
 
 	// setup the UI
+	ui.checkBoxRoads1->setChecked(true);
+	ui.checkBoxRoads2->setChecked(true);
+	ui.checkBoxInterpolation->setChecked(true);
 	ui.horizontalSlider->setMaximum(100);
 	ui.horizontalSlider->setMinimum(0);
 
@@ -14,6 +18,9 @@ BFSMultiControlWidget::BFSMultiControlWidget(Morph* parent) : ControlWidget("BFS
 	connect(ui.pushButtonLoadRoad1, SIGNAL(clicked()), this, SLOT(loadRoad1()));
 	connect(ui.pushButtonLoadRoad2, SIGNAL(clicked()), this, SLOT(loadRoad2()));
 	connect(ui.pushButtonCompute, SIGNAL(clicked()), this, SLOT(compute()));
+	connect(ui.checkBoxRoads1, SIGNAL(clicked(bool)), this, SLOT(showRoads1(bool)));
+	connect(ui.checkBoxRoads2, SIGNAL(clicked(bool)), this, SLOT(showRoads2(bool)));
+	connect(ui.checkBoxInterpolation, SIGNAL(clicked(bool)), this, SLOT(showInterpolation(bool)));
 	connect(ui.horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(moveSequence(int)));
 	connect(ui.pushButtonPrev, SIGNAL(clicked()), this, SLOT(prevSequence()));
 	connect(ui.pushButtonNext, SIGNAL(clicked()), this, SLOT(nextSequence()));
@@ -28,7 +35,78 @@ void BFSMultiControlWidget::draw(QPainter* painter) {
     bfs->draw(painter);
 }
 
-void BFSMultiControlWidget::selectVertex(float x, float y) {
+/**
+ * 頂点クリック時の処理
+ */
+void BFSMultiControlWidget::onClick(float x, float y) {
+	if (!selectVertex(x, y)) {
+		selectEdge(x, y);
+	}
+}
+
+/**
+ * 指定された座標に近い頂点に探し、Widgetに表示する。
+ * 見つからない場合は、falseを返却する。
+ */
+bool BFSMultiControlWidget::selectVertex(float x, float y) {
+	RoadGraph* roads = NULL;
+	RoadVertexDesc v;
+
+	// クリックされた道路網を調べる
+	if (ui.checkBoxRoads1->isChecked() && GraphUtil::getVertex(bfs->roads1, QVector2D(x, y), 50.0f, v)) {
+		roads = bfs->roads1;
+	} else if (ui.checkBoxRoads2->isChecked() && GraphUtil::getVertex(bfs->roads2, QVector2D(x, y), 50.0f, v)) {
+		roads = bfs->roads2;
+	} else if (ui.checkBoxInterpolation->isChecked() && GraphUtil::getVertex(bfs->getSelectedRoads(), QVector2D(x, y), 50.0f, v)) {
+		roads = bfs->getSelectedRoads();
+	}
+
+	if (roads == NULL) return false;
+
+	QString str;
+	ui.lineEditNodeId->setText(str.setNum(v));
+
+	std::vector<RoadVertexDesc> neighbors = GraphUtil::getNeighbors(roads, v);
+	str = "";
+	for (int i = 0; i < neighbors.size(); i++) {
+		QString str2;
+		if (str.length() > 0) {
+			str = str + ",";
+		}
+		str = str + str2.setNum(neighbors[i]);
+	}
+	ui.lineEditNodeNeighbors->setText(str);
+
+	return true;
+}
+
+/**
+ * 指定された座標に近いエッジを探し、Widgetに表示する。
+ * エッジが見つからない場合は、falseを返却する。
+ */
+bool BFSMultiControlWidget::selectEdge(float x, float y) {
+	RoadGraph* roads = NULL;
+	RoadEdgeDesc e;
+
+	// クリックされた道路網を調べる
+	float dist;
+	QVector2D closestPt;
+	if (ui.checkBoxRoads1->isChecked() && GraphUtil::getEdge(bfs->roads1, QVector2D(x, y), 50.0f, e)) {
+		roads = bfs->roads1;
+	} else if (ui.checkBoxRoads2->isChecked() && GraphUtil::getEdge(bfs->roads2, QVector2D(x, y), 50.0f, e)) {
+		roads = bfs->roads2;
+	} else if (ui.checkBoxInterpolation->isChecked() && GraphUtil::getEdge(bfs->getSelectedRoads(), QVector2D(x, y), 50.0f, e)) {
+		roads = bfs->getSelectedRoads();
+	}
+
+	if (roads == NULL) return false;
+
+	QString str;
+	ui.lineEditEdgeLength->setText(str.setNum(roads->graph[e]->getLength()));
+	ui.lineEditEdgeLanes->setText(str.setNum(roads->graph[e]->lanes));
+	ui.lineEditEdgeGroup->setText(str.setNum(roads->graph[e]->group));
+
+	return true;
 }
 
 void BFSMultiControlWidget::loadRoad1() {
@@ -37,6 +115,13 @@ void BFSMultiControlWidget::loadRoad1() {
 		bfs->setRoad1(filename.toUtf8().data());
 
 		ui.lineEditRoad1->setText(filename.split("/").last().split(".").at(0));
+
+		if (bfs->sequence.size() > 0) {
+			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
+			ui.horizontalSlider->setValue(0);
+			bfs->selectSequence(0);
+			update();
+		}
 	}
 }
 
@@ -46,6 +131,13 @@ void BFSMultiControlWidget::loadRoad2() {
 		bfs->setRoad2(filename.toUtf8().data());
 
 		ui.lineEditRoad2->setText(filename.split("/").last().split(".").at(0));
+
+		if (bfs->sequence.size() > 0) {
+			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
+			ui.horizontalSlider->setValue(0);
+			bfs->selectSequence(0);
+			update();
+		}
 	}
 }
 
@@ -55,6 +147,28 @@ void BFSMultiControlWidget::compute() {
 	if (bfs->sequence.size() > 0) {
 		ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
 		ui.horizontalSlider->setValue(0);
+		bfs->selectSequence(0);
+		update();
+	}
+}
+
+void BFSMultiControlWidget::showRoads1(bool flag) {
+	if (bfs != NULL) {
+		bfs->showRoads1 = flag;
+		update();
+	}
+}
+
+void BFSMultiControlWidget::showRoads2(bool flag) {
+	if (bfs != NULL) {
+		bfs->showRoads2 = flag;
+		update();
+	}
+}
+
+void BFSMultiControlWidget::showInterpolation(bool flag) {
+	if (bfs != NULL) {
+		bfs->showInterpolation = flag;
 		update();
 	}
 }

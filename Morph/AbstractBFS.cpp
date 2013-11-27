@@ -10,6 +10,9 @@ AbstractBFS::AbstractBFS() {
 	roads1 = NULL;
 	roads2 = NULL;
 	selected = 0;
+	showRoads1 = true;
+	showRoads2 = true;
+	showInterpolation = true;
 }
 
 AbstractBFS::~AbstractBFS() {
@@ -31,14 +34,7 @@ void AbstractBFS::setRoad1(const char* filename) {
 
 	//GraphUtil::singlify(roads1);			// Canberraなど、singlifyしない方が良いと思われる
 	GraphUtil::simplify(roads1, 100);
-	//GraphUtil::removeDeadEnd(roads1);		// やはり、deadEndを残すことにする。
 	GraphUtil::reduce(roads1);
-
-	// 道路のヒストグラム情報を出力
-	//GraphUtil::printStatistics(roads1);
-
-	clearSequence();
-	sequence.push_back(GraphUtil::copyRoads(roads1));
 }
 
 void AbstractBFS::setRoad2(const char* filename) {
@@ -54,39 +50,62 @@ void AbstractBFS::setRoad2(const char* filename) {
 
 	//GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads2, 100);
-	//GraphUtil::removeDeadEnd(roads2);
 	GraphUtil::reduce(roads2);
-
-	// 道路のヒストグラム情報を出力
-	//GraphUtil::printStatistics(roads2);
-
-	clearSequence();
-	sequence.push_back(GraphUtil::copyRoads(roads2));
 }
 
 void AbstractBFS::draw(QPainter* painter) {
-	if (selected < 0 || selected >= sequence.size()) return;
-
-	//drawGraph(painter, roads1, 50, true);
-	//drawGraph(painter, roads2, 50, true);
-	//drawRelation(painter, roads1, &correspondence, roads2);
-
-	drawGraph(painter, sequence[selected], 50, true);
+	if (showRoads1 && roads1 != NULL) {
+		drawGraph(painter, roads1, 20, 50, false);
+	}
+	if (showRoads2 && roads2 != NULL) {
+		drawGraph(painter, roads2, 20, 50, false);
+	}
+	if (showInterpolation && selected >= 0 && selected < sequence.size()) {
+		drawGraph(painter, sequence[selected], 20, 50, false);
+	}
 }
 
-void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int size, bool label) {
-	painter->setRenderHint(QPainter::Antialiasing, false);
+void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int line_width, int rect_size, bool label) {
+	painter->setRenderHint(QPainter::Antialiasing, true);
 	painter->setBrush(QBrush(Qt::green, Qt::SolidPattern));
+
+	QColor col[9] = {
+		QColor(255, 0, 0),
+		QColor(0, 0, 255),
+		QColor(0, 255, 0),
+		QColor(255, 255, 0),
+		QColor(255, 0, 255),
+		QColor(0, 255, 255),
+		QColor(128, 255, 128),
+		QColor(255, 128, 255),
+		QColor(255, 255, 128)
+	};
+
+	QColor dark_col[9];
+	for (int i = 0; i < 9; i++) {
+		dark_col[i].setRedF(col[i].redF() * 0.5f);
+		dark_col[i].setGreenF(col[i].greenF() * 0.5f);
+		dark_col[i].setBlueF(col[i].blueF() * 0.5f);
+	}
+
+	float b = dark_col[1].redF();
+	float a = dark_col[1].blueF();
 
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
 		RoadEdge* edge = roads->graph[*ei];
 		if (!edge->valid) continue;
 
-		if (edge->lanes >= 4) {
-			painter->setPen(QPen(QColor(0, 0, 192), 30, Qt::SolidLine, Qt::RoundCap));
+		if (edge->seed) {
+			painter->setPen(QPen(dark_col[edge->group % 9], line_width * 2.0f, Qt::SolidLine, Qt::RoundCap));
 		} else {
-			painter->setPen(QPen(QColor(192, 192, 255), 8, Qt::SolidLine, Qt::RoundCap));
+			painter->setPen(QPen(col[edge->group % 9], line_width, Qt::SolidLine, Qt::RoundCap));
+		}
+
+		RoadVertexDesc k = boost::source(*ei, roads->graph);
+		RoadVertexDesc k2 = boost::target(*ei, roads->graph);
+		if (k == 10 || k2 == 10) {
+			int p = 0;
 		}
 
 		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {
@@ -101,7 +120,6 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int size, bool 
 
 	QFont font = painter->font();
 	font.setPixelSize(20);
-	//font.setPointSize(font.getPointSize() * 10);
 	painter->setFont(font);
 
 
@@ -112,7 +130,7 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int size, bool 
 
 		int x = v->getPt().x();
 		int y = -v->getPt().y();
-		painter->fillRect(x - size/2, y - size/2, size, size, QColor(128, 128, 255));
+		painter->fillRect(x - rect_size/2, y - rect_size/2, rect_size, rect_size, QColor(0, 0, 0));
 
 		if (label) {
 			// 頂点番号をラベルとして表示する

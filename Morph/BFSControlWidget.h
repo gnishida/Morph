@@ -17,7 +17,7 @@ public:
 	BFSControlWidget(Morph* parent);
 
 	void draw(QPainter* painter);
-	void selectVertex(float x, float y);
+	void onClick(float x, float y);
 
 public slots:
 	void loadRoad1();

@@ -27,7 +27,7 @@ void BFSControlWidget::draw(QPainter* painter) {
     bfs->draw(painter);
 }
 
-void BFSControlWidget::selectVertex(float x, float y) {
+void BFSControlWidget::onClick(float x, float y) {
 }
 
 void BFSControlWidget::loadRoad1() {

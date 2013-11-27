@@ -6,8 +6,9 @@ RoadEdge::RoadEdge(unsigned int lanes, unsigned int type, bool oneWay) {
 	this->oneWay = oneWay;
 	this->weight = 0.0f;
 	this->valid = true;
-	this->orig = false;
 	this->importance = 0.0f;
+	this->group = 0;
+	this->seed = false;
 }
 
 RoadEdge::~RoadEdge() {

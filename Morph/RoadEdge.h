@@ -3,19 +3,17 @@
 #include <qvector2d.h>
 #include <vector>
 
-class RoadVertex;
-
 class RoadEdge {
 public:
 	unsigned int lanes;
-	//float length;
 	unsigned int type;
 	bool oneWay;
 	std::vector<QVector2D> polyLine;
 	float weight;
 	float importance;
 	bool valid;
-	bool orig;
+	int group;
+	bool seed;
 
 public:
 	RoadEdge(unsigned int lanes, unsigned int type, bool oneWay);
