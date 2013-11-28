@@ -235,7 +235,7 @@ void BFSMulti::init() {
 		QMap<RoadVertexDesc, RoadVertexDesc> map2;
 		float dissimilarity = computeDissimilarity(temp1, seeds1, temp2, seeds2, map1, map2);
 		
-		// 非類似度が最小なら、ベストマッチングとして更新
+		// 非類似度が良いなら、ベストマッチングとして更新
 		if (dissimilarity < min_dissimilarity * 1.1f) {
 			updated = true;
 			min_dissimilarity = std::min(dissimilarity, min_dissimilarity);
@@ -245,26 +245,19 @@ void BFSMulti::init() {
 		delete temp1;
 		delete temp2;
 
-		// もし、前回のループより、非類似度が改善しないなら、シードを正式採用せずに、ループを終了する
-		//if (!updated) break;
-
-		// Importance順に並べたエッジリストから、使用したエッジペアを削除
-		for (int j = 0; j < edges1.size(); j++) {
-			if (edges1[j] == e1) {
+		// Importance順に並べたエッジリストから、使用したエッジに含まれる頂点を含むエッジを削除
+		for (int j = edges1.size() - 1; j >= 0; j--) {
+			if (boost::source(edges1[j], roads1->graph) == src1 || boost::source(edges1[j], roads1->graph) == tgt1 || boost::target(edges1[j], roads1->graph) == src1 || boost::target(edges1[j], roads1->graph) == tgt1) {
 				edges1.removeAt(j);
-				break;
 			}
 		}
-		for (int j = 0; j < edges2.size(); j++) {
-			if (edges2[j] == e2) {
+		for (int j = edges2.size() - 1; j >= 0; j--) {
+			if (boost::source(edges2[j], roads2->graph) == src2 || boost::source(edges2[j], roads2->graph) == tgt2 || boost::target(edges2[j], roads2->graph) == src2 || boost::target(edges2[j], roads2->graph) == tgt2) {
 				edges2.removeAt(j);
-				break;
 			}
 		}
 
 		qDebug() << "Roads1: " << src1 << "-" << tgt1 << " Roads2: " << src2 << "-" << tgt2;
-
-		//if (iteration == 12) break;
 	}
 
 	/*

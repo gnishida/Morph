@@ -53,8 +53,6 @@ public:
 	void load(FILE* fp, int roadType);
 	void save(FILE* fp);
 
-	void removeIsolatedVertices();
-
 	void computeConnectivities();
 	bool isConnected(RoadVertexDesc desc1, RoadVertexDesc desc2);
 	void computeEdgeWeights();

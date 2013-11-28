@@ -162,29 +162,6 @@ void RoadGraph::save(FILE* fp) {
 }
 
 /**
- * エッジがない頂点を削除する。
- */
-void RoadGraph::removeIsolatedVertices() {
-	RoadVertexIter vi, vend;
-	bool deleted = false;
-
-	// 独立している頂点を削除
-	do {
-		deleted = false;
-
-		for (boost::tie(vi, vend) = boost::vertices(graph); vi != vend; ++vi) {
-			RoadVertex* v = graph[*vi];
-
-			if (boost::degree(*vi, graph) == 0) {
-				boost::remove_vertex(*vi, graph);
-				deleted = true;
-				break;
-			}
-		}
-	} while (deleted);
-}
-
-/**
  * 接続性情報を計算する。
  * 注意：頂点の追加、エッジの追加などにより、この情報は正しくなくなる！
  */
