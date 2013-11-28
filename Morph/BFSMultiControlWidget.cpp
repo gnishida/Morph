@@ -53,11 +53,11 @@ bool BFSMultiControlWidget::selectVertex(float x, float y) {
 	RoadVertexDesc v;
 
 	// クリックされた道路網を調べる
-	if (ui.checkBoxRoads1->isChecked() && GraphUtil::getVertex(bfs->roads1, QVector2D(x, y), 50.0f, v)) {
+	if (ui.checkBoxRoads1->isChecked() && bfs->roads1 != NULL && GraphUtil::getVertex(bfs->roads1, QVector2D(x, y), 50.0f, v)) {
 		roads = bfs->roads1;
-	} else if (ui.checkBoxRoads2->isChecked() && GraphUtil::getVertex(bfs->roads2, QVector2D(x, y), 50.0f, v)) {
+	} else if (ui.checkBoxRoads2->isChecked() && bfs->roads2 != NULL && GraphUtil::getVertex(bfs->roads2, QVector2D(x, y), 50.0f, v)) {
 		roads = bfs->roads2;
-	} else if (ui.checkBoxInterpolation->isChecked() && GraphUtil::getVertex(bfs->getSelectedRoads(), QVector2D(x, y), 50.0f, v)) {
+	} else if (ui.checkBoxInterpolation->isChecked() && bfs->getSelectedRoads() != NULL && GraphUtil::getVertex(bfs->getSelectedRoads(), QVector2D(x, y), 50.0f, v)) {
 		roads = bfs->getSelectedRoads();
 	}
 
@@ -91,11 +91,11 @@ bool BFSMultiControlWidget::selectEdge(float x, float y) {
 	// クリックされた道路網を調べる
 	float dist;
 	QVector2D closestPt;
-	if (ui.checkBoxRoads1->isChecked() && GraphUtil::getEdge(bfs->roads1, QVector2D(x, y), 50.0f, e)) {
+	if (ui.checkBoxRoads1->isChecked() && bfs->roads1 != NULL && GraphUtil::getEdge(bfs->roads1, QVector2D(x, y), 50.0f, e)) {
 		roads = bfs->roads1;
-	} else if (ui.checkBoxRoads2->isChecked() && GraphUtil::getEdge(bfs->roads2, QVector2D(x, y), 50.0f, e)) {
+	} else if (ui.checkBoxRoads2->isChecked() && bfs->roads2 != NULL && GraphUtil::getEdge(bfs->roads2, QVector2D(x, y), 50.0f, e)) {
 		roads = bfs->roads2;
-	} else if (ui.checkBoxInterpolation->isChecked() && GraphUtil::getEdge(bfs->getSelectedRoads(), QVector2D(x, y), 50.0f, e)) {
+	} else if (ui.checkBoxInterpolation->isChecked() && bfs->getSelectedRoads() != NULL && GraphUtil::getEdge(bfs->getSelectedRoads(), QVector2D(x, y), 50.0f, e)) {
 		roads = bfs->getSelectedRoads();
 	}
 

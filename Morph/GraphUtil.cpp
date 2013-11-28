@@ -1042,6 +1042,7 @@ RoadVertexDesc GraphUtil::findConnectedNearestNeighbor(RoadGraph* roads, const Q
 
 /**
  * 指定された点に最も近いエッジを返却する。
+ * ただし、指定された距離より通り場合は、falseを返却する。
  */
 bool GraphUtil::getEdge(RoadGraph* roads, const QVector2D &pt, float threshold, RoadEdgeDesc& e, bool onlyValidEdge) {
 	float min_dist = std::numeric_limits<float>::max();
@@ -1058,10 +1059,12 @@ bool GraphUtil::getEdge(RoadGraph* roads, const QVector2D &pt, float threshold, 
 		if (onlyValidEdge && !tgt->valid) continue;
 
 		QVector2D pt2;
-		float dist = Util::pointSegmentDistanceXY(src->getPt(), tgt->getPt(), pt, pt2);
-		if (dist < min_dist) {
-			min_dist = dist;
-			e = *ei;
+		for (int i = 0; i < roads->graph[*ei]->polyLine.size() - 1; i++) {
+			float dist = Util::pointSegmentDistanceXY(roads->graph[*ei]->polyLine[i], roads->graph[*ei]->polyLine[i + 1], pt, pt2);
+			if (dist < min_dist) {
+				min_dist = dist;
+				e = *ei;
+			}
 		}
 	}
 
