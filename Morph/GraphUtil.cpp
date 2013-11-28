@@ -2239,6 +2239,7 @@ void GraphUtil::findCorrespondenceByNearestNeighbor(RoadGraph* roads1, RoadGraph
 /**
  * ２つの対応するノードについて、その子ノードのベストマッチングを探す。
  * アルゴリズム：角度の差の最大値を最小とする組合せを探す。
+ * ただし、degreeが6を超えると、計算量が爆発するので、ループ数を1000に制約する。
  */
 QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph* roads1, RoadVertexDesc parent1, std::vector<RoadVertexDesc> children1, RoadGraph* roads2, RoadVertexDesc parent2, std::vector<RoadVertexDesc> children2) {
 	QMap<RoadVertexDesc, RoadVertexDesc> map;
@@ -2251,7 +2252,7 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 			permutation.push_back(i);
 		}
 
-		do {
+		for (int count = 0; count < 1000; count++) {
 			// 角度の差の最大値を求める
 			float diff = 0.0f;
 			for (int i = 0; i < children1.size(); i++) {
@@ -2269,13 +2270,14 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 				}
 			}
 
-		} while (std::next_permutation(permutation.begin(), permutation.end()));
+			if (!std::next_permutation(permutation.begin(), permutation.end())) break;
+		}
 	} else {
 		for (int i = 0; i < children1.size(); i++) {
 			permutation.push_back(i);
 		}
 
-		do {
+		for (int count = 0; count < 1000; count++) {
 			// 角度の差の最大値を求める
 			float diff = 0.0f;
 			for (int i = 0; i < children2.size(); i++) {
@@ -2293,7 +2295,8 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 				}
 			}
 
-		} while (std::next_permutation(permutation.begin(), permutation.end()));
+			if (!std::next_permutation(permutation.begin(), permutation.end())) break;
+		}
 	}
 
 	return map;

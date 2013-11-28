@@ -67,6 +67,7 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int line_width,
 	painter->setRenderHint(QPainter::Antialiasing, true);
 	painter->setBrush(QBrush(Qt::green, Qt::SolidPattern));
 
+	// 描画色をセットアップ
 	QColor col[9] = {
 		QColor(255, 0, 0),
 		QColor(0, 0, 255),
@@ -79,15 +80,13 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int line_width,
 		QColor(255, 255, 128)
 	};
 
+	// ルートエッジ用の描画色は、もとの描画色を半分暗くしたもの
 	QColor dark_col[9];
 	for (int i = 0; i < 9; i++) {
 		dark_col[i].setRedF(col[i].redF() * 0.5f);
 		dark_col[i].setGreenF(col[i].greenF() * 0.5f);
 		dark_col[i].setBlueF(col[i].blueF() * 0.5f);
 	}
-
-	float b = dark_col[1].redF();
-	float a = dark_col[1].blueF();
 
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
@@ -100,12 +99,6 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int line_width,
 			painter->setPen(QPen(col[edge->group % 9], line_width, Qt::SolidLine, Qt::RoundCap));
 		}
 
-		RoadVertexDesc k = boost::source(*ei, roads->graph);
-		RoadVertexDesc k2 = boost::target(*ei, roads->graph);
-		if (k == 10 || k2 == 10) {
-			int p = 0;
-		}
-
 		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {
 			int x1 = edge->getPolyLine()[i].x();
 			int y1 = -edge->getPolyLine()[i].y();
@@ -115,11 +108,9 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int line_width,
 		}
 	}
 
-
 	QFont font = painter->font();
 	font.setPixelSize(20);
 	painter->setFont(font);
-
 
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
@@ -148,8 +139,6 @@ void AbstractBFS::drawRelation(QPainter *painter, RoadGraph *roads1, QMap<RoadVe
 	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
 		RoadVertex* v1 = roads1->graph[*vi];
 		if (!v1->valid) continue;
-
-		//if (rand() * 10 < 8) continue;
 
 		RoadVertexDesc v2_desc = correspondence->value(*vi);
 
