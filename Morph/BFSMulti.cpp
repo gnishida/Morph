@@ -120,19 +120,22 @@ RoadGraph* BFSMulti::interpolate(float t) {
 			}
 		}
 
-		// 当該頂点と近接頂点との距離が、snap_threshold未満か？
-		if ((new_roads->graph[*vi]->pt - new_roads->graph[nearest_desc]->pt).length() < snap_threshold) {
-			// 一旦、古いエッジを、近接頂点にスナップするよう移動する
-			GraphUtil::moveEdge(new_roads, e_desc, new_roads->graph[nearest_desc]->pt, new_roads->graph[tgt]->pt);
+		// 近接頂点が見つかったか？
+		if (min_dist < std::numeric_limits<float>::max()) {
+			// 当該頂点と近接頂点との距離が、snap_threshold未満か？
+			if (min_dist < std::numeric_limits<float>::max() && (new_roads->graph[*vi]->pt - new_roads->graph[nearest_desc]->pt).length() < snap_threshold) {
+				// 一旦、古いエッジを、近接頂点にスナップするよう移動する
+				GraphUtil::moveEdge(new_roads, e_desc, new_roads->graph[nearest_desc]->pt, new_roads->graph[tgt]->pt);
 
-			// 新しいエッジを追加する
-			GraphUtil::addEdge(new_roads, nearest_desc, tgt, new_roads->graph[e_desc]);
+				// 新しいエッジを追加する
+				GraphUtil::addEdge(new_roads, nearest_desc, tgt, new_roads->graph[e_desc]);
 
-			// 古いエッジを無効にする
-			new_roads->graph[e_desc]->valid = false;
+				// 古いエッジを無効にする
+				new_roads->graph[e_desc]->valid = false;
 
-			// 当該頂点を無効にする
-			new_roads->graph[*vi]->valid = false;
+				// 当該頂点を無効にする
+				new_roads->graph[*vi]->valid = false;
+			}
 		}
 	}
 
@@ -140,6 +143,8 @@ RoadGraph* BFSMulti::interpolate(float t) {
 }
 
 void BFSMulti::init() {
+	float edge_dissimilarity_threshold = 3.0f;
+
 	// 道路網のエッジのImportanceを計算する
 	GraphUtil::computeImportanceOfEdges(roads1, 1.0f, 1.0f, 1.0f);
 	GraphUtil::computeImportanceOfEdges(roads2, 1.0f, 1.0f, 1.0f);
@@ -172,7 +177,7 @@ void BFSMulti::init() {
 		for (int i = 0; i < topN; i++) {
 			// 似ている対応エッジを道路網２から探す
 			for (int j = 0; j < edges2.size(); j++) {
-				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[i], roads2, edges2[j], 1.0f, 1.0f, 1.0f, 1.0f);
+				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[i], roads2, edges2[j], 0.001f, 1.25f, 0.3f, 0.3f);
 				if (diff < min_diff) {
 					min_diff = diff;
 					e1 = edges1[i];
@@ -186,7 +191,7 @@ void BFSMulti::init() {
 		for (int i = 0; i < topN; i++) {
 			// 似ている対応エッジを道路網１ら探す
 			for (int j = 0; j < edges1.size(); j++) {
-				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[j], roads2, edges2[i], 1.0f, 1.0f, 1.0f, 1.0f);
+				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[j], roads2, edges2[i], 0.001f, 1.25f, 0.3f, 0.3f);
 				if (diff < min_diff) {
 					min_diff = diff;
 					e1 = edges1[j];
@@ -194,6 +199,14 @@ void BFSMulti::init() {
 				}
 			}
 		}
+
+		float a1 = GraphUtil::computeDissimilarityOfEdges(roads1, e1, roads2, e2, 1.0f, 0.0f, 0.0f, 0.0f);
+		float a2 = GraphUtil::computeDissimilarityOfEdges(roads1, e1, roads2, e2, 0.0f, 1.0f, 0.0f, 0.0f);
+		float a3 = GraphUtil::computeDissimilarityOfEdges(roads1, e1, roads2, e2, 0.0f, 0.0f, 1.0f, 0.0f);
+		float a4 = GraphUtil::computeDissimilarityOfEdges(roads1, e1, roads2, e2, 0.0f, 0.0f, 0.0f, 1.0f);
+
+		// 選択されたエッジペアの非類似度が閾値より大きい場合は、終了
+		if (iteration > 1 && min_diff > edge_dissimilarity_threshold) break;
 
 		// 選択されたペアから、両端のノードを取得
 		RoadVertexDesc src1 = boost::source(e1, roads1->graph);
@@ -235,7 +248,7 @@ void BFSMulti::init() {
 		// もし、前回のループより、非類似度が改善しないなら、シードを正式採用せずに、ループを終了する
 		//if (!updated) break;
 
-		// Importance順に並べたエッジリストから、使用したペアを削除
+		// Importance順に並べたエッジリストから、使用したエッジペアを削除
 		for (int j = 0; j < edges1.size(); j++) {
 			if (edges1[j] == e1) {
 				edges1.removeAt(j);
@@ -251,6 +264,7 @@ void BFSMulti::init() {
 
 		qDebug() << "Roads1: " << src1 << "-" << tgt1 << " Roads2: " << src2 << "-" << tgt2;
 
+		//if (iteration == 12) break;
 	}
 
 	/*
@@ -418,7 +432,11 @@ bool BFSMulti::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1
 		RoadEdgeDesc e1_desc = GraphUtil::getEdge(roads1, parent1, children1[i]);
 
 		// 相手の親ノードと子ノードの間にエッジを作成する
-		GraphUtil::addEdge(roads2, parent2, v_desc, roads1->graph[e1_desc]->lanes, roads1->graph[e1_desc]->type, roads1->graph[e1_desc]->oneWay);
+		//RoadEdgeDesc e2_desc = GraphUtil::addEdge(roads2, parent2, v_desc, roads1->graph[e1_desc]->lanes, roads1->graph[e1_desc]->type, roads1->graph[e1_desc]->oneWay);
+		RoadEdgeDesc e2_desc = GraphUtil::addEdge(roads2, parent2, v_desc, roads1->graph[e1_desc]);
+		roads2->graph[e2_desc]->polyLine.clear();
+		roads2->graph[e2_desc]->addPoint(roads2->graph[parent2]->pt);
+		roads2->graph[e2_desc]->addPoint(roads2->graph[v_desc]->pt);
 
 		forest2->addChild(parent2, v_desc);
 
@@ -440,7 +458,11 @@ bool BFSMulti::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1
 		RoadEdgeDesc e2_desc = GraphUtil::getEdge(roads2, parent2, children2[i]);
 
 		// 相手の親ノードと子ノードの間にエッジを作成する
-		GraphUtil::addEdge(roads1, parent1, v_desc, roads2->graph[e2_desc]->lanes, roads2->graph[e2_desc]->type, roads2->graph[e2_desc]->oneWay);
+		//GraphUtil::addEdge(roads1, parent1, v_desc, roads2->graph[e2_desc]->lanes, roads2->graph[e2_desc]->type, roads2->graph[e2_desc]->oneWay);
+		RoadEdgeDesc e1_desc = GraphUtil::addEdge(roads1, parent1, v_desc, roads2->graph[e2_desc]);
+		roads1->graph[e1_desc]->polyLine.clear();
+		roads1->graph[e1_desc]->addPoint(roads1->graph[parent1]->pt);
+		roads1->graph[e1_desc]->addPoint(roads1->graph[v_desc]->pt);
 
 		forest1->addChild(parent1, v_desc);
 

@@ -113,6 +113,10 @@ void BFSForest::buildForest() {
 			tgt = new_tgt;
 		}
 
+		// src、tgtが更新されたかも知れないので、おおもとのデータも更新しておく
+		roots[i * 2] = src;
+		roots[i * 2 + 1] = tgt;
+
 		// シードを登録する
 		seeds.push_back(src);
 		seeds.push_back(tgt);
