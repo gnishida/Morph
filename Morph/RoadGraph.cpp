@@ -98,8 +98,6 @@ void RoadGraph::load(FILE* fp, int roadType) {
 			delete edge;
 		}
 	}
-
-	removeIsolatedVertices();
 }
 
 void RoadGraph::save(FILE* fp) {

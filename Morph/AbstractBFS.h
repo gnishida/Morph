@@ -24,6 +24,7 @@ public:
 	
 	void setRoad1(const char* filename);
 	void setRoad2(const char* filename);
+	RoadGraph* loadRoad(const char* filename);
 
 	virtual void init() = 0;
 
@@ -34,13 +35,5 @@ public:
 	void selectSequence(int selected);
 	void clearSequence();
 	RoadGraph* getSelectedRoads();
-
-	void createRoads1();
-	void createRoads2();
-	void createRoads3();
-	void createRoads4();
-	
-	void createRoads5();
-	void createRoads6();
 };
 
