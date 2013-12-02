@@ -17,7 +17,8 @@ BFSMulti::~BFSMulti() {
 }
 
 RoadGraph* BFSMulti::interpolate(float t) {
-	float edge_threshold = 300.0f;
+	float deadend_removal_threshold = 300.0f;
+	float same_vertex_snap_threshold = 300.0f;
 	float snap_threshold = 900.0f;
 
 	if (t == 1.0f) return GraphUtil::copyRoads(roads1);
@@ -61,31 +62,7 @@ RoadGraph* BFSMulti::interpolate(float t) {
 			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[u1]]->getPt());
 		}
 	}
-
-	// DeadEndの頂点について、エッジ長がthreshold以下なら頂点とそのエッジを削除する
-	bool deleted = true;
-	while (deleted) {
-		deleted = false;
-		for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
-			if (!new_roads->graph[*vi]->valid) continue;
-
-			if (GraphUtil::getDegree(new_roads, *vi) > 1) continue;
-
-			RoadOutEdgeIter ei, eend;
-			for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
-				if (!new_roads->graph[*ei]->valid) continue;
-
-				RoadVertexDesc tgt = boost::target(*ei, new_roads->graph);
-
-				if (new_roads->graph[*ei]->getLength() < edge_threshold) {
-					new_roads->graph[*vi]->valid = false;
-					new_roads->graph[*ei]->valid = false;
-					deleted = true;
-				}
-			}
-		}
-	}
-
+	
 	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
 		if (!new_roads->graph[*vi]->valid) continue;
 
@@ -103,13 +80,14 @@ RoadGraph* BFSMulti::interpolate(float t) {
 			break;
 		}
 
-		// 近接頂点を探す
+		// 近接頂点を探す（ただし、degree=1の頂点は、対象外）
 		RoadVertexDesc nearest_desc;
 		float min_dist = std::numeric_limits<float>::max();
 
 		RoadVertexIter vi2, vend2;
 		for (boost::tie(vi2, vend2) = boost::vertices(new_roads->graph); vi2 != vend2; ++vi2) {
 			if (!new_roads->graph[*vi2]->valid) continue;
+			if (*vi2 == *vi) continue;
 			if (*vi2 == tgt) continue;
 			if (GraphUtil::getDegree(new_roads, *vi2) == 1) continue;
 
@@ -120,21 +98,65 @@ RoadGraph* BFSMulti::interpolate(float t) {
 			}
 		}
 
-		// 近接頂点が見つかったか？
-		if (min_dist < std::numeric_limits<float>::max()) {
-			// 当該頂点と近接頂点との距離が、snap_threshold未満か？
-			if (min_dist < std::numeric_limits<float>::max() && (new_roads->graph[*vi]->pt - new_roads->graph[nearest_desc]->pt).length() < snap_threshold) {
-				// 一旦、古いエッジを、近接頂点にスナップするよう移動する
-				GraphUtil::moveEdge(new_roads, e_desc, new_roads->graph[nearest_desc]->pt, new_roads->graph[tgt]->pt);
+		// 見つからない場合は、degree=1の頂点の中から、最も近い頂点を探す
+		if (min_dist > snap_threshold) {
+			for (boost::tie(vi2, vend2) = boost::vertices(new_roads->graph); vi2 != vend2; ++vi2) {
+				if (!new_roads->graph[*vi2]->valid) continue;
+				if (*vi2 == *vi) continue;
+				if (*vi2 == tgt) continue;
+				if (GraphUtil::getDegree(new_roads, *vi2) != 1) continue;
 
-				// 新しいエッジを追加する
+				float dist = (new_roads->graph[*vi2]->pt - new_roads->graph[*vi]->pt).length();
+				if (dist < min_dist) {
+					nearest_desc = *vi2;
+					min_dist = dist;
+				}
+			}
+		}
+
+		// 当該頂点と近接頂点との距離が、snap_threshold未満か？
+		if (min_dist <= snap_threshold) {
+			// 一旦、古いエッジを、近接頂点にスナップするよう移動する
+			GraphUtil::moveEdge(new_roads, e_desc, new_roads->graph[nearest_desc]->pt, new_roads->graph[tgt]->pt);
+
+			if (GraphUtil::hasEdge(new_roads, nearest_desc, tgt, false)) {
+				// もともとエッジがあるが無効となっている場合、それを有効にし、エッジのポリラインを更新する
+				RoadEdgeDesc new_e_desc = GraphUtil::getEdge(new_roads, nearest_desc, tgt, false);
+				new_roads->graph[new_e_desc]->valid = true;
+				new_roads->graph[new_e_desc]->polyLine = new_roads->graph[e_desc]->polyLine;
+			} else {
+				// 該当頂点間にエッジがない場合は、新しいエッジを追加する
 				GraphUtil::addEdge(new_roads, nearest_desc, tgt, new_roads->graph[e_desc]);
+			}
 
-				// 古いエッジを無効にする
-				new_roads->graph[e_desc]->valid = false;
+			// 古いエッジを無効にする
+			new_roads->graph[e_desc]->valid = false;
 
-				// 当該頂点を無効にする
-				new_roads->graph[*vi]->valid = false;
+			// 当該頂点を無効にする
+			new_roads->graph[*vi]->valid = false;
+		}
+	}
+
+	// DeadEndの頂点について、エッジ長がthreshold以下なら頂点とそのエッジを削除する
+	bool deleted = true;
+	while (deleted) {
+		deleted = false;
+		for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
+			if (!new_roads->graph[*vi]->valid) continue;
+
+			if (GraphUtil::getDegree(new_roads, *vi) > 1) continue;
+
+			RoadOutEdgeIter ei, eend;
+			for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
+				if (!new_roads->graph[*ei]->valid) continue;
+
+				RoadVertexDesc tgt = boost::target(*ei, new_roads->graph);
+
+				if (new_roads->graph[*ei]->getLength() < deadend_removal_threshold) {
+					new_roads->graph[*vi]->valid = false;
+					new_roads->graph[*ei]->valid = false;
+					deleted = true;
+				}
 			}
 		}
 	}
@@ -207,7 +229,7 @@ void BFSMulti::init() {
 		delete temp2;
 
 		// 非類似度が悪すぎる場合、今回追加したシードを棄却して、終了する
-		if (dissimilarity > min_dissimilarity * 1.1f) {
+		if (dissimilarity >= min_dissimilarity * 1.1f) {
 			seeds1.pop_back();
 			seeds1.pop_back();
 			seeds2.pop_back();
