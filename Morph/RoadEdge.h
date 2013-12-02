@@ -14,6 +14,7 @@ public:
 	bool valid;
 	int group;
 	bool seed;
+	bool fullyPaired;
 
 public:
 	RoadEdge(unsigned int lanes, unsigned int type, bool oneWay);

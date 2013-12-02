@@ -19,7 +19,7 @@ BFSMulti::~BFSMulti() {
 RoadGraph* BFSMulti::interpolate(float t) {
 	float deadend_removal_threshold = 300.0f;
 	float same_vertex_snap_threshold = 300.0f;
-	float snap_threshold = 900.0f;
+	float snap_threshold = 300.0f;
 
 	if (t == 1.0f) return GraphUtil::copyRoads(roads1);
 	if (t == 0.0f) return GraphUtil::copyRoads(roads2);
@@ -28,6 +28,7 @@ RoadGraph* BFSMulti::interpolate(float t) {
 
 	QMap<RoadVertexDesc, RoadVertexDesc> conv;
 
+	// interpolation道路網に、頂点を追加する
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
 		if (!roads1->graph[*vi]->valid) continue;
@@ -42,6 +43,7 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		conv[*vi] = new_v_desc;
 	}
 
+	// interpolation道路網に、エッジを追加する
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
 		if (!roads1->graph[*ei]->valid) continue;
@@ -60,6 +62,35 @@ RoadGraph* BFSMulti::interpolate(float t) {
 			new_roads->graph[e_desc]->polyLine.clear();
 			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[v1]]->getPt());
 			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[u1]]->getPt());
+		}
+	}
+
+	// DeadEndの頂点について、fullyPairedじゃないエッジの中で、エッジ長がthreshold以下なら頂点とそのエッジを削除する
+	bool deleted = true;
+	while (deleted) {
+		deleted = false;
+		for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
+			if (!new_roads->graph[*vi]->valid) continue;
+
+			if (*vi == 12) {
+				int k = 0;
+			}
+
+			if (GraphUtil::getDegree(new_roads, *vi) > 1) continue;
+
+			RoadOutEdgeIter ei, eend;
+			for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
+				if (!new_roads->graph[*ei]->valid) continue;
+				if (new_roads->graph[*ei]->fullyPaired) continue;
+
+				RoadVertexDesc tgt = boost::target(*ei, new_roads->graph);
+
+				if (new_roads->graph[*ei]->getLength() < deadend_removal_threshold) {
+					new_roads->graph[*vi]->valid = false;
+					new_roads->graph[*ei]->valid = false;
+					deleted = true;
+				}
+			}
 		}
 	}
 	
@@ -92,6 +123,11 @@ RoadGraph* BFSMulti::interpolate(float t) {
 			if (GraphUtil::getDegree(new_roads, *vi2) == 1) continue;
 
 			float dist = (new_roads->graph[*vi2]->pt - new_roads->graph[*vi]->pt).length();
+
+			// 近接頂点が、*viよりもtgtの方に近い場合は、当該近接頂点は対象からはずす
+			float dist2 = (new_roads->graph[*vi2]->pt - new_roads->graph[tgt]->pt).length();
+			if (dist > dist2) continue;
+
 			if (dist < min_dist) {
 				nearest_desc = *vi2;
 				min_dist = dist;
@@ -107,6 +143,11 @@ RoadGraph* BFSMulti::interpolate(float t) {
 				if (GraphUtil::getDegree(new_roads, *vi2) != 1) continue;
 
 				float dist = (new_roads->graph[*vi2]->pt - new_roads->graph[*vi]->pt).length();
+
+				// 近接頂点が、*viよりもtgtの方に近い場合は、当該近接頂点は対象からはずす
+				float dist2 = (new_roads->graph[*vi2]->pt - new_roads->graph[tgt]->pt).length();
+				if (dist > dist2) continue;
+
 				if (dist < min_dist) {
 					nearest_desc = *vi2;
 					min_dist = dist;
@@ -134,30 +175,6 @@ RoadGraph* BFSMulti::interpolate(float t) {
 
 			// 当該頂点を無効にする
 			new_roads->graph[*vi]->valid = false;
-		}
-	}
-
-	// DeadEndの頂点について、エッジ長がthreshold以下なら頂点とそのエッジを削除する
-	bool deleted = true;
-	while (deleted) {
-		deleted = false;
-		for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
-			if (!new_roads->graph[*vi]->valid) continue;
-
-			if (GraphUtil::getDegree(new_roads, *vi) > 1) continue;
-
-			RoadOutEdgeIter ei, eend;
-			for (boost::tie(ei, eend) = boost::out_edges(*vi, new_roads->graph); ei != eend; ++ei) {
-				if (!new_roads->graph[*ei]->valid) continue;
-
-				RoadVertexDesc tgt = boost::target(*ei, new_roads->graph);
-
-				if (new_roads->graph[*ei]->getLength() < deadend_removal_threshold) {
-					new_roads->graph[*vi]->valid = false;
-					new_roads->graph[*ei]->valid = false;
-					deleted = true;
-				}
-			}
 		}
 	}
 
@@ -317,6 +334,10 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 			// マッチングを更新
 			map1[child1] = child2;
 			map2[child2] = child1;
+
+			// fullyPairedフラグをtrueにする
+			roads1->graph[GraphUtil::getEdge(roads1, parent1, child1)]->fullyPaired = true;
+			roads2->graph[GraphUtil::getEdge(roads2, parent2, child2)]->fullyPaired = true;
 
 			seeds1.push_back(child1);
 			seeds2.push_back(child2);
