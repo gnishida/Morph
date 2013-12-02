@@ -327,7 +327,7 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
 		// 残り者の子ノードのマッチングを探す
 		while (true) {
 			RoadVertexDesc child1, child2;
-			if (!findBestPairByDirection(roads1, parent1, forest1, map1, roads2, parent2, forest2, map2, false, child1, child2)) break;
+			if (!findBestPairByDirection(roads1, parent1, forest1, map1, roads2, parent2, forest2, map2, child1, child2)) break;
 
 			// マッチングを更新
 			map1[child1] = child2;
@@ -344,7 +344,7 @@ void BFSMulti::findCorrespondence(RoadGraph* roads1, BFSForest* forest1, RoadGra
  * まずは、ペアになっていないノードから候補を探す。
  * 既に、一方のリストが全てペアになっている場合は、当該リストからは、ペアとなっているものも含めて、ベストペアを探す。ただし、その場合は、ペアとなったノードをコピーして、必ず１対１ペアとなるようにする。
  */
-bool BFSMulti::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BFSForest* forest1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, RoadVertexDesc parent2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, bool onlyUnpairedNode, RoadVertexDesc& child1, RoadVertexDesc& child2) {
+bool BFSMulti::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1, BFSForest* forest1, QMap<RoadVertexDesc, RoadVertexDesc>& map1, RoadGraph* roads2, RoadVertexDesc parent2, BFSForest* forest2, QMap<RoadVertexDesc, RoadVertexDesc>& map2, RoadVertexDesc& child1, RoadVertexDesc& child2) {
 	float min_angle = std::numeric_limits<float>::max();
 	int min_id1;
 	int min_id2;
@@ -352,39 +352,6 @@ bool BFSMulti::findBestPairByDirection(RoadGraph* roads1, RoadVertexDesc parent1
 	// 子リストを取得
 	std::vector<RoadVertexDesc> children1 = forest1->getChildren(parent1);
 	std::vector<RoadVertexDesc> children2 = forest2->getChildren(parent2);
-
-	// エッジの角度が最もちかいペアをマッチさせる
-	for (int i = 0; i < children1.size(); i++) {
-		if (map1.contains(children1[i])) continue;
-		if (!roads1->graph[children1[i]]->valid) continue;
-
-		QVector2D dir1 = roads1->graph[children1[i]]->getPt() - roads1->graph[parent1]->getPt();
-		float theta1 = atan2f(dir1.y(), dir1.x());
-		for (int j = 0; j < children2.size(); j++) {
-			if (map2.contains(children2[j])) continue;
-			if (!roads2->graph[children2[j]]->valid) continue;
-
-			QVector2D dir2 = roads2->graph[children2[j]]->getPt() - roads2->graph[parent2]->getPt();
-			float theta2 = atan2f(dir2.y(), dir2.x());
-
-			float angle = GraphUtil::diffAngle(theta1, theta2);
-			if (angle < min_angle) {
-				min_angle = angle;
-				min_id1 = i;
-				min_id2 = j;
-			}
-		}
-	}
-	
-	// ベストペアが見つかったか、チェック
-	if (min_angle < std::numeric_limits<float>::max()) {
-		child1 = children1[min_id1];
-		child2 = children2[min_id2];
-
-		return true;
-	}
-
-	if (onlyUnpairedNode) return false;
 
 	// ベストペアが見つからない、つまり、一方のリストが、全てペアになっている場合
 	for (int i = 0; i < children1.size(); i++) {
