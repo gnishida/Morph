@@ -10,6 +10,27 @@
 #define M_PI	3.141592653
 #endif
 
+EdgePair::EdgePair(RoadEdgeDesc edge1, RoadEdgeDesc edge2) {
+	this->edge1 = edge1;
+	this->edge2 = edge2;
+}
+
+EdgePairComparison::EdgePairComparison(RoadGraph* roads1, RoadGraph* roads2) {
+	this->roads1 = roads1;
+	this->roads2 = roads2;
+}
+
+/**
+ * 非類似度が小さいものが先頭に来るようソートする。
+ * つまり、似ているエッジペアが先頭に来る。
+ */
+bool EdgePairComparison::operator()(const EdgePair& left, const EdgePair& right) const {
+	float dissimilarity1 = GraphUtil::computeDissimilarityOfEdges(roads1, left.edge1, roads2, left.edge2);
+	float dissimilarity2 = GraphUtil::computeDissimilarityOfEdges(roads1, right.edge1, roads2, right.edge2);
+
+	return dissimilarity1 < dissimilarity2;
+}
+
 /**
  * 頂点の数を返却する。
  * onlyValidVertexフラグがtrueの場合は、全ての頂点のvalidフラグをチェックしてカウントする。
@@ -595,7 +616,12 @@ void GraphUtil::computeImportanceOfEdges(RoadGraph* roads, float w_length, float
  *
  * 計算式：２つの頂点の距離 + Angleの差 + Degreeの差 + レーン数の差
  */
-float GraphUtil::computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2, float w_distance, float w_angle, float w_degree, float w_lanes) {
+float GraphUtil::computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2) {
+	float w_distance = 0.001f;
+	float w_angle = 1.25f;
+	float w_degree = 0.3f;
+	float w_lanes = 0.3f;
+
 	RoadVertexDesc src1 = boost::source(e1, roads1->graph);
 	RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
 
@@ -2327,6 +2353,9 @@ bool GraphUtil::nextSequence(std::vector<int>& seq, int N) {
 	}
 }
 
+/**
+ * エッジの平均長を計算して返却する。
+ */
 float GraphUtil::computeAvgEdgeLength(RoadGraph* roads) {
 	float length = 0.0f;
 	int count = 0;
@@ -2344,6 +2373,185 @@ float GraphUtil::computeAvgEdgeLength(RoadGraph* roads) {
 
 	if (count == 0) return 0;
 	else return length / (float)count;
+}
+
+/**
+ * ２つの道路網について、似ているエッジペアを類似度でソートして、トップNを返却する。
+ */
+QList<EdgePair> GraphUtil::getClosestEdgePairs(RoadGraph* roads1, RoadGraph* roads2, int num) {
+	QList<EdgePair> pairs;
+
+	// Importance順に並べたエッジリストを取得
+	QList<RoadEdgeDesc> edges1 = roads1->getOrderedEdgesByImportance();
+	QList<RoadEdgeDesc> edges2 = roads2->getOrderedEdgesByImportance();
+
+	while (pairs.size() < num && !edges1.empty() && !edges2.empty()) {
+		float min_diff = std::numeric_limits<float>::max();
+		RoadEdgeDesc e1;
+		RoadEdgeDesc e2;
+
+		// 道路網１のTop10 Importantエッジに対して
+		int topN = std::min(10, edges1.size());
+		for (int i = 0; i < topN; i++) {
+			// 似ている対応エッジを道路網２から探す
+			for (int j = 0; j < edges2.size(); j++) {
+				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[i], roads2, edges2[j]);
+				if (diff < min_diff) {
+					min_diff = diff;
+					e1 = edges1[i];
+					e2 = edges2[j];
+				}
+			}
+		}
+
+		// 道路網２のTop10 Importantエッジに対して
+		topN = std::min(10, edges2.size());
+		for (int i = 0; i < topN; i++) {
+			// 似ている対応エッジを道路網１ら探す
+			for (int j = 0; j < edges1.size(); j++) {
+				float diff = GraphUtil::computeDissimilarityOfEdges(roads1, edges1[j], roads2, edges2[i]);
+				if (diff < min_diff) {
+					min_diff = diff;
+					e1 = edges1[j];
+					e2 = edges2[i];
+				}
+			}
+		}
+
+		// 抽出された最も似ているエッジペアを、リストに登録する
+		pairs.push_back(EdgePair(e1, e2));
+
+		// 選択されたペアから、両端のノードを取得
+		RoadVertexDesc src1 = boost::source(e1, roads1->graph);
+		RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
+		RoadVertexDesc src2 = boost::source(e2, roads2->graph);
+		RoadVertexDesc tgt2 = boost::target(e2, roads2->graph);
+
+		//エッジリストから、使用したエッジに含まれる頂点を含むエッジを削除
+		for (int j = edges1.size() - 1; j >= 0; j--) {
+			if (boost::source(edges1[j], roads1->graph) == src1 || boost::source(edges1[j], roads1->graph) == tgt1 || boost::target(edges1[j], roads1->graph) == src1 || boost::target(edges1[j], roads1->graph) == tgt1) {
+				edges1.removeAt(j);
+			}
+		}
+		for (int j = edges2.size() - 1; j >= 0; j--) {
+			if (boost::source(edges2[j], roads2->graph) == src2 || boost::source(edges2[j], roads2->graph) == tgt2 || boost::target(edges2[j], roads2->graph) == src2 || boost::target(edges2[j], roads2->graph) == tgt2) {
+				edges2.removeAt(j);
+			}
+		}
+	}
+
+	return pairs;
+}
+
+/**
+ * グローバル Rigid ICPを実施し、道路網１の位置を、道路網２に近づくよう変形する。
+ */
+void GraphUtil::rigidICP(RoadGraph* roads1, RoadGraph* roads2, QList<EdgePair>& pairs) {
+	cv::Mat src(pairs.size() * 2, 2, CV_32FC2);
+	cv::Mat dst(pairs.size() * 2, 2, CV_32FC2);
+
+	for (int i = 0; i < pairs.size(); i++) {
+		RoadEdgeDesc e1 = pairs[i].edge1;
+		RoadEdgeDesc e2 = pairs[i].edge2;
+
+		// エッジの両端頂点を取得
+		RoadVertexDesc src1 = boost::source(e1, roads1->graph);
+		RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
+		RoadVertexDesc src2 = boost::source(e2, roads2->graph);
+		RoadVertexDesc tgt2 = boost::target(e2, roads2->graph);
+
+		// もしsrc1-tgt2、tgt1-src2の方が近かったら、src2とtgt2を入れ替える
+		if ((roads1->graph[src1]->pt - roads2->graph[src2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[tgt2]->pt).length() > (roads1->graph[src1]->pt - roads2->graph[tgt2]->pt).length() + (roads1->graph[tgt1]->pt - roads2->graph[src2]->pt).length()) {
+			src2 = boost::target(e2, roads2->graph);
+			tgt2 = boost::source(e2, roads2->graph);
+		}
+
+		// 頂点の座標を行列に格納
+		src.at<float>(i * 2, 0) = roads1->graph[src1]->pt.x();
+		src.at<float>(i * 2, 1) = roads1->graph[src1]->pt.y();
+		src.at<float>(i * 2 + 1, 0) = roads1->graph[tgt1]->pt.x();
+		src.at<float>(i * 2 + 1, 1) = roads1->graph[tgt1]->pt.y();
+		dst.at<float>(i * 2, 0) = roads2->graph[src2]->pt.x();
+		dst.at<float>(i * 2, 1) = roads2->graph[src2]->pt.y();
+		dst.at<float>(i * 2 + 1, 0) = roads2->graph[tgt2]->pt.x();
+		dst.at<float>(i * 2 + 1, 1) = roads2->graph[tgt2]->pt.y();
+	}
+
+	// Rigid ICP 変換行列を計算
+	cv::Mat transformMat = cv::estimateRigidTransform(src, dst, true);
+
+	// 道路網１の頂点座標を、変換行列を使って更新
+	src = convertVerticesToCVMatrix(roads1, false);
+	cv::Mat src2;
+	cv::transform(src, src2, transformMat);
+
+	// 道路網１の頂点座標を実際に更新する
+	RoadVertexIter vi, vend;
+	int count = 0;
+	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
+		roads1->graph[*vi]->pt.setX(src2.at<float>(count, 0));
+		roads1->graph[*vi]->pt.setY(src2.at<float>(count, 1));
+		count++;
+	}
+
+	// 道路網１のエッジの座標も更新する
+	src = convertEdgesToCVMatrix(roads1, false);
+	cv::transform(src, src2, transformMat);
+
+	// 道路網１のエッジ座標を実際に更新する
+	RoadEdgeIter ei, eend;
+	count = 0;
+	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
+		for (int i = 0; i < roads1->graph[*ei]->polyLine.size(); i++) {
+			roads1->graph[*ei]->polyLine[i].setX(src2.at<float>(count, 0));
+			roads1->graph[*ei]->polyLine[i].setY(src2.at<float>(count, 1));
+			count++;
+		}
+	}
+}
+
+/**
+ * 道路網の頂点座標を、Nx2の行列に変換する
+ */
+cv::Mat GraphUtil::convertVerticesToCVMatrix(RoadGraph* roads, bool onlyValidVertex) {
+	cv::Mat ret(getNumVertices(roads, onlyValidVertex), 2, CV_32FC2);
+
+	RoadVertexIter vi, vend;
+	int count = 0;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (onlyValidVertex && !roads->graph[*vi]->valid) continue;
+
+		ret.at<float>(count, 0) = roads->graph[*vi]->pt.x();
+		ret.at<float>(count, 1) = roads->graph[*vi]->pt.y();
+		count++;
+	}
+
+	return ret;
+}
+
+/**
+ * 道路網のエッジ座標を、Nx2の行列に変換する
+ */
+cv::Mat GraphUtil::convertEdgesToCVMatrix(RoadGraph* roads, bool onlyValidVertex) {
+	std::vector<QVector2D> data;
+	
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
+		if (onlyValidVertex && !roads->graph[*ei]->valid) continue;
+
+		for (int i = 0; i < roads->graph[*ei]->polyLine.size(); i++) {
+			data.push_back(roads->graph[*ei]->polyLine[i]);
+		}
+	}
+	
+	cv::Mat ret(data.size(), 2, CV_32FC2);
+
+	for (int i = 0; i < data.size(); i++) {
+		ret.at<float>(i, 0) = data[i].x();
+		ret.at<float>(i, 1) = data[i].y();
+	}
+
+	return ret;
 }
 
 /**

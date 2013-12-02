@@ -3,8 +3,29 @@
 #include "RoadGraph.h"
 #include "BBox.h"
 #include <vector>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 class BFSForest;
+
+class EdgePair {
+public:
+	RoadEdgeDesc edge1;
+	RoadEdgeDesc edge2;
+
+public:
+	EdgePair(RoadEdgeDesc edge1, RoadEdgeDesc edge2);
+};
+
+class EdgePairComparison {
+public:
+	RoadGraph* roads1;
+	RoadGraph* roads2;
+
+public:
+	EdgePairComparison(RoadGraph* roads1, RoadGraph* roads2);
+	bool operator()(const EdgePair& left, const EdgePair& right) const;
+};
 
 class GraphUtil {
 protected:
@@ -40,7 +61,7 @@ public:
 	static bool removeDeadEnd(RoadGraph* roads);
 	static std::vector<QVector2D> interpolateEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadVertexDesc src1, RoadGraph* roads2, RoadEdgeDesc e2, RoadVertexDesc src2, float t);
 	static void computeImportanceOfEdges(RoadGraph* roads, float w_length, float w_valence, float w_lanes);
-	static float computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2, float w_distance, float w_angle, float w_degree, float w_lanes);
+	static float computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2);
 	//static RoadEdgeDesc getImportantEdge(RoadGraph* roads, int relaxation = 1);
 
 	// 道路網全体に関する関数
@@ -98,6 +119,12 @@ public:
 
 	// 統計情報
 	static float computeAvgEdgeLength(RoadGraph* roads);
+	static QList<EdgePair> getClosestEdgePairs(RoadGraph* roads1, RoadGraph* roads2, int num);
+
+	// ICP
+	static void rigidICP(RoadGraph* roads1, RoadGraph* roads2, QList<EdgePair>& pairs);
+	static cv::Mat convertVerticesToCVMatrix(RoadGraph* roads, bool onlyValidVertex = true);
+	static cv::Mat convertEdgesToCVMatrix(RoadGraph* roads, bool onlyValidVertex = true);
 
 	// サンプル道路網を生成する関数
 	static RoadGraph* createGridNetwork(float size, int num);
