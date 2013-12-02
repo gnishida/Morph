@@ -2282,8 +2282,27 @@ QMap<RoadVertexDesc, RoadVertexDesc> GraphUtil::findCorrespondentEdges(RoadGraph
 			// 角度の差の最大値を求める
 			float diff = 0.0f;
 			for (int i = 0; i < children1.size(); i++) {
+				RoadEdgeDesc e1 = getEdge(roads1, parent1, children1[i]);
+				RoadEdgeDesc e2 = getEdge(roads2, parent2, children2[permutation[i]]);
+
+				QVector2D dir1;
+				if ((roads1->graph[parent1]->pt - roads1->graph[e1]->polyLine[0]).length() < (roads1->graph[parent1]->pt - roads1->graph[e1]->polyLine[roads1->graph[e1]->polyLine.size() - 1]).length()) {
+					dir1 = roads1->graph[e1]->polyLine[1] - roads1->graph[e1]->polyLine[0];
+				} else {
+					dir1 = roads1->graph[e1]->polyLine[roads1->graph[e1]->polyLine.size() - 2] - roads1->graph[e1]->polyLine[roads1->graph[e1]->polyLine.size() - 1];
+				}
+
+				QVector2D dir2;
+				if ((roads2->graph[parent2]->pt - roads2->graph[e2]->polyLine[0]).length() < (roads2->graph[parent2]->pt - roads1->graph[e2]->polyLine[roads2->graph[e2]->polyLine.size() - 1]).length()) {
+					dir2 = roads2->graph[e2]->polyLine[1] - roads2->graph[e2]->polyLine[0];
+				} else {
+					dir2 = roads2->graph[e2]->polyLine[roads2->graph[e2]->polyLine.size() - 2] - roads2->graph[e2]->polyLine[roads2->graph[e2]->polyLine.size() - 1];
+				}
+
+				/*
 				QVector2D dir1 = roads1->graph[children1[i]]->pt - roads1->graph[parent1]->pt;
 				QVector2D dir2 = roads2->graph[children2[permutation[i]]]->pt - roads2->graph[parent2]->pt;
+				*/
 
 				diff = std::max(diff, diffAngle(dir1, dir2));
 			}

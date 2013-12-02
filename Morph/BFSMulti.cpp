@@ -58,19 +58,17 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		if (GraphUtil::hasEdge(roads2, v2, u2)) {
 			new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, GraphUtil::getEdge(roads2, v2, u2), v2, t);
 		} else {
+			/*
 			new_roads->graph[e_desc]->polyLine.clear();
 			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[v1]]->getPt());
 			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[u1]]->getPt());
+			*/
 		}
 	}
 	
 	// Snap処理（DeadEndエッジのみを対象とし、近接頂点を探してスナップさせる）
 	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
 		if (!new_roads->graph[*vi]->valid) continue;
-
-		if (*vi == 30) {
-			int k = 0;
-		}
 
 		if (GraphUtil::getDegree(new_roads, *vi) != 1) continue;
 
@@ -173,10 +171,6 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
 			if (!new_roads->graph[*vi]->valid) continue;
 
-			if (*vi == 12) {
-				int k = 0;
-			}
-
 			if (GraphUtil::getDegree(new_roads, *vi) > 1) continue;
 
 			RoadOutEdgeIter ei, eend;
@@ -195,7 +189,7 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		}
 	}
 
-	// ２次Snap処理（DeadEndエッジのみを対象とし、もう少し広い範囲で近接頂点を探してスナップさせる）
+	// Snap処理（DeadEndエッジを削除した結果、新たにDeadEndエッジとなったやつがいるから、もう一度実施する）
 	for (boost::tie(vi, vend) = boost::vertices(new_roads->graph); vi != vend; ++vi) {
 		if (!new_roads->graph[*vi]->valid) continue;
 

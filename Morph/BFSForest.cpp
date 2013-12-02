@@ -181,6 +181,10 @@ void BFSForest::buildForest() {
 
 				children.push_back(child2);
 
+				// コピーした子ノードと、元々のノードの間にも、エッジを追加する
+				// レーン数などをハードコピーしているので、良くない。sameフラグみたいなのを追加して、。。。
+				//GraphUtil::addEdge(roads, child, child2, 2, 2, false);
+
 				// 分割しない案
 				//children.push_back(child);
 			} else { // 未訪問の場合
