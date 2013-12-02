@@ -47,6 +47,8 @@ RoadGraph* BFSMulti::interpolate(float t) {
 	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
 		if (!roads1->graph[*ei]->valid) continue;
 
+		if (roads1->graph[*ei]->none) continue;
+
 		RoadVertexDesc v1 = boost::source(*ei, roads1->graph);
 		RoadVertexDesc u1 = boost::target(*ei, roads1->graph);
 
