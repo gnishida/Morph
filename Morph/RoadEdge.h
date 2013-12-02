@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <qvector2d.h>
 #include <vector>
@@ -11,10 +11,12 @@ public:
 	std::vector<QVector2D> polyLine;
 	float weight;
 	float importance;
-	bool valid;
-	int group;
-	bool seed;
-	bool fullyPaired;
+
+	bool valid;			// このエッジが、有効か、無効か
+	bool seed;			// このエッジは、フォレスト構築の際に、シードとして使用されたということ
+	int group;			// このエッジが、フォレスト構築の際に、どのツリーに属したかということ
+	bool fullyPaired;	// このエッジは、完全マッチングにおいて、対応相手が見つかったということ
+	bool none;			// このエッジは、両端頂点が同じ場所に位置し、長さが0、ということ
 
 public:
 	RoadEdge(unsigned int lanes, unsigned int type, bool oneWay);
