@@ -102,6 +102,7 @@ public:
 	static void normalizeBySpring(RoadGraph* roads, BBox& area);
 	static bool removeDuplicateEdges(RoadGraph* roads);
 	static void snapDeadendEdges(RoadGraph* roads, float threshold);
+	static void snapDeadendEdges2(RoadGraph* roads, float threshold);
 	static void removeShortDeadend(RoadGraph* roads, float threshold);
 
 	// その他
