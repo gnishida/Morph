@@ -1870,6 +1870,142 @@ bool GraphUtil::removeDuplicateEdges(RoadGraph* roads) {
 }
 
 /**
+ * Deadendのエッジについて、近くに頂点がある場合は、Snapさせる。
+ * まず、degree>1の頂点のみを対象として、最も近い頂点を探す。
+ * もし存在しない場合は、degree=1の頂点のみを対象として、最も近い頂点を探す。
+ * ただし、Snap対象となるエッジとのなす角度がmin_angle_threshold以下の場合は、対象外。
+ */
+void GraphUtil::snapDeadendEdges(RoadGraph* roads, float threshold) {
+	float min_angle_threshold = 0.34f;
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+		if (!roads->graph[*vi]->valid) continue;
+
+		// degreeが1の頂点以外は、対象外
+		if (GraphUtil::getDegree(roads, *vi) != 1) continue;
+
+		// 当該頂点と接続されている唯一の頂点を取得
+		RoadVertexDesc tgt;
+		RoadEdgeDesc e_desc;
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+			if (!roads->graph[*ei]->valid) continue;
+
+			tgt = boost::target(*ei, roads->graph);
+			e_desc = *ei;
+			break;
+		}
+
+		// 近接頂点を探す（ただし、degree=1の頂点は、対象外）
+		RoadVertexDesc nearest_desc;
+		float min_dist = std::numeric_limits<float>::max();
+
+		RoadVertexIter vi2, vend2;
+		for (boost::tie(vi2, vend2) = boost::vertices(roads->graph); vi2 != vend2; ++vi2) {
+			if (!roads->graph[*vi2]->valid) continue;
+			if (*vi2 == *vi) continue;
+			if (*vi2 == tgt) continue;
+			if (GraphUtil::getDegree(roads, *vi2) == 1) continue;
+
+			float dist = (roads->graph[*vi2]->pt - roads->graph[*vi]->pt).length();
+
+			// 近接頂点が、*viよりもtgtの方に近い場合は、当該近接頂点は対象からはずす
+			float dist2 = (roads->graph[*vi2]->pt - roads->graph[tgt]->pt).length();
+			if (dist > dist2) continue;
+
+			if (dist < min_dist) {
+				nearest_desc = *vi2;
+				min_dist = dist;
+			}
+
+			// *vi2から出るエッジとのなす角度の最小値が小さすぎる場合は、対象からはずす
+			float min_angle = std::numeric_limits<float>::max();
+			RoadOutEdgeIter ei, eend;
+			for (boost::tie(ei, eend) = boost::out_edges(*vi2, roads->graph); ei != eend; ++ei) {
+				if (!roads->graph[*ei]->valid) continue;
+
+				RoadVertexDesc tgt2 = boost::target(*ei, roads->graph);
+				float angle = GraphUtil::diffAngle(roads->graph[*vi]->pt - roads->graph[tgt]->pt, roads->graph[*vi2]->pt - roads->graph[tgt2]->pt);
+				if (angle < min_angle) {
+					min_angle = angle;
+				}
+			}
+			if (min_angle < min_angle_threshold) continue;
+		}
+
+		// 見つからない場合は、degree=1の頂点の中から、最も近い頂点を探す
+		if (min_dist > threshold) {
+			for (boost::tie(vi2, vend2) = boost::vertices(roads->graph); vi2 != vend2; ++vi2) {
+				if (!roads->graph[*vi2]->valid) continue;
+				if (*vi2 == *vi) continue;
+				if (*vi2 == tgt) continue;
+				if (GraphUtil::getDegree(roads, *vi2) != 1) continue;
+
+				// 最も近い頂点の、唯一のエッジを探す
+				RoadEdgeDesc e_desc2;
+				RoadOutEdgeIter ei, eend;
+				for (boost::tie(ei, eend) = boost::out_edges(*vi2, roads->graph); ei != eend; ++ei) {
+					if (!roads->graph[*ei]->valid) continue;
+
+					e_desc2 = *ei;
+					break;
+				}
+
+				// 最も近い頂点のエッジが短すぎる場合は、スキップ
+				//if (roads->graph[e_desc2]->getLength() < deadend_removal_threshold) continue;
+
+				float dist = (roads->graph[*vi2]->pt - roads->graph[*vi]->pt).length();
+
+				// 近接頂点が、*viよりもtgtの方に近い場合は、当該近接頂点は対象からはずす
+				float dist2 = (roads->graph[*vi2]->pt - roads->graph[tgt]->pt).length();
+				if (dist > dist2) continue;
+
+				if (dist < min_dist) {
+					nearest_desc = *vi2;
+					min_dist = dist;
+				}
+
+				// *vi2から出るエッジとのなす角度の最小値が小さすぎる場合は、対象からはずす
+				float min_angle = std::numeric_limits<float>::max();
+				for (boost::tie(ei, eend) = boost::out_edges(*vi2, roads->graph); ei != eend; ++ei) {
+					if (!roads->graph[*ei]->valid) continue;
+
+					RoadVertexDesc tgt2 = boost::target(*ei, roads->graph);
+					float angle = GraphUtil::diffAngle(roads->graph[*vi]->pt - roads->graph[tgt]->pt, roads->graph[*vi2]->pt - roads->graph[tgt2]->pt);
+					if (angle < min_angle) {
+						min_angle = angle;
+					}
+				}
+				if (min_angle < min_angle_threshold) continue;
+			}
+		}
+
+		// 当該頂点と近接頂点との距離が、snap_deadend_threshold未満か？
+		if (min_dist <= threshold) {
+			// 一旦、古いエッジを、近接頂点にスナップするよう移動する
+			GraphUtil::moveEdge(roads, e_desc, roads->graph[nearest_desc]->pt, roads->graph[tgt]->pt);
+
+			if (GraphUtil::hasEdge(roads, nearest_desc, tgt, false)) {
+				// もともとエッジがあるが無効となっている場合、それを有効にし、エッジのポリラインを更新する
+				RoadEdgeDesc new_e_desc = GraphUtil::getEdge(roads, nearest_desc, tgt, false);
+				roads->graph[new_e_desc]->valid = true;
+				roads->graph[new_e_desc]->polyLine = roads->graph[e_desc]->polyLine;
+			} else {
+				// 該当頂点間にエッジがない場合は、新しいエッジを追加する
+				GraphUtil::addEdge(roads, nearest_desc, tgt, roads->graph[e_desc]);
+			}
+
+			// 古いエッジを無効にする
+			roads->graph[e_desc]->valid = false;
+
+			// 当該頂点を無効にする
+			roads->graph[*vi]->valid = false;
+		}
+	}
+}
+
+/**
  * ２つのデータリストの差の最小値を返却する。
  * 各データは、１回のみ比較に使用できる。
  */
