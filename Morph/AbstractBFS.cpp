@@ -47,6 +47,7 @@ RoadGraph* AbstractBFS::loadRoad(const char* filename) {
 	//GraphUtil::singlify(roads2);
 	GraphUtil::simplify(roads, 100);
 	GraphUtil::reduce(roads);
+	GraphUtil::removeIsolatedEdges(roads);
 
 	return roads;
 }

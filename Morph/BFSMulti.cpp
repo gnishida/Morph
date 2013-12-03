@@ -64,13 +64,18 @@ RoadGraph* BFSMulti::interpolate(float t) {
 	}
 	
 	// Snap処理（DeadEndエッジのみを対象とし、近接頂点を探してスナップさせる）
-	GraphUtil::snapDeadendEdges2(new_roads, snap_deadend_threshold);
+	GraphUtil::snapDeadendEdges2(new_roads, 1, snap_deadend_threshold);
 
 	// DeadEndの頂点について、fullyPairedじゃないエッジの中で、エッジ長がdeadend_removal_threshold以下なら頂点とそのエッジを削除する
 	GraphUtil::removeShortDeadend(new_roads, deadend_removal_threshold);
 
 	// Snap処理（DeadEndエッジを削除した結果、新たにDeadEndエッジとなったやつがいるから、もう一度実施する）
-	GraphUtil::snapDeadendEdges2(new_roads, snap_deadend_threshold);
+	GraphUtil::snapDeadendEdges2(new_roads, 1, snap_deadend_threshold);
+
+	// Snap処理（Degree=2の頂点を対象に、狭い探索範囲でスナップを行う）
+	GraphUtil::snapDeadendEdges2(new_roads, 2, snap_deadend_threshold * 0.65f);
+
+	GraphUtil::removeIsolatedVertices(new_roads);
 
 	return new_roads;
 }
@@ -157,25 +162,25 @@ void BFSMulti::init() {
 		qDebug() << "Roads1: " << src1 << "-" << tgt1 << " Roads2: " << src2 << "-" << tgt2;
 	}
 
-	// 最終的に決まったシードを使って、フォレストを構築
+	// Build forests by using the finalized seeds
 	BFSForest forest1(roads1, seeds1);
 	BFSForest forest2(roads2, seeds2);
 
-	// フォレストを使って、最終的なマッチングを探す
+	// Find the final matching by using the forests
 	QMap<RoadVertexDesc, RoadVertexDesc> map1;
 	QMap<RoadVertexDesc, RoadVertexDesc> map2;
 	findCorrespondence(roads1, &forest1, roads2, &forest2, true, map1, map2);
 
 	correspondence = map1;
 
-	// 孤立した頂点を削除
+	// Remove the isolated vertices
 	GraphUtil::removeIsolatedVertices(roads1);
 	GraphUtil::removeIsolatedVertices(roads2);
 
-	// グローバル Rigid Iterative Closest Point (ICP)
-	//GraphUtil::rigidICP(roads1, roads2, chosen_pairs);
+	// Apply Rigid Iterative Closest Point (ICP)
+	GraphUtil::rigidICP(roads1, roads2, pairs);
 
-	// シーケンスを生成
+	// Generate sequence of interpolated roads
 	clearSequence();
 	for (int i = 0; i <= 20; i++) {
 		float t = 1.0f - (float)i * 0.05f;

@@ -44,6 +44,7 @@ public:
 	static int getDegree(RoadGraph* roads, RoadVertexDesc v, bool onlyValidEdge = true);
 	static std::vector<RoadVertexDesc> getVertices(RoadGraph* roads, bool onlyValidVertex = true);
 	static void removeIsolatedVertices(RoadGraph* roads, bool onlyValidVertex = true);
+	static void snapVertex(RoadGraph* roads, RoadVertexDesc v1, RoadVertexDesc v2);
 
 	// エッジ関係の関数
 	static RoadEdgeDesc getEdge(RoadGraph* roads, int index, bool onlyValidEdge = true);
@@ -62,6 +63,7 @@ public:
 	static std::vector<QVector2D> interpolateEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadVertexDesc src1, RoadGraph* roads2, RoadEdgeDesc e2, RoadVertexDesc src2, float t);
 	static void computeImportanceOfEdges(RoadGraph* roads, float w_length, float w_valence, float w_lanes);
 	static float computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1, RoadGraph* roads2, RoadEdgeDesc e2);
+	static void removeIsolatedEdges(RoadGraph* roads, bool onlyValidEdge = true);
 	//static RoadEdgeDesc getImportantEdge(RoadGraph* roads, int relaxation = 1);
 
 	// 道路網全体に関する関数
@@ -102,7 +104,7 @@ public:
 	static void normalizeBySpring(RoadGraph* roads, BBox& area);
 	static bool removeDuplicateEdges(RoadGraph* roads);
 	static void snapDeadendEdges(RoadGraph* roads, float threshold);
-	static void snapDeadendEdges2(RoadGraph* roads, float threshold);
+	static void snapDeadendEdges2(RoadGraph* roads, int degree, float threshold);
 	static void removeShortDeadend(RoadGraph* roads, float threshold);
 
 	// その他
