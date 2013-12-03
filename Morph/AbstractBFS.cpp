@@ -13,6 +13,7 @@ AbstractBFS::AbstractBFS() {
 	showRoads1 = true;
 	showRoads2 = true;
 	showInterpolation = true;
+	colorByGroup = true;
 }
 
 AbstractBFS::~AbstractBFS() {
@@ -69,7 +70,7 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int line_width,
 	painter->setBrush(QBrush(Qt::green, Qt::SolidPattern));
 
 	// 描画色をセットアップ
-	QColor col[9] = {
+	QColor group_col[9] = {
 		QColor(255, 0, 0),
 		QColor(0, 0, 255),
 		QColor(0, 255, 0),
@@ -84,9 +85,9 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int line_width,
 	// ルートエッジ用の描画色は、もとの描画色を半分暗くしたもの
 	QColor dark_col[9];
 	for (int i = 0; i < 9; i++) {
-		dark_col[i].setRedF(col[i].redF() * 0.5f);
-		dark_col[i].setGreenF(col[i].greenF() * 0.5f);
-		dark_col[i].setBlueF(col[i].blueF() * 0.5f);
+		dark_col[i].setRedF(group_col[i].redF() * 0.5f);
+		dark_col[i].setGreenF(group_col[i].greenF() * 0.5f);
+		dark_col[i].setBlueF(group_col[i].blueF() * 0.5f);
 	}
 
 	RoadEdgeIter ei, eend;
@@ -94,10 +95,19 @@ void AbstractBFS::drawGraph(QPainter *painter, RoadGraph *roads, int line_width,
 		RoadEdge* edge = roads->graph[*ei];
 		if (!edge->valid) continue;
 
-		if (edge->seed) {
-			painter->setPen(QPen(dark_col[edge->group % 9], line_width * 2.0f, Qt::SolidLine, Qt::RoundCap));
+		QColor col;
+		if (!colorByGroup) {
+			col = QColor(0, 0, 0);
+		} else if (edge->seed) {
+			col = dark_col[edge->group % 9];
 		} else {
-			painter->setPen(QPen(col[edge->group % 9], line_width, Qt::SolidLine, Qt::RoundCap));
+			col = group_col[edge->group % 9];
+		}
+
+		if (edge->seed) {
+			painter->setPen(QPen(col, line_width * 2.0f, Qt::SolidLine, Qt::RoundCap));
+		} else {
+			painter->setPen(QPen(col, line_width, Qt::SolidLine, Qt::RoundCap));
 		}
 
 		for (int i = 0; i < edge->getPolyLine().size() - 1; i++) {

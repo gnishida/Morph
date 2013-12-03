@@ -23,6 +23,6 @@ protected:
 
 public:
 	void setControlWidget(ControlWidget* controlWidget);
-	void zoom(float scale);
+	void zoom(float scale, QPoint center);
 };
 

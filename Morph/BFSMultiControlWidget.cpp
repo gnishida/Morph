@@ -2,6 +2,7 @@
 #include "Morph.h"
 #include "GraphUtil.h"
 #include <qfiledialog.h>
+#include <QtTest/qtest.h>
 
 BFSMultiControlWidget::BFSMultiControlWidget(Morph* parent) : ControlWidget("BFS Multi Control Widget", parent) {
 	ui.setupUi(this);
@@ -13,6 +14,7 @@ BFSMultiControlWidget::BFSMultiControlWidget(Morph* parent) : ControlWidget("BFS
 	ui.checkBoxInterpolation->setChecked(true);
 	ui.horizontalSlider->setMaximum(100);
 	ui.horizontalSlider->setMinimum(0);
+	ui.checkBoxColorByGroup->setChecked(true);
 
 	// setup the signal handler
 	connect(ui.pushButtonLoadRoad1, SIGNAL(clicked()), this, SLOT(loadRoad1()));
@@ -22,6 +24,7 @@ BFSMultiControlWidget::BFSMultiControlWidget(Morph* parent) : ControlWidget("BFS
 	connect(ui.checkBoxRoads2, SIGNAL(clicked(bool)), this, SLOT(showRoads2(bool)));
 	connect(ui.checkBoxInterpolation, SIGNAL(clicked(bool)), this, SLOT(showInterpolation(bool)));
 	connect(ui.horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(moveSequence(int)));
+	connect(ui.checkBoxColorByGroup, SIGNAL(clicked(bool)), this, SLOT(colorByGroup(bool)));
 	connect(ui.pushButtonPrev, SIGNAL(clicked()), this, SLOT(prevSequence()));
 	connect(ui.pushButtonNext, SIGNAL(clicked()), this, SLOT(nextSequence()));
 
@@ -122,39 +125,76 @@ bool BFSMultiControlWidget::selectEdge(float x, float y) {
 	return true;
 }
 
+void BFSMultiControlWidget::disableAll() {
+	ui.pushButtonLoadRoad1->setEnabled(false);
+	ui.pushButtonLoadRoad2->setEnabled(false);
+	ui.pushButtonCompute->setEnabled(false);
+	ui.checkBoxRoads1->setEnabled(false);
+	ui.checkBoxRoads2->setEnabled(false);
+	ui.checkBoxInterpolation->setEnabled(false);
+	ui.horizontalSlider->setEnabled(false);
+	ui.checkBoxColorByGroup->setEnabled(false);
+	ui.pushButtonPrev->setEnabled(false);
+	ui.pushButtonNext->setEnabled(false);
+}
+
+void BFSMultiControlWidget::enableAll() {
+	ui.pushButtonLoadRoad1->setEnabled(true);
+	ui.pushButtonLoadRoad2->setEnabled(true);
+	ui.pushButtonCompute->setEnabled(true);
+	ui.checkBoxRoads1->setEnabled(true);
+	ui.checkBoxRoads2->setEnabled(true);
+	ui.checkBoxInterpolation->setEnabled(true);
+	ui.horizontalSlider->setEnabled(true);
+	ui.checkBoxColorByGroup->setEnabled(true);
+	ui.pushButtonPrev->setEnabled(true);
+	ui.pushButtonNext->setEnabled(true);
+}
+
 void BFSMultiControlWidget::loadRoad1() {
+	setCursor(Qt::WaitCursor);
+	disableAll();
+	QTest::qWait(30);
+
 	QString filename = QFileDialog::getOpenFileName(this, tr("Load road network ..."), QString(), tr("GSM Files (*.gsm)"));
-	if (filename != QString::null && !filename.isEmpty()) {
+	if (filename != QString::null && !filename.isEmpty()) {		
 		bfs->setRoad1(filename.toUtf8().data());
 
 		ui.lineEditRoad1->setText(filename.split("/").last().split(".").at(0));
+		ui.checkBoxRoads1->setChecked(true);
 
-		if (bfs->sequence.size() > 0) {
-			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
-			ui.horizontalSlider->setValue(0);
-			bfs->selectSequence(0);
-			update();
-		}
+		update();
 	}
+
+	enableAll();
+	setCursor(Qt::ArrowCursor);
 }
 
 void BFSMultiControlWidget::loadRoad2() {
+	setCursor(Qt::WaitCursor);
+	disableAll();
+	QTest::qWait(30);
+
 	QString filename = QFileDialog::getOpenFileName(this, tr("Load road network ..."), QString(), tr("GSM Files (*.gsm)"));
 	if (filename != QString::null && !filename.isEmpty()) {
 		bfs->setRoad2(filename.toUtf8().data());
 
 		ui.lineEditRoad2->setText(filename.split("/").last().split(".").at(0));
+		ui.checkBoxRoads2->setChecked(true);
 
-		if (bfs->sequence.size() > 0) {
-			ui.horizontalSlider->setMaximum(bfs->sequence.size() - 1);
-			ui.horizontalSlider->setValue(0);
-			bfs->selectSequence(0);
-			update();
-		}
+		update();
+
 	}
+
+	enableAll();
+	setCursor(Qt::ArrowCursor);
 }
 
 void BFSMultiControlWidget::compute() {
+	setCursor(Qt::WaitCursor);
+	disableAll();
+	QTest::qWait(30);
+
 	bfs->init();
 
 	if (bfs->sequence.size() > 0) {
@@ -163,6 +203,9 @@ void BFSMultiControlWidget::compute() {
 		bfs->selectSequence(0);
 		update();
 	}
+
+	enableAll();
+	setCursor(Qt::ArrowCursor);
 }
 
 void BFSMultiControlWidget::showRoads1(bool flag) {
@@ -182,6 +225,13 @@ void BFSMultiControlWidget::showRoads2(bool flag) {
 void BFSMultiControlWidget::showInterpolation(bool flag) {
 	if (bfs != NULL) {
 		bfs->showInterpolation = flag;
+		update();
+	}
+}
+
+void BFSMultiControlWidget::colorByGroup(bool flag) {
+	if (bfs != NULL) {
+		bfs->colorByGroup = flag;
 		update();
 	}
 }

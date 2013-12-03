@@ -20,6 +20,8 @@ public:
 	void onClick(float x, float y);
 	bool selectVertex(float x, float y);
 	bool selectEdge(float x, float y);
+	void disableAll();
+	void enableAll();
 
 public slots:
 	void loadRoad1();
@@ -28,6 +30,7 @@ public slots:
 	void showRoads1(bool flag);
 	void showRoads2(bool flag);
 	void showInterpolation(bool flag);
+	void colorByGroup(bool flag);
 	void moveSequence(int value);
 	void prevSequence();
 	void nextSequence();

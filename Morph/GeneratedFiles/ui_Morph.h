@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'Morph.ui'
 **
-** Created: Tue Dec 3 10:39:39 2013
+** Created: Tue Dec 3 12:51:22 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -47,7 +47,7 @@ public:
     {
         if (MorphClass->objectName().isEmpty())
             MorphClass->setObjectName(QString::fromUtf8("MorphClass"));
-        MorphClass->resize(774, 604);
+        MorphClass->resize(1200, 1024);
         actionNearestNeighbor = new QAction(MorphClass);
         actionNearestNeighbor->setObjectName(QString::fromUtf8("actionNearestNeighbor"));
         actionNearestNeighborConnectivity = new QAction(MorphClass);
@@ -71,7 +71,7 @@ public:
         MorphClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MorphClass);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 774, 21));
+        menuBar->setGeometry(QRect(0, 0, 1247, 21));
         menuMorphing = new QMenu(menuBar);
         menuMorphing->setObjectName(QString::fromUtf8("menuMorphing"));
         menuView = new QMenu(menuBar);

@@ -14,6 +14,7 @@ public:
 	bool showRoads1;
 	bool showRoads2;
 	bool showInterpolation;
+	bool colorByGroup;
 
 	std::vector<RoadGraph*> sequence;
 	int selected;

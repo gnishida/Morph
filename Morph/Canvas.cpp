@@ -8,7 +8,7 @@ Canvas::Canvas(QWidget *parent) : QLabel(parent) {
 	height = 10000;
 	controlWidget = NULL;
 
-	scale = 0.1f;
+	scale = 0.09f;
 	this->setMinimumSize(width * this->scale, height * this->scale);
 }
 
@@ -36,7 +36,7 @@ void Canvas::mousePressEvent(QMouseEvent *event) {
 
 void Canvas::mouseMoveEvent(QMouseEvent *event) {
 	if (event->buttons() == Qt::RightButton) {
-		zoom((event->pos().y() - prevMousePos.y()));
+		zoom((event->pos().y() - prevMousePos.y()), prevMousePos);
 		prevMousePos = event->pos();
 	}
 }
@@ -45,7 +45,7 @@ void Canvas::setControlWidget(ControlWidget* controlWidget) {
 	this->controlWidget = controlWidget;
 }
 
-void Canvas::zoom(float scale) {
+void Canvas::zoom(float scale, QPoint center) {
 	if (scale > 0) {
 		this->scale *= 1.05f;
 	} else {

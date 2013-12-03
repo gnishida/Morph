@@ -96,11 +96,11 @@ void Morph::startBFSProp() {
 }
 
 void Morph::zoomIn() {
-	canvas->zoom(0.2f);
+	canvas->zoom(0.2f, QPoint(500, 500));
 	scrollArea->update();
 }
 
 void Morph::zoomOut(){
-	canvas->zoom(-0.2f);
+	canvas->zoom(-0.2f, QPoint(500, 500));
 	scrollArea->update();
 }

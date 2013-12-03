@@ -28,14 +28,14 @@ RoadGraph* BFSMulti::interpolate(float t) {
 
 	QMap<RoadVertexDesc, RoadVertexDesc> conv;
 
-	// interpolation道路網に、頂点を追加する
+	// Add vertices to the interpolated roads
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads1->graph); vi != vend; ++vi) {
 		if (!roads1->graph[*vi]->valid) continue;
 
 		RoadVertexDesc v2 = correspondence[*vi];
 
-		// 頂点を作成
+		// Add a vertex
 		RoadVertex* new_v = new RoadVertex(roads1->graph[*vi]->getPt() * t + roads2->graph[v2]->getPt() * (1 - t));
 		RoadVertexDesc new_v_desc = boost::add_vertex(new_roads->graph);
 		new_roads->graph[new_v_desc] = new_v;
@@ -43,7 +43,7 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		conv[*vi] = new_v_desc;
 	}
 
-	// interpolation道路網に、エッジを追加する
+	// Add edges to the interpolated roads
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
 		if (!roads1->graph[*ei]->valid) continue;
@@ -54,27 +54,38 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		RoadVertexDesc v2 = correspondence[v1];
 		RoadVertexDesc u2 = correspondence[u1];
 
-		// 対応エッジがあるか？
+		// Is there a corresponding edge?
 		if (GraphUtil::hasEdge(roads2, v2, u2)) {
 			RoadEdgeDesc e2 = GraphUtil::getEdge(roads2, v2, u2);
 
 			RoadEdgeDesc e_desc = GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]);
 			new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, e2, v2, t);
+
+			// Remove the too short edge
+			if (roads1->graph[*ei]->getLength() < 1.0f && !roads1->graph[*ei]->fullyPaired && t > 0.7f) {
+				//GraphUtil::collapseEdge(new_roads, e_desc);
+			}
+
+			// Remove the too short edge
+			if (roads2->graph[e2]->getLength() < 1.0f && !roads2->graph[e2]->fullyPaired && t < 0.3f) {
+				//GraphUtil::collapseEdge(new_roads, e_desc);
+			}
 		}
 	}
 	
-	// Snap処理（DeadEndエッジのみを対象とし、近接頂点を探してスナップさせる）
+	// Snapping (for dead end edges)
 	GraphUtil::snapDeadendEdges2(new_roads, 1, snap_deadend_threshold);
 
-	// DeadEndの頂点について、fullyPairedじゃないエッジの中で、エッジ長がdeadend_removal_threshold以下なら頂点とそのエッジを削除する
+	// Remove the too short dead end edges
 	GraphUtil::removeShortDeadend(new_roads, deadend_removal_threshold);
 
-	// Snap処理（DeadEndエッジを削除した結果、新たにDeadEndエッジとなったやつがいるから、もう一度実施する）
+	// Snapping again (for dead end edges)
 	GraphUtil::snapDeadendEdges2(new_roads, 1, snap_deadend_threshold);
 
-	// Snap処理（Degree=2の頂点を対象に、狭い探索範囲でスナップを行う）
+	// Snapping (for other edges with degree 2)
 	GraphUtil::snapDeadendEdges2(new_roads, 2, snap_deadend_threshold * 0.65f);
 
+	// Remove all the isolated vertices
 	GraphUtil::removeIsolatedVertices(new_roads);
 
 	return new_roads;
@@ -124,27 +135,26 @@ void BFSMulti::init() {
 			tgt2 = boost::source(e2, roads2->graph);
 		}
 
-
-		// テンポラリの道路網を作成する。
+		// copy the roads to the temporal ones
 		RoadGraph* temp1 = GraphUtil::copyRoads(roads1);
 		RoadGraph* temp2 = GraphUtil::copyRoads(roads2);
 
-		// シードを追加
+		// Add seeds
 		seeds1.push_back(src1);
 		seeds1.push_back(tgt1);
 		seeds2.push_back(src2);
 		seeds2.push_back(tgt2);
 
-		// シードを使ってマッチングを探し、非類似度を計算する
+		// Compute the dissimilarity
 		QMap<RoadVertexDesc, RoadVertexDesc> map1;
 		QMap<RoadVertexDesc, RoadVertexDesc> map2;
 		float dissimilarity = computeDissimilarity(temp1, seeds1, temp2, seeds2, map1, map2);
 		
-		// テンポラリの道路網を削除する
+		// delete the temporal roads
 		delete temp1;
 		delete temp2;
 
-		// 非類似度が悪すぎる場合、今回追加したシードを棄却して、終了する
+		// If the dissiminarity becomes too bad, stop the iteration
 		if (dissimilarity >= min_dissimilarity * 1.1f) {
 			seeds1.pop_back();
 			seeds1.pop_back();
@@ -156,10 +166,10 @@ void BFSMulti::init() {
 
 		chosen_pairs.push_back(EdgePair(e1, e2));
 
-		// 非類似度が良いなら、ベストマッチングとして更新
+		// Update the best dissimilarity
 		min_dissimilarity = std::min(dissimilarity, min_dissimilarity);
 
-		qDebug() << "Roads1: " << src1 << "-" << tgt1 << " Roads2: " << src2 << "-" << tgt2;
+		qDebug() << "Roads1: " << src1 << "-" << tgt1 << " Roads2: " << src2 << "-" << tgt2 << " (Dissimilarity: " << min_dissimilarity << ")";
 	}
 
 	// Build forests by using the finalized seeds
@@ -178,7 +188,7 @@ void BFSMulti::init() {
 	GraphUtil::removeIsolatedVertices(roads2);
 
 	// Apply Rigid Iterative Closest Point (ICP)
-	GraphUtil::rigidICP(roads1, roads2, pairs);
+	//GraphUtil::rigidICP(roads1, roads2, pairs);
 
 	// Generate sequence of interpolated roads
 	clearSequence();

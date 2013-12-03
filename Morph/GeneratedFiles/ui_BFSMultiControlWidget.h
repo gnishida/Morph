@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'BFSMultiControlWidget.ui'
 **
-** Created: Tue Dec 3 10:39:44 2013
+** Created: Tue Dec 3 12:15:41 2013
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -54,12 +54,13 @@ public:
     QCheckBox *checkBoxRoads1;
     QCheckBox *checkBoxRoads2;
     QCheckBox *checkBoxInterpolation;
+    QCheckBox *checkBoxColorByGroup;
 
     void setupUi(QDockWidget *BFSMultiControlWidget)
     {
         if (BFSMultiControlWidget->objectName().isEmpty())
             BFSMultiControlWidget->setObjectName(QString::fromUtf8("BFSMultiControlWidget"));
-        BFSMultiControlWidget->resize(148, 635);
+        BFSMultiControlWidget->resize(148, 688);
         BFSMultiControlWidget->setMinimumSize(QSize(145, 261));
         BFSMultiControlWidget->setStyleSheet(QString::fromUtf8("background-color: rgb(181, 181, 181);"));
         dockWidgetContents = new QWidget();
@@ -81,7 +82,7 @@ public:
         pushButtonCompute->setGeometry(QRect(10, 150, 131, 31));
         groupBox = new QGroupBox(dockWidgetContents);
         groupBox->setObjectName(QString::fromUtf8("groupBox"));
-        groupBox->setGeometry(QRect(10, 380, 131, 101));
+        groupBox->setGeometry(QRect(10, 410, 131, 101));
         lineEditNodeId = new QLineEdit(groupBox);
         lineEditNodeId->setObjectName(QString::fromUtf8("lineEditNodeId"));
         lineEditNodeId->setGeometry(QRect(50, 20, 71, 20));
@@ -98,7 +99,7 @@ public:
         lineEditNodeNeighbors->setReadOnly(true);
         groupBox_2 = new QGroupBox(dockWidgetContents);
         groupBox_2->setObjectName(QString::fromUtf8("groupBox_2"));
-        groupBox_2->setGeometry(QRect(10, 490, 131, 111));
+        groupBox_2->setGeometry(QRect(10, 520, 131, 111));
         label_3 = new QLabel(groupBox_2);
         label_3->setObjectName(QString::fromUtf8("label_3"));
         label_3->setGeometry(QRect(10, 50, 41, 16));
@@ -119,17 +120,17 @@ public:
         lineEditEdgeGroup->setGeometry(QRect(60, 80, 61, 20));
         groupBox_3 = new QGroupBox(dockWidgetContents);
         groupBox_3->setObjectName(QString::fromUtf8("groupBox_3"));
-        groupBox_3->setGeometry(QRect(10, 200, 131, 171));
+        groupBox_3->setGeometry(QRect(10, 200, 131, 201));
         horizontalSlider = new QSlider(groupBox_3);
         horizontalSlider->setObjectName(QString::fromUtf8("horizontalSlider"));
         horizontalSlider->setGeometry(QRect(10, 90, 111, 20));
         horizontalSlider->setOrientation(Qt::Horizontal);
         pushButtonPrev = new QPushButton(groupBox_3);
         pushButtonPrev->setObjectName(QString::fromUtf8("pushButtonPrev"));
-        pushButtonPrev->setGeometry(QRect(10, 120, 41, 31));
+        pushButtonPrev->setGeometry(QRect(10, 150, 41, 31));
         pushButtonNext = new QPushButton(groupBox_3);
         pushButtonNext->setObjectName(QString::fromUtf8("pushButtonNext"));
-        pushButtonNext->setGeometry(QRect(80, 120, 41, 31));
+        pushButtonNext->setGeometry(QRect(80, 150, 41, 31));
         checkBoxRoads1 = new QCheckBox(groupBox_3);
         checkBoxRoads1->setObjectName(QString::fromUtf8("checkBoxRoads1"));
         checkBoxRoads1->setGeometry(QRect(10, 20, 70, 17));
@@ -139,6 +140,9 @@ public:
         checkBoxInterpolation = new QCheckBox(groupBox_3);
         checkBoxInterpolation->setObjectName(QString::fromUtf8("checkBoxInterpolation"));
         checkBoxInterpolation->setGeometry(QRect(10, 60, 91, 17));
+        checkBoxColorByGroup = new QCheckBox(groupBox_3);
+        checkBoxColorByGroup->setObjectName(QString::fromUtf8("checkBoxColorByGroup"));
+        checkBoxColorByGroup->setGeometry(QRect(10, 120, 101, 17));
         BFSMultiControlWidget->setWidget(dockWidgetContents);
 
         retranslateUi(BFSMultiControlWidget);
@@ -164,6 +168,7 @@ public:
         checkBoxRoads1->setText(QApplication::translate("BFSMultiControlWidget", "Roads1", 0, QApplication::UnicodeUTF8));
         checkBoxRoads2->setText(QApplication::translate("BFSMultiControlWidget", "Roads2", 0, QApplication::UnicodeUTF8));
         checkBoxInterpolation->setText(QApplication::translate("BFSMultiControlWidget", "Interpolation", 0, QApplication::UnicodeUTF8));
+        checkBoxColorByGroup->setText(QApplication::translate("BFSMultiControlWidget", "Color by group", 0, QApplication::UnicodeUTF8));
         Q_UNUSED(BFSMultiControlWidget);
     } // retranslateUi
 

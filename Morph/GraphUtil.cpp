@@ -313,31 +313,24 @@ float GraphUtil::getTotalEdgeLength(RoadGraph* roads, RoadVertexDesc v) {
 
 /**
  * グラフの指定エッジを削除する。Degreeの小さいほうの頂点を削除する。
- * また、木構造のための情報も併せて登録する。
  */
 void GraphUtil::collapseEdge(RoadGraph* roads, RoadEdgeDesc e) {
-	// 当該エッジを無効にする
-	roads->graph[e]->valid = false;
-
 	RoadVertexDesc v1 = boost::source(e, roads->graph);
 	RoadVertexDesc v2 = boost::target(e, roads->graph);
 	if (v1 == v2) return;
 
-	// degreeの多い方をv1とする
-	if (boost::degree(v1, roads->graph) < boost::degree(v2, roads->graph)) {
-		RoadVertexDesc temp = v1;
-		v1 = v2;
-		v2 = temp;
+	// 当該エッジを無効にする
+	roads->graph[e]->valid = false;
+
+	if (getDegree(roads, v1) < getDegree(roads, v2)) {
+		snapVertex(roads, v1, v2);
+	} else {
+		snapVertex(roads, v2, v1);
 	}
 
+	/*
 	// 頂点v2を無効にする
 	roads->graph[v2]->valid = false;
-
-	// 木構造のための情報を登録する
-	roads->childrenToParent[v2] = v1;
-	CollapseAction ca;
-	ca.parentNode = v1;
-	ca.childNode = v2;
 
 	std::vector<RoadEdgeDesc> removedEdges;
 	std::vector<RoadEdgeDesc> addedEdges;
@@ -356,21 +349,9 @@ void GraphUtil::collapseEdge(RoadGraph* roads, RoadEdgeDesc e) {
 			roads->graph[*ei]->valid = false;
 
 			RoadEdgeDesc new_e_desc = addEdge(roads, v1, v3, roads->graph[*ei]->lanes, roads->graph[*ei]->type, roads->graph[*ei]->oneWay);
-
-			// 木構造のための情報を登録する
-			addedEdges.push_back(new_e_desc);
 		}
-
-		// 木構造のための情報を登録する
-		removedEdges.push_back(*ei);
 	}
-
-	roads->childrenRemovedEdges[v2] = removedEdges;
-	roads->parentAddedEdges[v2] = addedEdges;
-	ca.addedEdges = addedEdges;
-	ca.removedEdges = removedEdges;
-
-	roads->collapseHistory.push_back(ca);
+	*/
 }
 
 /**
