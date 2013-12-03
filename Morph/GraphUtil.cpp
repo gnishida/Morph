@@ -2006,6 +2006,41 @@ void GraphUtil::snapDeadendEdges(RoadGraph* roads, float threshold) {
 }
 
 /**
+ * 短すぎるDeadendエッジを削除する。
+ * ただし、完全マッチングの相手がいるエッジは、削除しない。
+ */
+void GraphUtil::removeShortDeadend(RoadGraph* roads, float threshold) {
+	bool deleted = true;
+	while (deleted) {
+		deleted = false;
+
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
+			if (!roads->graph[*vi]->valid) continue;
+
+			if (getDegree(roads, *vi) > 1) continue;
+
+			RoadOutEdgeIter ei, eend;
+			for (boost::tie(ei, eend) = boost::out_edges(*vi, roads->graph); ei != eend; ++ei) {
+				if (!roads->graph[*ei]->valid) continue;
+
+				// 完全マッチングの相手がいるエッジは、削除しない
+				if (roads->graph[*ei]->fullyPaired) continue;
+
+				RoadVertexDesc tgt = boost::target(*ei, roads->graph);
+
+				// 短すぎるエッジを無効にし、degree=1の側の頂点を無効にする
+				if (roads->graph[*ei]->getLength() < threshold) {
+					roads->graph[*vi]->valid = false;
+					roads->graph[*ei]->valid = false;
+					deleted = true;
+				}
+			}
+		}
+	}
+}
+
+/**
  * ２つのデータリストの差の最小値を返却する。
  * 各データは、１回のみ比較に使用できる。
  */

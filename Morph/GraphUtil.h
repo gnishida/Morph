@@ -102,6 +102,7 @@ public:
 	static void normalizeBySpring(RoadGraph* roads, BBox& area);
 	static bool removeDuplicateEdges(RoadGraph* roads);
 	static void snapDeadendEdges(RoadGraph* roads, float threshold);
+	static void removeShortDeadend(RoadGraph* roads, float threshold);
 
 	// その他
 	static float computeMinDiffAngle(std::vector<float> *data1, std::vector<float> *data2);
