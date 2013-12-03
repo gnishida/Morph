@@ -67,10 +67,10 @@ RoadGraph* BFSMulti::interpolate(float t) {
 	GraphUtil::snapDeadendEdges2(new_roads, snap_deadend_threshold);
 
 	// DeadEndの頂点について、fullyPairedじゃないエッジの中で、エッジ長がdeadend_removal_threshold以下なら頂点とそのエッジを削除する
-	//GraphUtil::removeShortDeadend(new_roads, deadend_removal_threshold);
+	GraphUtil::removeShortDeadend(new_roads, deadend_removal_threshold);
 
 	// Snap処理（DeadEndエッジを削除した結果、新たにDeadEndエッジとなったやつがいるから、もう一度実施する）
-	//GraphUtil::snapDeadendEdges(new_roads, snap_deadend_threshold);
+	GraphUtil::snapDeadendEdges2(new_roads, snap_deadend_threshold);
 
 	return new_roads;
 }

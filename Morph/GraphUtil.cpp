@@ -2053,10 +2053,10 @@ void GraphUtil::snapDeadendEdges2(RoadGraph* roads, float threshold) {
 			}
 		}
 
-		// *vi2から出るエッジとのなす角度の最小値が小さすぎる場合は、対象からはずす
+		// nearest_descから出るエッジとのなす角度の最小値が小さすぎる場合は、対象からはずす
 		float min_angle = std::numeric_limits<float>::max();
 		bool duplicated = false;
-		for (boost::tie(ei, eend) = boost::out_edges(*vi2, roads->graph); ei != eend; ++ei) {
+		for (boost::tie(ei, eend) = boost::out_edges(nearest_desc, roads->graph); ei != eend; ++ei) {
 			if (!roads->graph[*ei]->valid) continue;
 
 			RoadVertexDesc tgt2 = boost::target(*ei, roads->graph);
@@ -2067,7 +2067,7 @@ void GraphUtil::snapDeadendEdges2(RoadGraph* roads, float threshold) {
 				break;
 			}
 
-			float angle = GraphUtil::diffAngle(roads->graph[*vi]->pt - roads->graph[tgt]->pt, roads->graph[*vi2]->pt - roads->graph[tgt2]->pt);
+			float angle = GraphUtil::diffAngle(roads->graph[*vi]->pt - roads->graph[tgt]->pt, roads->graph[nearest_desc]->pt - roads->graph[tgt2]->pt);
 			if (angle < min_angle) {
 				min_angle = angle;
 			}
