@@ -607,11 +607,7 @@ void GraphUtil::computeImportanceOfEdges(RoadGraph* roads, float w_length, float
 		RoadVertexDesc src = boost::source(*ei, roads->graph);
 		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
 
-		if (roads->graph[*ei]->none) {
-			roads->graph[*ei]->importance = 0;
-		} else {
-			roads->graph[*ei]->importance = roads->graph[*ei]->getLength() / max_length * w_length + (getDegree(roads, src) + getDegree(roads, tgt)) * w_valence + roads->graph[*ei]->lanes * w_lanes;
-		}
+		roads->graph[*ei]->importance = roads->graph[*ei]->getLength() / max_length * w_length + (getDegree(roads, src) + getDegree(roads, tgt)) * w_valence + roads->graph[*ei]->lanes * w_lanes;
 	}
 }
 
@@ -625,9 +621,6 @@ float GraphUtil::computeDissimilarityOfEdges(RoadGraph* roads1, RoadEdgeDesc e1,
 	float w_angle = 1.25f;
 	float w_degree = 0.3f;
 	float w_lanes = 0.3f;
-
-	// もしどちらかのエッジのnoneフラグがtrueなら、非類似度としてfloat最大値を返却する
-	if (roads1->graph[e1]->none || roads2->graph[e2]->none) return std::numeric_limits<float>::max();
 
 	RoadVertexDesc src1 = boost::source(e1, roads1->graph);
 	RoadVertexDesc tgt1 = boost::target(e1, roads1->graph);
@@ -2195,7 +2188,6 @@ float GraphUtil::computeDissimilarity2(RoadGraph* roads1, QMap<RoadVertexDesc, R
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
 		if (!roads1->graph[*ei]->valid) continue;
-		if (roads1->graph[*ei]->none) continue;
 
 		RoadVertexDesc src = boost::source(*ei, roads1->graph);
 		RoadVertexDesc tgt = boost::target(*ei, roads1->graph);
@@ -2210,7 +2202,6 @@ float GraphUtil::computeDissimilarity2(RoadGraph* roads1, QMap<RoadVertexDesc, R
 	// 道路網２の各エッジについて、対応エッジがない場合のペナルティ
 	for (boost::tie(ei, eend) = boost::edges(roads2->graph); ei != eend; ++ei) {
 		if (!roads2->graph[*ei]->valid) continue;
-		if (roads2->graph[*ei]->none) continue;
 
 		RoadVertexDesc src = boost::source(*ei, roads2->graph);
 		RoadVertexDesc tgt = boost::target(*ei, roads2->graph);

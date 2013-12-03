@@ -145,7 +145,6 @@ void BFSForest::buildForest() {
 		RoadOutEdgeIter ei, eend;
 		for (boost::tie(ei, eend) = boost::out_edges(parent, roads->graph); ei != eend; ++ei) {
 			if (!roads->graph[*ei]->valid) continue;
-			if (roads->graph[*ei]->none) continue;
 			if (visitedEdge[*ei]) continue;
 
 			// 隣接ノードを取得
@@ -181,14 +180,6 @@ void BFSForest::buildForest() {
 				roads->graph[e_desc]->group = group;
 
 				children.push_back(child2);
-
-				// コピーした子ノードと、元々のノードの間にも、エッジを追加する
-				// レーン数などをハードコピーしているので、良くない。sameフラグみたいなのを追加して、。。。
-				RoadEdgeDesc none_edge_desc = GraphUtil::addEdge(roads, child, child2, 2, 2, false);
-				roads->graph[none_edge_desc]->none = true;
-
-				// 分割しない案
-				//children.push_back(child);
 			} else { // 未訪問の場合
 				visitedVertex[child] = true;
 				roads->graph[edges[i]]->group = group;

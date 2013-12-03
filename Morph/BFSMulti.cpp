@@ -47,8 +47,6 @@ RoadGraph* BFSMulti::interpolate(float t) {
 	for (boost::tie(ei, eend) = boost::edges(roads1->graph); ei != eend; ++ei) {
 		if (!roads1->graph[*ei]->valid) continue;
 
-		if (roads1->graph[*ei]->none) continue;
-
 		RoadVertexDesc v1 = boost::source(*ei, roads1->graph);
 		RoadVertexDesc u1 = boost::target(*ei, roads1->graph);
 
@@ -59,14 +57,8 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		if (GraphUtil::hasEdge(roads2, v2, u2)) {
 			RoadEdgeDesc e2 = GraphUtil::getEdge(roads2, v2, u2);
 
-			// 少なくともどちらかのエッジが本物のエッジなら、エッジを作成
-			if (!roads1->graph[*ei]->none) {
-				RoadEdgeDesc e_desc = GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]);
-				new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, e2, v2, t);
-			} else if (!roads2->graph[e2]->none) {
-				RoadEdgeDesc e_desc = GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads2->graph[e2]);
-				new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, e2, v2, t);
-			}
+			RoadEdgeDesc e_desc = GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]);
+			new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, e2, v2, t);
 		}
 	}
 	
