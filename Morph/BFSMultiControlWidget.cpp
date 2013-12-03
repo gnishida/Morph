@@ -61,7 +61,13 @@ bool BFSMultiControlWidget::selectVertex(float x, float y) {
 		roads = bfs->getSelectedRoads();
 	}
 
-	if (roads == NULL) return false;
+	if (roads == NULL) {
+		// 指定した座標の近くに頂点が見つからない場合、Widgetの頂点情報を消す
+		ui.lineEditNodeId->setText("");
+		ui.lineEditNodeNeighbors->setText("");
+
+		return false;
+	}
 
 	QString str;
 	ui.lineEditNodeId->setText(str.setNum(v));
@@ -99,7 +105,14 @@ bool BFSMultiControlWidget::selectEdge(float x, float y) {
 		roads = bfs->getSelectedRoads();
 	}
 
-	if (roads == NULL) return false;
+	if (roads == NULL) {
+		// 指定した座標の近くにエッジが見つからない場合、Widgetのエッジ情報を消す
+		ui.lineEditEdgeLength->setText("");
+		ui.lineEditEdgeLanes->setText("");
+		ui.lineEditEdgeGroup->setText("");
+
+		return false;
+	}
 
 	QString str;
 	ui.lineEditEdgeLength->setText(str.setNum(roads->graph[e]->getLength()));

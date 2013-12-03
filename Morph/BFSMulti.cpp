@@ -55,16 +55,18 @@ RoadGraph* BFSMulti::interpolate(float t) {
 		RoadVertexDesc v2 = correspondence[v1];
 		RoadVertexDesc u2 = correspondence[u1];
 
-		// エッジを作成
-		RoadEdgeDesc e_desc = GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]);
+		// 対応エッジがあるか？
 		if (GraphUtil::hasEdge(roads2, v2, u2)) {
-			new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, GraphUtil::getEdge(roads2, v2, u2), v2, t);
-		} else {
-			/*
-			new_roads->graph[e_desc]->polyLine.clear();
-			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[v1]]->getPt());
-			new_roads->graph[e_desc]->addPoint(new_roads->graph[conv[u1]]->getPt());
-			*/
+			RoadEdgeDesc e2 = GraphUtil::getEdge(roads2, v2, u2);
+
+			// 少なくともどちらかのエッジが本物のエッジなら、エッジを作成
+			if (!roads1->graph[*ei]->none) {
+				RoadEdgeDesc e_desc = GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads1->graph[*ei]);
+				new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, e2, v2, t);
+			} else if (!roads2->graph[e2]->none) {
+				RoadEdgeDesc e_desc = GraphUtil::addEdge(new_roads, conv[v1], conv[u1], roads2->graph[e2]);
+				new_roads->graph[e_desc]->polyLine = GraphUtil::interpolateEdges(roads1, *ei, v1, roads2, e2, v2, t);
+			}
 		}
 	}
 	
